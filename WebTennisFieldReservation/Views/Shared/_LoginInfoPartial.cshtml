@@ -1,0 +1,32 @@
+﻿@using System.Security.Claims;
+
+@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+
+@{
+    string? username = User.FindFirstValue(ClaimTypes.Name);
+}
+
+<ul class="navbar-nav">
+    @if (username == null)
+    {
+        <li class="nav-item">
+            <a class="nav-link text-dark" asp-area="" asp-controller="Users" asp-action="Login" asp-route-returnurl="@Context.Request.Path">Login</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link text-dark" asp-area="" asp-controller="Users" asp-action="Register" asp-route-returnurl="@Context.Request.Path">Register</a>
+        </li>
+    }
+    else
+    {
+        <li class="nav-item">
+            <span class="nav-item">Welcome @username</span>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link text-dark" asp-area="" asp-controller="Users" asp-action="Logout" asp-route-returnurl="@Context.Request.Path">Logout</a>
+        </li>
+    }
+
+   
+</ul>

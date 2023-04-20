@@ -1,0 +1,15 @@
+﻿@{
+    ViewData["Title"] = "Please confirm you email";
+}
+
+<div class="row">
+    <h3>@ViewData["Title"]</h3>
+    <p>Click this button to confirm your email</p> 
+    <div class="col-4">
+        <form method="post">
+            <input type="hidden" value="@Context.Request.Query[QueryFieldsNames.Token]" />
+            <button type="submit" class="w-100 btn btn-lg btn-primary">Confirm</button>"
+        </form>
+        <a class="btn btn-primary" href="/">Confirm</a>
+    </div>    
+</div>

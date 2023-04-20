@@ -1,0 +1,13 @@
+﻿@model string
+
+@{
+    ViewData["Title"] = "Registration successful";
+}
+
+<div class="row">
+    <h3>@ViewData["Title"]</h3>
+    <p>A mail has been sent to your email address. Please confirm your account.</p> 
+    <div class="col-4">
+        <a class="btn btn-primary" href="@Model">Return</a>
+    </div>    
+</div>

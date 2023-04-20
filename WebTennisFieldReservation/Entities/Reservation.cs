@@ -1,0 +1,17 @@
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace WebTennisFieldReservation.Entities
+{
+    public class Reservation
+    {
+        [Key]
+        public Guid Id { get; set; }
+
+        [ForeignKey(nameof(User))]
+        public Guid UserId { get; set; }
+
+        // Navigation
+        public User User { get; set; } = null!;
+    }
+}
