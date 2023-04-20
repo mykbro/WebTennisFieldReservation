@@ -36,5 +36,11 @@ namespace WebTennisFieldReservation.Data
         {
             throw new NotImplementedException();
         }
+
+        public Task<int> UpdateUserEmailConfirmationByIdAndSecurityStampAsync(Guid id, Guid securityStamp)
+        {
+            return _context.Users.Where(user => user.Id == id && user.SecurityStamp == securityStamp && user.EmailConfirmed == false)
+                        .ExecuteUpdateAsync(user => user.SetProperty(user => user.EmailConfirmed, true));
+        }
     }
 }

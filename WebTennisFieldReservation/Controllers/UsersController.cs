@@ -7,6 +7,8 @@ using WebTennisFieldReservation.Models.Users;
 using WebTennisFieldReservation.Entities;
 using WebTennisFieldReservation.Services;
 using WebTennisFieldReservation.Settings;
+using WebTennisFieldReservation.Utilities;
+using System.Security.Cryptography;
 
 namespace WebTennisFieldReservation.Controllers
 {
@@ -63,7 +65,7 @@ namespace WebTennisFieldReservation.Controllers
 
                 if (userAdded)
                 {
-                    string token = tokenManager.GenerateToken(ProtectorPurposesNames.EmailConfirmation, toAdd.Id, toAdd.SecurityStamp);                    
+                    string token = tokenManager.GenerateToken(ProtectorPurposesNames.EmailConfirmation, toAdd.Id, toAdd.SecurityStamp, DateTimeOffset.Now);                    
                     string mailBody = String.Format(UsersController.ConfirmationMailBodyTemplate, Url.Action(nameof(EmailConfirmation), "users", new { token = token }, Request.Scheme, Request.Host.Value));
                     await mailSender.SendEmailAsync(registrationInfo.Email, UsersController.ConfirmationMailSubject, mailBody);
                     return RedirectToAction(nameof(RegistrationOk), new {ReturnUrl = returnUrl});
@@ -93,22 +95,49 @@ namespace WebTennisFieldReservation.Controllers
         {
             return View();
         }
-
         
         [HttpPost("emailconfirmation")]
         public async Task<IActionResult> EmailConfirmation(ConfirmMailModel confirmationData, [FromServices] ITokenManager tokenManager, [FromServices] TokenManagerSettings tokenManagerSettings)
         {
+            //we check if we have a token passed as a parameter
             if (ModelState.IsValid)
             {
-                
-            }
-            else
-            {
-                return NotFound();
+                //if so we check if the token string is deserializable to a valid SecurityToken
+                try
+                {
+                    SecurityToken token = tokenManager.RetrieveTokenFromString(confirmationData.Token, ProtectorPurposesNames.EmailConfirmation);
+                    
+                    //we check if the token has not expired
+                    if (DateTimeOffset.Now <= token.IssueTime.Add(TimeSpan.FromMinutes(tokenManagerSettings.ValidTimeSpanInMinutes)))
+                    {
+                        //we finally try to update the confirmation status
+                        int usersUpdated = await _repo.UpdateUserEmailConfirmationByIdAndSecurityStampAsync(token.UserId, token.SecurityStamp);
+
+                        //we check how many users we updated... 0 -> already confirmed, 1 -> OK, 2+ -> BIIIG PROBLEMS !!
+                        if (usersUpdated == 1) 
+                        {
+                            return RedirectToAction(nameof(EmailConfirmed));   
+                        }
+                    }                   
+                }
+                catch(CryptographicException ex)
+                {
+                    //forged token string
+                }  
+                catch(FormatException ex)
+                {
+                    //malformed base64 token string
+                }
             }
             
-            
+            return NotFound(); 
         }
-        
+
+        [HttpGet("emailconfirmed")]
+        public IActionResult EmailConfirmed()
+        {    
+            return View();
+        }
+
     }
 }
