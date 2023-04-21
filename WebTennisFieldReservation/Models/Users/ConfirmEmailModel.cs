@@ -2,9 +2,9 @@
 
 namespace WebTennisFieldReservation.Models.Users
 {
-    public class ConfirmMailModel
+    public class ConfirmEmailModel
     {
         [Required]
-        public string TokenString { get; set; } = null!;
+        public string Token { get; set; } = null!;
     }
 }

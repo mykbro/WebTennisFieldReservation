@@ -1,4 +1,6 @@
-﻿@{
+﻿@model ConfirmEmailModel
+
+@{
     ViewData["Title"] = "Please confirm you email";
 }
 
@@ -6,9 +8,9 @@
     <h3>@ViewData["Title"]</h3>
     <p>Click this button to confirm your email</p> 
     <div class="col-4">
-        <form method="post">
-            <input type="hidden" value="@Context.Request.Query[QueryFieldsNames.Token]" />
-            <button type="submit" class="w-100 btn btn-lg btn-primary">Confirm</button>"
+        <form method="post">           
+            <input type="hidden" asp-for="Token" value="@Context.Request.Query[QueryFieldsNames.Token]" />
+            <button type="submit" class="w-100 btn btn-lg btn-primary">Confirm</button>
         </form>       
     </div>    
 </div>

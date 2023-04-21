@@ -2,6 +2,7 @@
 {
     public class TokenManagerSettings
     {
-        public int ValidTimeSpanInMinutes { get; set; }
+        public int EmailConfirmationValidTimeSpanInMinutes { get; set; }
+        public int PwdResetValidTimeSpanInMinutes { get; set; }
     }
 }
