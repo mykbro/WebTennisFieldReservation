@@ -15,6 +15,7 @@ namespace WebTennisFieldReservation.Data
         public async Task<bool> AddUserAsync(User u)
         {
             _context.Users.Add(u);
+
             try
             {
                 await _context.SaveChangesAsync();
@@ -37,10 +38,18 @@ namespace WebTennisFieldReservation.Data
             throw new NotImplementedException();
         }
 
-        public Task<int> UpdateUserEmailConfirmationByIdAndSecurityStampAsync(Guid id, Guid securityStamp)
+        public Task<int> ConfirmUserEmail(Guid id, Guid securityStamp)
         {
+            // we set EmailConfirmed = true for the user with Id = id if secStamp coincides and email is still unconfirmed
+            // we return the nr of rows updated
             return _context.Users.Where(user => user.Id == id && user.SecurityStamp == securityStamp && user.EmailConfirmed == false)
                         .ExecuteUpdateAsync(user => user.SetProperty(user => user.EmailConfirmed, true));
+        }
+
+        public Task<(Guid Id, Guid SecurityStamp)> GetDataForConfirmationTokenAsync(string email)
+        {
+            //we check if a user exists with Email == email and EmailConfirmed == false, otherwise we return default
+            return _context.Users.Where(user => user.Email.Equals(email) && user.EmailConfirmed == false).Select(user => new ValueTuple<Guid, Guid>(user.Id, user.SecurityStamp)).SingleOrDefaultAsync();
         }
     }
 }

@@ -23,7 +23,7 @@ namespace WebTennisFieldReservation
             TokenManagerSettings tokenManagerSettings = builder.Configuration.GetSection(ConfigurationSectionsNames.TokenManager).Get<TokenManagerSettings>();
 
             // Add dbcontext backed repository
-            string connString = builder.Configuration.GetConnectionString(ConnectionStringsNames.Default);
+            string connString = builder.Configuration.GetConnectionString(ConnectionStringsNames.Default) ?? throw new InvalidOperationException("Connection string missing");
             builder.Services.AddScoped<ICourtComplexRepository, DbCourtComplexRepository>(_ => new DbCourtComplexRepository(connString));
 
             // Add password hasher
@@ -41,7 +41,7 @@ namespace WebTennisFieldReservation
 
             // Add mail sending service
             Console.Write("Insert smtp password: ");
-            string smtpPassword = Console.ReadLine() ?? "";
+            string smtpPassword = ""; //Console.ReadLine() ?? "";
             
             SmtpClientFactory smtpClientFactory = new SmtpClientFactory(mailSenderSettings.HostName, mailSenderSettings.Port, mailSenderSettings.UseSSL, mailSenderSettings.User, smtpPassword);
             SmtpClientPoolSender smtpClientPoolSender = new SmtpClientPoolSender(smtpClientFactory, 1, 10);

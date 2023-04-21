@@ -3,7 +3,7 @@ using System.Net.Mail;
 
 namespace WebTennisFieldReservation.Services
 {
-    public class SingleUserPooledMailSender : ISingleUserMailSender
+    public class SingleUserPooledMailSender : ISingleUserMailSender, IDisposable
     {
         private readonly SmtpClientPoolSender _mailSender;
         private readonly string _fromAddress;
