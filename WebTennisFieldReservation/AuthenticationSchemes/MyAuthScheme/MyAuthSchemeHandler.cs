@@ -17,12 +17,13 @@ namespace WebTennisFieldReservation.AuthenticationSchemes.MyAuthScheme
         private readonly IDataProtectionProvider _dataProtectionProvider;
 
         private string CookieName => Options.CookieName ?? Scheme.Name;
-        private string ProtectionPurpose => Options.ProtectorPurposeString ?? Scheme.Name;
+        private string ProtectionPurpose => Options.ProtectorPurposeString ?? Scheme.Name;        
 
         public MyAuthSchemeHandler(IOptionsMonitor<MyAuthSchemeOptions> options, ILoggerFactory logger, UrlEncoder encoder, ISystemClock clock, ICourtComplexRepository repo, IDataProtectionProvider protectorProvider):base(options, logger, encoder, clock)
         {
             _repo = repo;
             _dataProtectionProvider = protectorProvider;
+           
         }
 
         protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
@@ -112,8 +113,44 @@ namespace WebTennisFieldReservation.AuthenticationSchemes.MyAuthScheme
 
         protected override Task HandleSignInAsync(ClaimsPrincipal user, AuthenticationProperties? properties)
         {
+            //we get a protector
+            IDataProtector protector = _dataProtectionProvider.CreateProtector(ProtectionPurpose);
+            byte[] cpAsBytes;
+
+
+            //we serialize the ClaimsPrincipal
+            using (MemoryStream ms = new MemoryStream())
+            {
+                using (BinaryWriter bw = new BinaryWriter(ms))
+                {
+                    user.WriteTo(bw);
+                }
+                
+                cpAsBytes = ms.ToArray();
+            }
+
+            //we encrypt the ClaimsPrincipal
+            byte[] encryptedData = protector.Protect(cpAsBytes);
             
+            //we create a Base64UrlSafe string
+            string cookieVal = Base64UrlEncoder.Encode(encryptedData);
+
+            //we create/update the auth cookie in the response
+            bool persistCookie = properties?.IsPersistent ?? false;
+            
+            CookieOptions cookieOptions = new CookieOptions()
+            {
+                HttpOnly = true,
+                SameSite = SameSiteMode.Lax,
+                IsEssential = true,
+                Secure = true,
+                MaxAge = persistCookie ? Options.CookieMaxAge : null                
+            };
+
+            Context.Response.Cookies.Append(CookieName, cookieVal, cookieOptions);
+            return Task.CompletedTask;
         }
+    
 
         protected override Task HandleSignOutAsync(AuthenticationProperties? properties)
         {
