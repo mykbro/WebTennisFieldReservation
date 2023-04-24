@@ -301,7 +301,7 @@ namespace WebTennisFieldReservation.Controllers
 
                         // we can then proceed to build the claimsprincipal and signIn
                         ClaimsPrincipal userCp = claimsFactory.CreatePrincipal(partialUserData.Id, partialUserData.SecurityStamp, isAdmin, DateTimeOffset.Now);
-                        await HttpContext.SignInAsync("Cookies"/*AuthenticationSchemesNames.MyAuthScheme*/, userCp, loginData.RememberMe ? RememberMeProperty : DoNotRememberMeProperty);
+                        await HttpContext.SignInAsync(AuthenticationSchemesNames.MyAuthScheme, userCp, loginData.RememberMe ? RememberMeProperty : DoNotRememberMeProperty);
 
                         // we check if the returnUrl is valid
                         if(Url.IsLocalUrl(returnUrl))

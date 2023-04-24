@@ -5,6 +5,7 @@ using WebTennisFieldReservation.Settings;
 using WebTennisFieldReservation.Services;
 using SmtpLibrary;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using WebTennisFieldReservation.AuthenticationSchemes.MyAuthScheme;
 
 namespace WebTennisFieldReservation
 {
@@ -22,6 +23,7 @@ namespace WebTennisFieldReservation
             DataProtectionSettings dataProtectionSettings = builder.Configuration.GetSection(ConfigurationSectionsNames.DataProtection).Get<DataProtectionSettings>();
             MailSenderSettings mailSenderSettings = builder.Configuration.GetSection(ConfigurationSectionsNames.MailSender).Get<MailSenderSettings>();
             TokenManagerSettings tokenManagerSettings = builder.Configuration.GetSection(ConfigurationSectionsNames.TokenManager).Get<TokenManagerSettings>();
+            AuthenticationSchemeSettings myAuthSchemeSettings = builder.Configuration.GetSection(ConfigurationSectionsNames.AuthenticationSchemes + ":" + AuthenticationSchemesNames.MyAuthScheme).Get<AuthenticationSchemeSettings>();
 
             // Add dbcontext backed repository
             string connString = builder.Configuration.GetConnectionString(ConnectionStringsNames.Default) ?? throw new InvalidOperationException("Connection string missing");
@@ -48,16 +50,21 @@ namespace WebTennisFieldReservation
             builder.Services.AddSingleton<ISingleUserMailSender>(new SingleUserPooledMailSender(smtpClientPoolSender, mailSenderSettings.User));
 
             // Add claims builder
-            builder.Services.AddSingleton<ClaimsPrincipalFactory>(new ClaimsPrincipalFactory("Cookies" /*AuthenticationSchemesNames.MyAuthScheme*/));
+            builder.Services.AddSingleton<ClaimsPrincipalFactory>(new ClaimsPrincipalFactory(AuthenticationSchemesNames.MyAuthScheme));
 
             // Add authentication
-            builder.Services.AddAuthentication("Cookies").AddCookie(options =>
-            {
-                options.AccessDeniedPath = "/home/forbidden";
-                options.ReturnUrlParameter = QueryFieldsNames.ReturnUrl;
-                options.LoginPath = "/users/login";
-                options.LogoutPath = "/users/logout";
-            });
+            builder.Services.AddAuthentication(AuthenticationSchemesNames.MyAuthScheme)
+                .AddCookie(options =>
+                {
+                    options.AccessDeniedPath = "/home/forbidden";
+                    options.ReturnUrlParameter = QueryFieldsNames.ReturnUrl;
+                    options.LoginPath = "/users/login";
+                    options.LogoutPath = "/users/logout";                    
+                })
+                .AddScheme<MyAuthSchemeOptions, MyAuthSchemeHandler>(AuthenticationSchemesNames.MyAuthScheme, options =>
+                {
+                    options.CookieMaxAge = myAuthSchemeSettings.CookieMaxAge;
+                });
 
 
             //*************** BUILD ***************
