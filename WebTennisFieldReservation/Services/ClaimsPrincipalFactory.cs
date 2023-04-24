@@ -13,7 +13,7 @@ namespace WebTennisFieldReservation.Services
             _authSchemeName = authSchemeName;
         }
 
-        public ClaimsPrincipal BuildPrincipal(Guid id, Guid secStamp, DateTimeOffset issueTime)
+        public ClaimsPrincipal CreatePrincipal(Guid id, Guid secStamp, DateTimeOffset issueTime)
         {
             List<Claim> claims = new List<Claim>();
 

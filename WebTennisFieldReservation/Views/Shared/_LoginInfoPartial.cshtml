@@ -5,7 +5,7 @@
 *@
 
 @{
-    string? username = User.FindFirstValue(ClaimTypes.Name);
+    string? username = User.FindFirstValue(ClaimsNames.Id);
 }
 
 <ul class="navbar-nav">
@@ -21,10 +21,12 @@
     else
     {
         <li class="nav-item">
-            <span class="nav-item">Welcome @username</span>
+            <span class="nav-link text-dark">Welcome @username</span>
         </li>
         <li class="nav-item">
-            <a class="nav-link text-dark" asp-controller="Users" asp-action="Logout" asp-route-returnurl="@Context.Request.Path">Logout</a>
+            <form method="post" asp-controller="Users" asp-action="Logout" asp-route-returnurl="@Context.Request.Path">
+                <button type="submit" class="nav-link btn btn-link text-dark">Logout</button>
+            </form>           
         </li>
     }   
 </ul>

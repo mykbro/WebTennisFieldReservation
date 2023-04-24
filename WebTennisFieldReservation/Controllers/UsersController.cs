@@ -9,6 +9,7 @@ using WebTennisFieldReservation.Services;
 using WebTennisFieldReservation.Settings;
 using WebTennisFieldReservation.Utilities;
 using System.Security.Cryptography;
+using Microsoft.AspNetCore.Authentication;
 
 namespace WebTennisFieldReservation.Controllers
 {
@@ -17,6 +18,9 @@ namespace WebTennisFieldReservation.Controllers
     public class UsersController : Controller
     {
                
+        private static readonly AuthenticationProperties RememberMeProperty = new AuthenticationProperties() { IsPersistent = true };
+        private static readonly AuthenticationProperties DoNotRememberMeProperty = new AuthenticationProperties() { IsPersistent = false };
+
 
         public UsersController()
         {           
@@ -280,7 +284,7 @@ namespace WebTennisFieldReservation.Controllers
         }
 
         [HttpPost("login")]
-        public async Task<IActionResult> Login(LoginUserModel loginData, string? returnUrl, [FromServices] ICourtComplexRepository repo, [FromServices] IPasswordHasher pwdHasher)
+        public async Task<IActionResult> Login(LoginUserModel loginData, string? returnUrl, [FromServices] ICourtComplexRepository repo, [FromServices] IPasswordHasher pwdHasher, [FromServices] ClaimsPrincipalFactory claimsFactory)
         {
             if (ModelState.IsValid)
             {
@@ -292,16 +296,48 @@ namespace WebTennisFieldReservation.Controllers
                     // we check if the passwords match (using the db iters, not the live value in the pwdHasher
                     if(pwdHasher.ValidatePassword(loginData.Password, partialUserData.pwdHash, partialUserData.salt, partialUserData.iters))
                     {
-                        //we can then proceed to build the claimsprincipal and signIn
+                        // we can then proceed to build the claimsprincipal and signIn
+                        ClaimsPrincipal userCp = claimsFactory.CreatePrincipal(partialUserData.Id, partialUserData.SecurityStamp, DateTimeOffset.Now);
+                        await HttpContext.SignInAsync("Cookies"/*AuthenticationSchemesNames.MyAuthScheme*/, userCp, loginData.RememberMe ? RememberMeProperty : DoNotRememberMeProperty);
 
-
-
+                        // we check if the returnUrl is valid
+                        if(Url.IsLocalUrl(returnUrl))
+                        {
+                            return Redirect(returnUrl);
+                        }
+                        else
+                        {
+                            return Redirect("/");
+                        }
+                    }
+                    else //invalid password
+                    {
+                        ModelState.AddModelError("", "Invalid username and/or password");
                     }
                 }
+                else //invalid username
+                {
+                    ModelState.AddModelError("", "Invalid username and/or password");
+                }
             }
-
-            ModelState.AddModelError("", "Invalid username and/or password");
+            
             return View();
+        }
+
+        [HttpPost("logout")]
+        [Authorize]
+        public IActionResult Logout(string? returnUrl)
+        {          
+            HttpContext.SignOutAsync();
+
+            if (Url.IsLocalUrl(returnUrl))
+            {
+                return Redirect(returnUrl);
+            }
+            else
+            {
+                return Redirect("/");
+            }
         }
 
 

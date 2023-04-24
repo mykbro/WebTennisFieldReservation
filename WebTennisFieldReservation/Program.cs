@@ -4,6 +4,7 @@ using WebTennisFieldReservation.Data;
 using WebTennisFieldReservation.Settings;
 using WebTennisFieldReservation.Services;
 using SmtpLibrary;
+using Microsoft.AspNetCore.Authentication.Cookies;
 
 namespace WebTennisFieldReservation
 {
@@ -47,7 +48,16 @@ namespace WebTennisFieldReservation
             builder.Services.AddSingleton<ISingleUserMailSender>(new SingleUserPooledMailSender(smtpClientPoolSender, mailSenderSettings.User));
 
             // Add claims builder
-            builder.Services.AddSingleton<ClaimsPrincipalFactory>(new ClaimsPrincipalFactory(AuthenticationSchemesNames.MyAuthScheme));
+            builder.Services.AddSingleton<ClaimsPrincipalFactory>(new ClaimsPrincipalFactory("Cookies" /*AuthenticationSchemesNames.MyAuthScheme*/));
+
+            // Add authentication
+            builder.Services.AddAuthentication("Cookies").AddCookie(options =>
+            {
+                options.AccessDeniedPath = "/forbidden";
+                options.ReturnUrlParameter = QueryFieldsNames.ReturnUrl;
+                options.LoginPath = "/users/login";
+                options.LogoutPath = "/users/logout";
+            });
 
 
             //*************** BUILD ***************
