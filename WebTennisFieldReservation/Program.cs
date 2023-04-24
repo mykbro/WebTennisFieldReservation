@@ -53,7 +53,7 @@ namespace WebTennisFieldReservation
             // Add authentication
             builder.Services.AddAuthentication("Cookies").AddCookie(options =>
             {
-                options.AccessDeniedPath = "/forbidden";
+                options.AccessDeniedPath = "/home/forbidden";
                 options.ReturnUrlParameter = QueryFieldsNames.ReturnUrl;
                 options.LoginPath = "/users/login";
                 options.LogoutPath = "/users/logout";

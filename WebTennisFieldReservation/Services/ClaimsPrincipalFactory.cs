@@ -13,12 +13,13 @@ namespace WebTennisFieldReservation.Services
             _authSchemeName = authSchemeName;
         }
 
-        public ClaimsPrincipal CreatePrincipal(Guid id, Guid secStamp, DateTimeOffset issueTime)
+        public ClaimsPrincipal CreatePrincipal(Guid id, Guid secStamp, bool isAdmin, DateTimeOffset issueTime)
         {
             List<Claim> claims = new List<Claim>();
 
             claims.Add(new Claim(ClaimsNames.Id, id.ToString()));
             claims.Add(new Claim(ClaimsNames.SecurityStamp, secStamp.ToString()));
+            claims.Add(new Claim(ClaimsNames.IsAdmin, isAdmin.ToString()));
             claims.Add(new Claim(ClaimsNames.IssueTime, issueTime.ToString()));
 
             ClaimsIdentity identity = new ClaimsIdentity(claims, _authSchemeName);

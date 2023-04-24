@@ -287,7 +287,7 @@ namespace WebTennisFieldReservation.Controllers
         public async Task<IActionResult> Login(LoginUserModel loginData, string? returnUrl, [FromServices] ICourtComplexRepository repo, [FromServices] IPasswordHasher pwdHasher, [FromServices] ClaimsPrincipalFactory claimsFactory)
         {
             if (ModelState.IsValid)
-            {
+            {               
                 var partialUserData = await repo.GetDataForLoginCheckAsync(loginData.Email);
 
                 // we check if a confirmed user was found
@@ -296,8 +296,11 @@ namespace WebTennisFieldReservation.Controllers
                     // we check if the passwords match (using the db iters, not the live value in the pwdHasher
                     if(pwdHasher.ValidatePassword(loginData.Password, partialUserData.pwdHash, partialUserData.salt, partialUserData.iters))
                     {
+                        // we check if the user is an admin
+                        bool isAdmin = await repo.IsAdminAsync(partialUserData.Id);
+
                         // we can then proceed to build the claimsprincipal and signIn
-                        ClaimsPrincipal userCp = claimsFactory.CreatePrincipal(partialUserData.Id, partialUserData.SecurityStamp, DateTimeOffset.Now);
+                        ClaimsPrincipal userCp = claimsFactory.CreatePrincipal(partialUserData.Id, partialUserData.SecurityStamp, isAdmin, DateTimeOffset.Now);
                         await HttpContext.SignInAsync("Cookies"/*AuthenticationSchemesNames.MyAuthScheme*/, userCp, loginData.RememberMe ? RememberMeProperty : DoNotRememberMeProperty);
 
                         // we check if the returnUrl is valid

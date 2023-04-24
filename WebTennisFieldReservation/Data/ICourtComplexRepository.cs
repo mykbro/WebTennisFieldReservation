@@ -11,5 +11,6 @@ namespace WebTennisFieldReservation.Data
         public Task<int> ResetUserPasswordAsync(Guid id, Guid oldSecurityStamp, byte[] pwdHash, byte[] salt, int iters, Guid newSecurityStamp);
         public Task<(Guid Id, Guid SecurityStamp)> GetDataForTokenAsync(string email);
         public Task<(Guid Id, Guid SecurityStamp, byte[] pwdHash, byte[] salt, int iters)> GetDataForLoginCheckAsync(string email);
+        public Task<bool> IsAdminAsync(Guid id);
     }
 }

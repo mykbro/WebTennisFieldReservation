@@ -70,5 +70,11 @@ namespace WebTennisFieldReservation.Data
                 .Select(user => new ValueTuple<Guid, Guid, byte[], byte[], int>(user.Id, user.SecurityStamp, user.PwdHash, user.PwdSalt, user.Pbkdf2Iterations))
                 .SingleOrDefaultAsync();
         }
+
+        public async Task<bool> IsAdminAsync(Guid id)
+        {
+            AdminUser? admin = await _context.AdminUsers.FindAsync(id);
+            return admin != null;
+        }
     }
 }
