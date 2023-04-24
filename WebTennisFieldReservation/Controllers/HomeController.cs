@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
 using WebTennisFieldReservation.Models;
 
@@ -18,6 +19,7 @@ namespace WebTennisFieldReservation.Controllers
             return View();
         }
 
+        [Authorize(Policy = "MustBeAdmin")]
         public IActionResult Privacy()
         {
             return View();

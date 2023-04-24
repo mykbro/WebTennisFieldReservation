@@ -53,7 +53,7 @@ namespace WebTennisFieldReservation
             builder.Services.AddSingleton<ClaimsPrincipalFactory>(new ClaimsPrincipalFactory(AuthenticationSchemesNames.MyAuthScheme));
 
             // Add authentication
-            builder.Services.AddAuthentication(AuthenticationSchemesNames.MyAuthScheme)
+            builder.Services.AddAuthentication(defaultScheme: AuthenticationSchemesNames.MyAuthScheme)
                 .AddCookie(options =>
                 {
                     options.AccessDeniedPath = "/home/forbidden";
@@ -64,8 +64,19 @@ namespace WebTennisFieldReservation
                 .AddScheme<MyAuthSchemeOptions, MyAuthSchemeHandler>(AuthenticationSchemesNames.MyAuthScheme, options =>
                 {
                     options.CookieMaxAge = TimeSpan.FromMinutes(myAuthSchemeSettings.CookieMaxAgeInMinutes);
+                    options.AccessDeniedPath = "/home/forbidden";
+                    options.LoginPath = "/users/login";
+                    options.ReturnUrlParameter = QueryFieldsNames.ReturnUrl;
                 });
 
+            // Add authorization policies
+            builder.Services.AddAuthorization(options =>
+            {
+                options.AddPolicy("MustBeAdmin", policyBuilder =>
+                {
+                    policyBuilder.RequireClaim(ClaimsNames.IsAdmin, "True");
+                });
+            });
 
             //*************** BUILD ***************
             var app = builder.Build();

@@ -27,7 +27,7 @@ namespace WebTennisFieldReservation.AuthenticationSchemes.MyAuthScheme
         }
 
         protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
-        {
+        {           
             string? cookieValue = Context.Request.Cookies[CookieName];
 
             //we check if the auth cookie exists
@@ -157,6 +157,52 @@ namespace WebTennisFieldReservation.AuthenticationSchemes.MyAuthScheme
         {
             Context.Response.Cookies.Delete(CookieName);
             return Task.CompletedTask;
+        }
+
+        protected override Task HandleForbiddenAsync(AuthenticationProperties properties)
+        {
+            
+            string? accessDeniendPath = Options.AccessDeniedPath;
+            
+            if(accessDeniendPath != null)
+            {
+                Context.Response.Redirect(accessDeniendPath);
+            }
+            else
+            {
+                Context.Response.StatusCode = 403;
+            }
+
+            return Task.CompletedTask;
+            
+            //return Context.ForbidAsync("Cookies", properties);
+        }
+
+        protected override Task HandleChallengeAsync(AuthenticationProperties properties)
+        {
+            
+            string? loginPath = Options.LoginPath;
+            string? returnUrlParam = Options.ReturnUrlParameter;
+
+            if (loginPath != null)
+            {
+                if(returnUrlParam != null)
+                {
+                    Context.Response.Redirect(loginPath + $"?{returnUrlParam}={Context.Request.Path}");
+                }
+                else
+                {
+                    Context.Response.Redirect(loginPath);
+                }
+            }
+            else
+            {
+                Context.Response.StatusCode = 401;
+            }
+
+            return Task.CompletedTask;
+            
+            //return Context.ChallengeAsync("Cookies", properties);
         }
     }
 }
