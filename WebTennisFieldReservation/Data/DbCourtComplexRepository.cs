@@ -66,6 +66,7 @@ namespace WebTennisFieldReservation.Data
 
         public Task<(Guid Id, Guid SecurityStamp, byte[] pwdHash, byte[] salt, int iters)> GetDataForLoginCheckAsync(string email)
         {
+            //we check email confirmed
             return _context.Users.Where(user => user.Email == email && user.EmailConfirmed == true)
                 .Select(user => new ValueTuple<Guid, Guid, byte[], byte[], int>(user.Id, user.SecurityStamp, user.PwdHash, user.PwdSalt, user.Pbkdf2Iterations))
                 .SingleOrDefaultAsync();
@@ -75,6 +76,13 @@ namespace WebTennisFieldReservation.Data
         {
             AdminUser? admin = await _context.AdminUsers.FindAsync(id);
             return admin != null;
+        }
+
+        public Task<(string Firstname, string Lastname, string Email)> GetAuthenticatedUserDataAsync(Guid id, Guid securityStamp)
+        {
+            return _context.Users.Where(user => user.Id == id && user.SecurityStamp == securityStamp)
+                .Select(user => new ValueTuple<string, string, string>(user.FirstName, user.LastName, user.Email))
+                .SingleOrDefaultAsync();
         }
     }
 }

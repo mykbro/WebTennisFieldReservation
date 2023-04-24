@@ -12,5 +12,6 @@ namespace WebTennisFieldReservation.Data
         public Task<(Guid Id, Guid SecurityStamp)> GetDataForTokenAsync(string email);
         public Task<(Guid Id, Guid SecurityStamp, byte[] pwdHash, byte[] salt, int iters)> GetDataForLoginCheckAsync(string email);
         public Task<bool> IsAdminAsync(Guid id);
+        public Task<(string Firstname, string Lastname, string Email)> GetAuthenticatedUserDataAsync(Guid id, Guid securityStamp);
     }
 }

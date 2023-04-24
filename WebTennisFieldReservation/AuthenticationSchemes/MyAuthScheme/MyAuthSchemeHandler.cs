@@ -31,9 +31,7 @@ namespace WebTennisFieldReservation.AuthenticationSchemes.MyAuthScheme
 
             //we check if the auth cookie exists
             if (cookieValue != null)
-            {
-                      
-
+            {  
                 try
                 {
                     //we try to convert the token in bytes
@@ -56,51 +54,58 @@ namespace WebTennisFieldReservation.AuthenticationSchemes.MyAuthScheme
                             }
                         }
 
-                        //we extract user data from the claims
+                        // we extract user data from the claims that we need to check
                         string? idAsString = principal.FindFirstValue(ClaimsNames.Id);
                         string? securityStampAsString = principal.FindFirstValue(ClaimsNames.SecurityStamp);
-                        string? issueTimeAsString = principal.FindFirstValue(ClaimsNames.IssueTime);
+                        //string? isAdminAsString = principal.FindFirstValue(ClaimsNames.IsAdmin);
+                        //string? issueTimeAsString = principal.FindFirstValue(ClaimsNames.IssueTime);
 
-                        //we parse everything, shouldn't throw
+                        // we parse, shouldn't throw
                         Guid id = Guid.Parse(idAsString);
                         Guid secStamp = Guid.Parse(securityStampAsString);
-                        DateTimeOffset issueTime = DateTimeOffset.Parse(issueTimeAsString);
+                        //bool isAdmin = Boolean.Parse(isAdminAsString);
+                        //DateTimeOffset issueTime = DateTimeOffset.Parse(issueTimeAsString);
 
                         //we check in the db if the id is still there and the secStamp is still the same
-                        //and contextually we retrieve the user data
+                        //and contextually we retrieve the user data that we need in every request
+                        var userData = await _repo.GetAuthenticatedUserDataAsync(id, secStamp);
 
-                        var userData = await _repo.GetAuthenticatedUserData
+                        if(userData != default)
+                        {
+                            //we add user data claims to the principal
+                            principal.Claims.Append(new Claim(ClaimsNames.Fullname, userData.Firstname + " " + userData.Lastname));
+                            principal.Claims.Append(new Claim(ClaimsNames.Email, userData.Email));
 
-
-
-                        //we add user data claims to the principal
-
-
-
-
-                        //and we return the principal in an auth ticket
-                        AuthenticationTicket ticket = new AuthenticationTicket(principal, Scheme.Name);
-
-                        return Task.FromResult(AuthenticateResult.Success(ticket));                                                  
-                        
-
+                            //and we return the principal in an auth ticket
+                            AuthenticationTicket ticket = new AuthenticationTicket(principal, Scheme.Name);
+                            return AuthenticateResult.Success(ticket);
+                        }
+                        else
+                        {
+                            //cookie data is not valid anymore
+                            await HandleSignOutAsync(null);
+                            return AuthenticateResult.Fail("Cookie expired");
+                        }
                     }
                     catch (CryptographicException ex)
                     {
                         //encryption authentication failed
-                        return Task.FromResult(AuthenticateResult.Fail("Invalid auth cookie"));
+                        await HandleSignOutAsync(null);
+                        return AuthenticateResult.Fail("Invalid auth cookie");
                     }
                 }
                 catch (FormatException ex)
                 {
                     //string base64 was malformed
-                    return Task.FromResult(AuthenticateResult.Fail("Invalid auth cookie"));
+                    await HandleSignOutAsync(null);
+                    return AuthenticateResult.Fail("Invalid auth cookie");
                 }
                 
             }
             else
             {
-                return Task.FromResult(AuthenticateResult.Fail("Auth cookie not found"));
+                //no cookie
+                return AuthenticateResult.Fail("Auth cookie not found");
             }
             
         }
@@ -113,7 +118,6 @@ namespace WebTennisFieldReservation.AuthenticationSchemes.MyAuthScheme
         protected override Task HandleSignOutAsync(AuthenticationProperties? properties)
         {
             Context.Response.Cookies.Delete(CookieName);
-
             return Task.CompletedTask;
         }
     }

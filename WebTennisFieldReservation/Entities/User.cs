@@ -51,10 +51,6 @@ namespace WebTennisFieldReservation.Entities
         [Required]
         public bool EmailConfirmed { get; set; }
         #endregion
-
-
-
-        //  Properties        
-        public string FullName => FirstName + LastName;      
+            
     }
 }
