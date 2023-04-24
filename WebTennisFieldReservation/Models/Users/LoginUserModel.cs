@@ -17,5 +17,8 @@ namespace WebTennisFieldReservation.Models.Users
         [DataType(DataType.Password)]
         [DisplayName("Password")]
         public string Password { get; set; } = null!;
+
+        [Required]
+        public bool RememberMe { get; set; }
     }
 }

@@ -29,6 +29,9 @@ namespace WebTennisFieldReservation.Entities
         [Required]
         public DateTime BirthDate { get; set; }
 
+        [Required]
+        public DateTimeOffset RegistrationTimestamp { get; set; }
+
         #region __SecurityInfo
 
         [Required]

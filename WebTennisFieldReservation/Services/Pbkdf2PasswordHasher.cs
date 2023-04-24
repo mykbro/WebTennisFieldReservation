@@ -20,5 +20,33 @@ namespace WebTennisFieldReservation.Services
 
             return (pwdBytes, saltBytes);
         }
+
+        public bool ValidatePassword(string pwdToValidate, byte[] pwdHash, byte[] pwdSalt, int iters)
+        {
+            byte[] tempHash = Rfc2898DeriveBytes.Pbkdf2(pwdToValidate, pwdSalt, iters, HashAlgorithmName.SHA256, 32); 
+            return ByteArrayCompare(pwdHash, tempHash);
+        }
+
+        private static bool ByteArrayCompare(byte[] first, byte[] second)
+        {  
+
+            if(first.Length != second.Length)
+            {
+                return false;
+            }
+            else
+            { 
+                // we should probably check the whole array anyway for timing attacks
+                for(int i = 0; i < first.Length; i++)
+                {
+                    if (first[i] != second[i])
+                    {
+                        return false;
+                    }
+                }
+
+                return true;
+            }
+        }
     }
 }

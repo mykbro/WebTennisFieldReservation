@@ -54,7 +54,7 @@ namespace WebTennisFieldReservation.Data
 
         public Task<int> ResetUserPasswordAsync(Guid id, Guid oldSecurityStamp, byte[] pwdHash, byte[] salt, int iters, Guid newSecurityStamp)
         {
-            //we should probaly check that email is confirmed
+            //we should probaly check if email is confirmed
             return _context.Users.Where(user => user.Id == id && user.SecurityStamp == oldSecurityStamp)
                 .ExecuteUpdateAsync(user =>                
                     user.SetProperty(user => user.PwdHash, pwdHash)
@@ -62,6 +62,13 @@ namespace WebTennisFieldReservation.Data
                         .SetProperty(user => user.Pbkdf2Iterations, iters)
                         .SetProperty(user => user.SecurityStamp, newSecurityStamp)
                 );
+        }
+
+        public Task<(Guid Id, Guid SecurityStamp, byte[] pwdHash, byte[] salt, int iters)> GetDataForLoginCheckAsync(string email)
+        {
+            return _context.Users.Where(user => user.Email == email && user.EmailConfirmed == true)
+                .Select(user => new ValueTuple<Guid, Guid, byte[], byte[], int>(user.Id, user.SecurityStamp, user.PwdHash, user.PwdSalt, user.Pbkdf2Iterations))
+                .SingleOrDefaultAsync();
         }
     }
 }

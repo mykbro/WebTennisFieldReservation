@@ -51,6 +51,7 @@ namespace WebTennisFieldReservation.Controllers
                     Address = registrationInfo.Address,
                     BirthDate = registrationInfo.BirthDate,
                     EmailConfirmed = false,
+                    RegistrationTimestamp = DateTimeOffset.Now,
                     Pbkdf2Iterations = pwdHasher.Iterations,
                     SecurityStamp = Guid.NewGuid(),
                     PwdHash = pwdInfo.Password,
@@ -269,6 +270,37 @@ namespace WebTennisFieldReservation.Controllers
         [HttpGet("resetpassword/success")]
         public IActionResult ResetPasswordSuccess()
         {
+            return View();
+        }
+
+        [HttpGet("login")]
+        public IActionResult Login(string? returnUrl)
+        {
+            return View();
+        }
+
+        [HttpPost("login")]
+        public async Task<IActionResult> Login(LoginUserModel loginData, string? returnUrl, [FromServices] ICourtComplexRepository repo, [FromServices] IPasswordHasher pwdHasher)
+        {
+            if (ModelState.IsValid)
+            {
+                var partialUserData = await repo.GetDataForLoginCheckAsync(loginData.Email);
+
+                // we check if a confirmed user was found
+                if(partialUserData != default)
+                {
+                    // we check if the passwords match (using the db iters, not the live value in the pwdHasher
+                    if(pwdHasher.ValidatePassword(loginData.Password, partialUserData.pwdHash, partialUserData.salt, partialUserData.iters))
+                    {
+                        //we can then proceed to build the claimsprincipal and signIn
+
+
+
+                    }
+                }
+            }
+
+            ModelState.AddModelError("", "Invalid username and/or password");
             return View();
         }
 
