@@ -63,7 +63,7 @@ namespace WebTennisFieldReservation
                 })
                 .AddScheme<MyAuthSchemeOptions, MyAuthSchemeHandler>(AuthenticationSchemesNames.MyAuthScheme, options =>
                 {
-                    options.CookieMaxAge = myAuthSchemeSettings.CookieMaxAge;
+                    options.CookieMaxAge = TimeSpan.FromMinutes(myAuthSchemeSettings.CookieMaxAgeInMinutes);
                 });
 
 

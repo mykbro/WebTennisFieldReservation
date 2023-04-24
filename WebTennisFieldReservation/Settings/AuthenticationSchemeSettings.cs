@@ -4,6 +4,6 @@
     {
         public string? ProtectorPurposeString { get; set; }
         public string? CookieName { get; set; }
-        public TimeSpan? CookieMaxAge { get; set; }
+        public int CookieMaxAgeInMinutes { get; set; }
     }
 }
