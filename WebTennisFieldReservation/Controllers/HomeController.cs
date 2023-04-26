@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
 using WebTennisFieldReservation.Models;
+using WebTennisFieldReservation.Constants.Names;
 
 namespace WebTennisFieldReservation.Controllers
 {
@@ -19,7 +20,7 @@ namespace WebTennisFieldReservation.Controllers
             return View();
         }
 
-        [Authorize(Policy = "MustBeAdmin")]
+        [Authorize(Policy = AuthorizationPoliciesNames.IsAdmin)]
         public IActionResult Privacy()
         {
             return View();

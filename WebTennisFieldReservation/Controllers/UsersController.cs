@@ -26,12 +26,13 @@ namespace WebTennisFieldReservation.Controllers
         {           
         }
 
-        [Authorize(Policy = AuthorizationPoliciesNames.IsAdmin)]
+        /*
         public IActionResult Index()
         {            
             //TODO
             return View();
         }
+        */
 
         [HttpGet("register")]
         public IActionResult Register()
@@ -54,7 +55,7 @@ namespace WebTennisFieldReservation.Controllers
                     Email = registrationInfo.Email,
                     Address = registrationInfo.Address,
                     BirthDate = registrationInfo.BirthDate,
-                    EmailConfirmed = false,
+                    EmailConfirmed = true,
                     RegistrationTimestamp = DateTimeOffset.Now,
                     Pbkdf2Iterations = pwdHasher.Iterations,
                     SecurityStamp = Guid.NewGuid(),
@@ -343,6 +344,78 @@ namespace WebTennisFieldReservation.Controllers
             }
         }
 
+        [HttpGet("{id:guid}/details")]
+        //[Authorize(Policy = AuthorizationPoliciesNames.SameUser)]
+        public async Task<IActionResult> Details(Guid id, [FromServices] ICourtComplexRepository repo, [FromServices] IAuthorizationService authorizer)
+        {
+            //we must follow the "SameUser" authZ policy
+            AuthorizationResult authResult = await authorizer.AuthorizeAsync(User, id, AuthorizationPoliciesNames.SameUser);
+
+            if (authResult.Succeeded)
+            {
+                //we check for user data for this id
+                EditUserDataModel? userData = await repo.GetUserDataById(id);
+                
+                //if any we populate the view
+                if(userData != null)
+                {
+                    return View(userData);
+                }
+                else
+                {
+                    return NotFound();
+                }
+            }
+            else
+            {
+                //we return NotFound instead of Forbid/Challenge to give away nothing
+                return NotFound();
+            }
+        }
+
+        [HttpPost("{id:guid}/details")]
+        //[Authorize(Policy = AuthorizationPoliciesNames.SameUser)]
+        public async Task<IActionResult> Details(EditUserDataModel userData, Guid id, [FromServices] ICourtComplexRepository repo, [FromServices] IAuthorizationService authorizer)
+        {
+            
+            //we first check for authZ
+            AuthorizationResult authResult = await authorizer.AuthorizeAsync(User, id, AuthorizationPoliciesNames.SameUser);
+
+            if (authResult.Succeeded)
+            {
+                //we then check for the model validity
+                if (ModelState.IsValid)
+                {
+                    //we try to update the user's data (will fail on a duplicate email)                    
+                    int usersUpdated = await repo.UpdateUserDataById(id, userData);
+
+                    if(usersUpdated == 1) 
+                    {
+                        return RedirectToAction(nameof(UserUpdated));
+                    }
+                    else
+                    {
+                        ModelState.AddModelError("", "Email already registered");
+                        return View();
+                    }
+                }
+                else
+                {
+                    return View();
+                }
+            }
+            else
+            {
+                //we return NotFound instead of Forbid/Challenge to give away nothing
+                return NotFound();
+            }
+        }
+
+        [HttpGet("userupdated")]
+        public IActionResult UserUpdated()
+        {
+            return View();
+        }
 
 
         ///////////////////////////////////////////////
@@ -353,8 +426,9 @@ namespace WebTennisFieldReservation.Controllers
             string confirmationMailBodyTemplate = "Click <a href=\"{0}\">here</a> to confirm your email";
            
             string mailBody = String.Format(confirmationMailBodyTemplate, Url.Action(nameof(ConfirmEmail), "users", new { token = tokenString }, Request.Scheme, Request.Host.Value));
-            
-            return mailSender.SendEmailAsync(recipientEmail, confirmationMailSubject, mailBody);
+
+            //return mailSender.SendEmailAsync(recipientEmail, confirmationMailSubject, mailBody);
+            return Task.CompletedTask;
         }
 
         private Task SendPwdResetEmailAsync(string recipientEmail, string tokenString, ISingleUserMailSender mailSender)
@@ -364,7 +438,8 @@ namespace WebTennisFieldReservation.Controllers
 
             string mailBody = String.Format(resetPwdMailBodyTemplate, Url.Action(nameof(ResetPassword), "users", new { token = tokenString }, Request.Scheme, Request.Host.Value));
 
-            return mailSender.SendEmailAsync(recipientEmail, resetPwdMailSubject, mailBody);
+            //return mailSender.SendEmailAsync(recipientEmail, resetPwdMailSubject, mailBody);
+            return Task.CompletedTask;
         }
 
     }

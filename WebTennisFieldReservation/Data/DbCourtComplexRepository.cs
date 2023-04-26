@@ -1,5 +1,8 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore;
 using WebTennisFieldReservation.Entities;
+using WebTennisFieldReservation.Models.Administration;
+using WebTennisFieldReservation.Models.Users;
 
 namespace WebTennisFieldReservation.Data
 {
@@ -83,6 +86,49 @@ namespace WebTennisFieldReservation.Data
             return _context.Users.Where(user => user.Id == id && user.SecurityStamp == securityStamp)
                 .Select(user => new ValueTuple<string, string, string>(user.FirstName, user.LastName, user.Email))
                 .SingleOrDefaultAsync();
+        }
+
+        public Task<List<UserPartialModel>> GetAllUsersData()
+        {
+            return _context.Users.Select(user => new UserPartialModel() { 
+                Id = user.Id,
+                Address = user.Address,
+                BirthDate = user.BirthDate,
+                Email = user.Email,
+                FirstName = user.FirstName,
+                LastName = user.LastName
+            }).ToListAsync();
+        }
+
+        public Task<EditUserDataModel?> GetUserDataById(Guid id)
+        {
+            return _context.Users.Where(user => user.Id == id).Select(user => 
+                new EditUserDataModel(){ 
+                    Address = user.Address,
+                    BirthDate = user.BirthDate,
+                    Email = user.Email,
+                    FirstName = user.FirstName,
+                    LastName = user.LastName            
+                }).SingleOrDefaultAsync();
+        }
+
+        public async Task<int> UpdateUserDataById(Guid id, EditUserDataModel userData)
+        {
+            try
+            {
+                int updatedUsers = await _context.Users.Where(user => user.Id == id).ExecuteUpdateAsync( user => 
+                    user.SetProperty(user => user.Address, userData.Address)
+                        .SetProperty(user => user.FirstName, userData.FirstName)
+                        .SetProperty(user => user.LastName, userData.LastName)
+                        .SetProperty(user => user.BirthDate, userData.BirthDate)
+                        .SetProperty(user => user.Email, userData.Email)
+                );
+                return updatedUsers;
+            }
+            catch(SqlException ex)
+            {
+                return 0;
+            }
         }
     }
 }

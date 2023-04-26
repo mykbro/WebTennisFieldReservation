@@ -1,4 +1,6 @@
 ﻿using WebTennisFieldReservation.Entities;
+using WebTennisFieldReservation.Models.Administration;
+using WebTennisFieldReservation.Models.Users;
 
 namespace WebTennisFieldReservation.Data
 {
@@ -13,5 +15,9 @@ namespace WebTennisFieldReservation.Data
         public Task<(Guid Id, Guid SecurityStamp, byte[] pwdHash, byte[] salt, int iters)> GetDataForLoginCheckAsync(string email);
         public Task<bool> IsAdminAsync(Guid id);
         public Task<(string Firstname, string Lastname, string Email)> GetAuthenticatedUserDataAsync(Guid id, Guid securityStamp);
+
+        public Task<List<UserPartialModel>> GetAllUsersData();
+        public Task<EditUserDataModel?> GetUserDataById(Guid id);
+        public Task<int> UpdateUserDataById(Guid id, EditUserDataModel userData);
     }
 }

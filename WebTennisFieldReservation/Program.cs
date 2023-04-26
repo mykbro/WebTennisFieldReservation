@@ -6,6 +6,8 @@ using WebTennisFieldReservation.Services;
 using SmtpLibrary;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using WebTennisFieldReservation.AuthenticationSchemes.MyAuthScheme;
+using WebTennisFieldReservation.AuthorizationPolicies.SameUser;
+using Microsoft.AspNetCore.Authorization;
 
 namespace WebTennisFieldReservation
 {
@@ -72,11 +74,18 @@ namespace WebTennisFieldReservation
             // Add authorization policies
             builder.Services.AddAuthorization(options =>
             {
-                options.AddPolicy("MustBeAdmin", policyBuilder =>
+                options.AddPolicy(AuthorizationPoliciesNames.IsAdmin, policyBuilder =>
                 {
-                    policyBuilder.RequireClaim(ClaimsNames.IsAdmin, "True");
+                    policyBuilder.RequireClaim(ClaimsNames.IsAdmin, true.ToString());
+                });
+
+                options.AddPolicy(AuthorizationPoliciesNames.SameUser, policyBuilder =>
+                {
+                    policyBuilder.AddRequirements(new SameUserRequirement());
                 });
             });
+
+            builder.Services.AddSingleton<IAuthorizationHandler, SameUserAuthZHandler>();
 
             //*************** BUILD ***************
             var app = builder.Build();
