@@ -88,7 +88,7 @@ namespace WebTennisFieldReservation.Data
                 .SingleOrDefaultAsync();
         }
 
-        public Task<List<UserPartialModel>> GetAllUsersData()
+        public Task<List<UserPartialModel>> GetAllUsersDataAsync()
         {
             return _context.Users.Select(user => new UserPartialModel() { 
                 Id = user.Id,
@@ -100,7 +100,7 @@ namespace WebTennisFieldReservation.Data
             }).ToListAsync();
         }
 
-        public Task<EditUserDataModel?> GetUserDataById(Guid id)
+        public Task<EditUserDataModel?> GetUserDataByIdAsync(Guid id)
         {
             return _context.Users.Where(user => user.Id == id).Select(user => 
                 new EditUserDataModel(){ 
@@ -112,7 +112,7 @@ namespace WebTennisFieldReservation.Data
                 }).SingleOrDefaultAsync();
         }
 
-        public async Task<int> UpdateUserDataById(Guid id, EditUserDataModel userData)
+        public async Task<int> UpdateUserDataByIdAsync(Guid id, EditUserDataModel userData)
         {
             try
             {
@@ -129,6 +129,23 @@ namespace WebTennisFieldReservation.Data
             {
                 return 0;
             }
+        }
+
+        public Task<(byte[] pwdHash, byte[] salt, int iters)> GetPasswordDataByIdAsync(Guid id)
+        {
+            return _context.Users.Where(user => user.Id == id)
+                .Select(user => new ValueTuple<byte[], byte[], int>(user.PwdHash, user.PwdSalt, user.Pbkdf2Iterations))
+                .SingleOrDefaultAsync();
+        }
+
+        public Task<int> UpdatePasswordDataByIdAsync(Guid id, byte[] pwdHash, byte[] salt, int iters, Guid newSecurityStamp)
+        {
+            return _context.Users.Where(user => user.Id == id).ExecuteUpdateAsync(user =>
+                    user.SetProperty(user => user.PwdHash, pwdHash)
+                        .SetProperty(user => user.PwdSalt, salt)
+                        .SetProperty(user => user.Pbkdf2Iterations, iters)
+                        .SetProperty(user => user.SecurityStamp, newSecurityStamp)
+                    );                        
         }
     }
 }

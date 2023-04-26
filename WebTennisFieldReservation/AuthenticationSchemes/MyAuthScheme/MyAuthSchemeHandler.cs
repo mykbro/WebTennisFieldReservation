@@ -175,7 +175,7 @@ namespace WebTennisFieldReservation.AuthenticationSchemes.MyAuthScheme
 
             return Task.CompletedTask;
             
-            //return Context.ForbidAsync("Cookies", properties);
+            //return Context.ForbidAsync("Cookies", properties);        //could have done just this
         }
 
         protected override Task HandleChallengeAsync(AuthenticationProperties properties)
@@ -201,8 +201,8 @@ namespace WebTennisFieldReservation.AuthenticationSchemes.MyAuthScheme
             }
 
             return Task.CompletedTask;
-            
-            //return Context.ChallengeAsync("Cookies", properties);
+
+            //return Context.ChallengeAsync("Cookies", properties);     //could have done just this
         }
     }
 }

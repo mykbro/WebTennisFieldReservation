@@ -26,7 +26,7 @@ namespace WebTennisFieldReservation.Controllers
         [HttpGet("users")]
         public async Task<IActionResult> Users()
         {        
-            List<UserPartialModel> users = await _repo.GetAllUsersData();
+            List<UserPartialModel> users = await _repo.GetAllUsersDataAsync();
             return View(users);
         }
 

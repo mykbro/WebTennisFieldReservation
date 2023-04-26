@@ -2,11 +2,13 @@
 
 @{
     ViewData["Title"] = "User details";
+    string id = (string?) Context.Request.RouteValues["id"] ?? "";
 }
 
+<h3>@ViewData["Title"]</h3>
 <div class="row">
-    <div class="col-4">
-        <form method="post">
+    <div class="col-4">        
+        <form method="post" asp-route-id="@id">    @*asp-route-id="@Context.Request.RouteValues["id"]"  <-- this can be avoided, it defaults to the GET request values*@   
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             <div class="mb-3">
                 <label asp-for="FirstName"></label>
@@ -35,6 +37,10 @@
             </div>
             <button type="submit" class="btn btn-lg btn-primary">Update</button>
         </form>
+        <div class="mt-3">
+            <a asp-action="EditPassword" asp-route-id="@id">Click here to edit your password</a>
+        </div>
+
     </div>
 </div>
 

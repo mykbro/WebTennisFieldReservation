@@ -354,7 +354,7 @@ namespace WebTennisFieldReservation.Controllers
             if (authResult.Succeeded)
             {
                 //we check for user data for this id
-                EditUserDataModel? userData = await repo.GetUserDataById(id);
+                EditUserDataModel? userData = await repo.GetUserDataByIdAsync(id);
                 
                 //if any we populate the view
                 if(userData != null)
@@ -368,8 +368,14 @@ namespace WebTennisFieldReservation.Controllers
             }
             else
             {
-                //we return NotFound instead of Forbid/Challenge to give away nothing
-                return NotFound();
+                if (!User.Identity!.IsAuthenticated)
+                {
+                    return Challenge();
+                }
+                else
+                {
+                    return Forbid();
+                }
             }
         }
 
@@ -390,7 +396,7 @@ namespace WebTennisFieldReservation.Controllers
                     userData.Email = userData.Email.ToLower();
 
                     //we try to update the user's data (will fail on a duplicate email)                    
-                    int usersUpdated = await repo.UpdateUserDataById(id, userData);
+                    int usersUpdated = await repo.UpdateUserDataByIdAsync(id, userData);
 
                     if(usersUpdated == 1) 
                     {
@@ -409,8 +415,14 @@ namespace WebTennisFieldReservation.Controllers
             }
             else
             {
-                //we return NotFound instead of Forbid/Challenge to give away nothing
-                return NotFound();
+                if(!User.Identity!.IsAuthenticated)
+                {
+                    return Challenge();
+                }
+                else
+                {
+                    return Forbid();
+                }                
             }
         }
 
@@ -418,6 +430,98 @@ namespace WebTennisFieldReservation.Controllers
         public IActionResult UserUpdated()
         {
             return View();
+        }
+
+        
+        [HttpGet("{id:guid}/editpassword")]        
+        public async Task<IActionResult> EditPassword(Guid id, [FromServices] IAuthorizationService authorizer) 
+        {
+            AuthorizationResult result = await authorizer.AuthorizeAsync(User, id, AuthorizationPoliciesNames.SameUser);
+
+            if(result.Succeeded)
+            {
+                return View();
+            }
+            else
+            {                
+                if(!User.Identity!.IsAuthenticated)
+                {
+                    return Challenge();
+                }
+                else
+                {
+                    return Forbid();
+                }
+            }
+        }
+
+        [HttpPost("{id:guid}/editpassword")]
+        public async Task<IActionResult> EditPassword(EditPasswordModel pwdData, Guid id, [FromServices] IAuthorizationService authorizer, [FromServices] ICourtComplexRepository repo, [FromServices] IPasswordHasher pwdHasher, [FromServices] ClaimsPrincipalFactory claimsPrincipalFactory)
+        {
+            AuthorizationResult result = await authorizer.AuthorizeAsync(User, id, AuthorizationPoliciesNames.SameUser);
+
+            if (result.Succeeded)
+            {
+                if(ModelState.IsValid)
+                {        
+                    //we retrieve the user current password data (hash, salt, iters)
+                    var userSecurityData = await repo.GetPasswordDataByIdAsync(id);
+                    
+                    if(userSecurityData != default)
+                    {
+                        //if we found something as we should we check the supplied password with the one in the db
+                        bool pwdValid = pwdHasher.ValidatePassword(pwdData.CurrentPassword, userSecurityData.pwdHash, userSecurityData.salt, userSecurityData.iters);
+
+                        if(pwdValid)
+                        {
+                            //we generate the new security data
+                            var newPwdData = pwdHasher.GeneratePasswordAndSalt(pwdData.NewPassword);
+                            Guid newSecStamp = Guid.NewGuid();
+
+                            //we can update the password with the current iters and a new securityStamp
+                            int usersUpdated = await repo.UpdatePasswordDataByIdAsync(id, newPwdData.Password, newPwdData.Salt, pwdHasher.Iterations, newSecStamp);
+                            
+                            //we do a little check
+                            if(usersUpdated != 1) 
+                            {
+                                throw new Exception("Password update didn't return 'usersUpdated == 1'");
+                            }
+
+                            //we resign-in the user with the updated security stamp
+                            bool wasAdmin = Boolean.Parse(User.FindFirstValue(ClaimsNames.IsAdmin));
+                            var claimsPrincipal = claimsPrincipalFactory.CreatePrincipal(id, newSecStamp, wasAdmin, DateTimeOffset.Now);
+                            await HttpContext.SignInAsync(AuthenticationSchemesNames.MyAuthScheme, claimsPrincipal);
+                            
+                            //and we return to the details page for this user
+                            return RedirectToAction(nameof(Details), new { id = id });
+                        }
+                        else
+                        {
+                            ModelState.AddModelError("", "Wrong current password");
+                            return View();
+                        }
+                    }
+                    else
+                    {
+                        return NotFound();
+                    }
+                }
+                else
+                {                    
+                    return View();
+                }
+            }
+            else
+            {
+                if (!User.Identity!.IsAuthenticated)
+                {
+                    return Challenge();
+                }
+                else
+                {
+                    return Forbid();
+                }
+            }
         }
 
 
