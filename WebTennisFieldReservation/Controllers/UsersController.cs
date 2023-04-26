@@ -52,10 +52,10 @@ namespace WebTennisFieldReservation.Controllers
                     Id = Guid.NewGuid(),
                     FirstName = registrationInfo.FirstName,
                     LastName = registrationInfo.LastName,
-                    Email = registrationInfo.Email,
+                    Email = registrationInfo.Email.ToLower(),       //note the .ToLower()
                     Address = registrationInfo.Address,
                     BirthDate = registrationInfo.BirthDate,
-                    EmailConfirmed = true,
+                    EmailConfirmed = true,                          //set to true just for testing
                     RegistrationTimestamp = DateTimeOffset.Now,
                     Pbkdf2Iterations = pwdHasher.Iterations,
                     SecurityStamp = Guid.NewGuid(),
@@ -386,6 +386,9 @@ namespace WebTennisFieldReservation.Controllers
                 //we then check for the model validity
                 if (ModelState.IsValid)
                 {
+                    //we first need to lowerCase the Email field
+                    userData.Email = userData.Email.ToLower();
+
                     //we try to update the user's data (will fail on a duplicate email)                    
                     int usersUpdated = await repo.UpdateUserDataById(id, userData);
 
