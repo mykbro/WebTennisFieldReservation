@@ -4,5 +4,6 @@
     {
         public const string IsAdmin = nameof(IsAdmin);
         public const string SameUser = nameof(SameUser);
+        public const string LoggedRecently = nameof(LoggedRecently);
     }
 }

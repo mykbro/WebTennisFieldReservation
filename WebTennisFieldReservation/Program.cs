@@ -8,6 +8,8 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using WebTennisFieldReservation.AuthenticationSchemes.MyAuthScheme;
 using WebTennisFieldReservation.AuthorizationPolicies.SameUser;
 using Microsoft.AspNetCore.Authorization;
+using System.Reflection.Metadata.Ecma335;
+using System.Security.Claims;
 
 namespace WebTennisFieldReservation
 {
@@ -26,6 +28,7 @@ namespace WebTennisFieldReservation
             MailSenderSettings mailSenderSettings = builder.Configuration.GetSection(ConfigurationSectionsNames.MailSender).Get<MailSenderSettings>();
             TokenManagerSettings tokenManagerSettings = builder.Configuration.GetSection(ConfigurationSectionsNames.TokenManager).Get<TokenManagerSettings>();
             AuthenticationSchemeSettings myAuthSchemeSettings = builder.Configuration.GetSection(ConfigurationSectionsNames.AuthenticationSchemes + ":" + AuthenticationSchemesNames.MyAuthScheme).Get<AuthenticationSchemeSettings>();
+            LoggedRecentlyPolicySettings loggedRecentlyPolicySettings = builder.Configuration.GetSection(ConfigurationSectionsNames.LoggedRecentlyPolicy).Get<LoggedRecentlyPolicySettings>();
 
             // Add dbcontext backed repository
             string connString = builder.Configuration.GetConnectionString(ConnectionStringsNames.Default) ?? throw new InvalidOperationException("Connection string missing");
@@ -82,6 +85,16 @@ namespace WebTennisFieldReservation
                 options.AddPolicy(AuthorizationPoliciesNames.SameUser, policyBuilder =>
                 {
                     policyBuilder.AddRequirements(new SameUserRequirement());
+                });
+
+                options.AddPolicy(AuthorizationPoliciesNames.LoggedRecently, policyBuilder =>
+                {
+                    policyBuilder.RequireAssertion(context =>
+                    {
+                        DateTimeOffset cookieIssueTime = DateTimeOffset.Parse(context.User.FindFirstValue(ClaimsNames.IssueTime));
+
+                        return DateTimeOffset.Now <= cookieIssueTime.AddMinutes(loggedRecentlyPolicySettings.MaxAgeInMins);
+                    });
                 });
             });
 

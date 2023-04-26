@@ -433,14 +433,27 @@ namespace WebTennisFieldReservation.Controllers
         }
 
         
-        [HttpGet("{id:guid}/editpassword")]        
+        [HttpGet("{id:guid}/editpassword")]
+        //[Authorize(Policy = AuthorizationPoliciesNames.LoggedRecently)]
+        //we manually check the "LoggedRecently" policy to issue a Challenge instead of a Forbid
         public async Task<IActionResult> EditPassword(Guid id, [FromServices] IAuthorizationService authorizer) 
         {
-            AuthorizationResult result = await authorizer.AuthorizeAsync(User, id, AuthorizationPoliciesNames.SameUser);
+            AuthorizationResult sameUserCheck = await authorizer.AuthorizeAsync(User, id, AuthorizationPoliciesNames.SameUser);
 
-            if(result.Succeeded)
+            if(sameUserCheck.Succeeded)
             {
-                return View();
+                //we then check if we recently logged
+                AuthorizationResult recentLogCheck = await authorizer.AuthorizeAsync(User, AuthorizationPoliciesNames.LoggedRecently);
+
+                if (recentLogCheck.Succeeded)
+                {
+                    return View();
+                }
+                else
+                {
+                    //we return a challenge and not a Forbid !!!
+                    return Challenge();
+                }
             }
             else
             {                
@@ -456,60 +469,74 @@ namespace WebTennisFieldReservation.Controllers
         }
 
         [HttpPost("{id:guid}/editpassword")]
+        //[Authorize(Policy = AuthorizationPoliciesNames.LoggedRecently)]
+        //we manually check the "LoggedRecently" policy to issue a Challenge instead of a Forbid
         public async Task<IActionResult> EditPassword(EditPasswordModel pwdData, Guid id, [FromServices] IAuthorizationService authorizer, [FromServices] ICourtComplexRepository repo, [FromServices] IPasswordHasher pwdHasher, [FromServices] ClaimsPrincipalFactory claimsPrincipalFactory)
         {
-            AuthorizationResult result = await authorizer.AuthorizeAsync(User, id, AuthorizationPoliciesNames.SameUser);
+            AuthorizationResult sameUserCheck = await authorizer.AuthorizeAsync(User, id, AuthorizationPoliciesNames.SameUser);
 
-            if (result.Succeeded)
+            if (sameUserCheck.Succeeded)
             {
-                if(ModelState.IsValid)
-                {        
-                    //we retrieve the user current password data (hash, salt, iters)
-                    var userSecurityData = await repo.GetPasswordDataByIdAsync(id);
-                    
-                    if(userSecurityData != default)
+                //we then check if we recently logged
+                AuthorizationResult recentLogCheck = await authorizer.AuthorizeAsync(User, AuthorizationPoliciesNames.LoggedRecently);
+
+                if (recentLogCheck.Succeeded)
+                {
+                    if (ModelState.IsValid)
                     {
-                        //if we found something as we should we check the supplied password with the one in the db
-                        bool pwdValid = pwdHasher.ValidatePassword(pwdData.CurrentPassword, userSecurityData.pwdHash, userSecurityData.salt, userSecurityData.iters);
+                        //we retrieve the user current password data (hash, salt, iters)
+                        var userSecurityData = await repo.GetPasswordDataByIdAsync(id);
 
-                        if(pwdValid)
+                        if (userSecurityData != default)
                         {
-                            //we generate the new security data
-                            var newPwdData = pwdHasher.GeneratePasswordAndSalt(pwdData.NewPassword);
-                            Guid newSecStamp = Guid.NewGuid();
+                            //if we found something as we should we check the supplied password with the one in the db
+                            bool pwdValid = pwdHasher.ValidatePassword(pwdData.CurrentPassword, userSecurityData.pwdHash, userSecurityData.salt, userSecurityData.iters);
 
-                            //we can update the password with the current iters and a new securityStamp
-                            int usersUpdated = await repo.UpdatePasswordDataByIdAsync(id, newPwdData.Password, newPwdData.Salt, pwdHasher.Iterations, newSecStamp);
-                            
-                            //we do a little check
-                            if(usersUpdated != 1) 
+                            if (pwdValid)
                             {
-                                throw new Exception("Password update didn't return 'usersUpdated == 1'");
-                            }
+                                //we generate the new security data
+                                var newPwdData = pwdHasher.GeneratePasswordAndSalt(pwdData.NewPassword);
+                                Guid newSecStamp = Guid.NewGuid();
 
-                            //we resign-in the user with the updated security stamp
-                            bool wasAdmin = Boolean.Parse(User.FindFirstValue(ClaimsNames.IsAdmin));
-                            var claimsPrincipal = claimsPrincipalFactory.CreatePrincipal(id, newSecStamp, wasAdmin, DateTimeOffset.Now);
-                            await HttpContext.SignInAsync(AuthenticationSchemesNames.MyAuthScheme, claimsPrincipal);
-                            
-                            //and we return to the details page for this user
-                            return RedirectToAction(nameof(Details), new { id = id });
+                                //we can update the password with the current iters and a new securityStamp
+                                int usersUpdated = await repo.UpdatePasswordDataByIdAsync(id, newPwdData.Password, newPwdData.Salt, pwdHasher.Iterations, newSecStamp);
+
+                                //we do a little check
+                                if (usersUpdated != 1)
+                                {
+                                    throw new Exception("Password update didn't return 'usersUpdated == 1'");
+                                }
+
+                                //we resign-in the user with the updated security stamp
+                                bool wasAdmin = Boolean.Parse(User.FindFirstValue(ClaimsNames.IsAdmin));
+                                var claimsPrincipal = claimsPrincipalFactory.CreatePrincipal(id, newSecStamp, wasAdmin, DateTimeOffset.Now);
+                                await HttpContext.SignInAsync(AuthenticationSchemesNames.MyAuthScheme, claimsPrincipal);
+
+                                //and we return to the details page for this user
+                                return RedirectToAction(nameof(Details), new { id = id });
+                            }
+                            else
+                            {
+                                ModelState.AddModelError("", "Wrong current password");
+                                return View();
+                            }
                         }
-                        else
+                        else //somehow the password wasn't found... shouldn't enter here
                         {
-                            ModelState.AddModelError("", "Wrong current password");
-                            return View();
+                            return NotFound();
                         }
                     }
-                    else
+                    else //model invalid
                     {
-                        return NotFound();
+                        return View();
                     }
                 }
-                else
-                {                    
-                    return View();
+                else    //our login wasn't recent
+                {
+                    //we return a challenge and not a Forbid !!!
+                    return Challenge();
                 }
+                
             }
             else
             {
