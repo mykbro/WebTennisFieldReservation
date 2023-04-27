@@ -21,14 +21,7 @@ namespace WebTennisFieldReservation.Controllers
         public IActionResult Index()
         {
             return View();
-        }
-
-        [HttpGet("users")]
-        public async Task<IActionResult> Users()
-        {        
-            List<UserPartialModel> users = await _repo.GetAllUsersDataAsync();
-            return View(users);
-        }
+        }       
 
         [HttpGet("courts")]
         public IActionResult Courts()
@@ -41,5 +34,7 @@ namespace WebTennisFieldReservation.Controllers
         {
             return View();
         }
+
+       
     }
 }

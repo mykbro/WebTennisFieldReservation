@@ -515,7 +515,7 @@ namespace WebTennisFieldReservation.Controllers
                                 //and we return to the details page for this user
                                 return RedirectToAction(nameof(Details), new { id = id });
                             }
-                            else
+                            else //current password wasn't valid
                             {
                                 ModelState.AddModelError("", "Wrong current password");
                                 return View();

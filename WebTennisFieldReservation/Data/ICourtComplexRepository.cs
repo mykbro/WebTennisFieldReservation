@@ -22,5 +22,7 @@ namespace WebTennisFieldReservation.Data
 
         public Task<(byte[] pwdHash, byte[] salt, int iters)> GetPasswordDataByIdAsync(Guid id);
         public Task<int> UpdatePasswordDataByIdAsync(Guid id, byte[] pwdHash, byte[] salt, int iters, Guid newSecurityStamp);
+
+        public Task<int> DeleteUserByIdAsync(Guid id);
     }
 }

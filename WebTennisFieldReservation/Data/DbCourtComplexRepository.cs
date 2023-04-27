@@ -147,5 +147,10 @@ namespace WebTennisFieldReservation.Data
                         .SetProperty(user => user.SecurityStamp, newSecurityStamp)
                     );                        
         }
+
+        public Task<int> DeleteUserByIdAsync(Guid id)
+        {
+            return _context.Users.Where(user => user.Id == id).ExecuteDeleteAsync();
+        }
     }
 }

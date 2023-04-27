@@ -74,7 +74,7 @@ namespace WebTennisFieldReservation
                     options.ReturnUrlParameter = QueryFieldsNames.ReturnUrl;
                 });
 
-            // Add authorization policies
+            // Add authorization policies (and services)
             builder.Services.AddAuthorization(options =>
             {
                 options.AddPolicy(AuthorizationPoliciesNames.IsAdmin, policyBuilder =>
@@ -89,6 +89,7 @@ namespace WebTennisFieldReservation
 
                 options.AddPolicy(AuthorizationPoliciesNames.LoggedRecently, policyBuilder =>
                 {
+                    //the auth cookie IssueTime must be in the MaxAge window defined in appsettings.json
                     policyBuilder.RequireAssertion(context =>
                     {
                         DateTimeOffset cookieIssueTime = DateTimeOffset.Parse(context.User.FindFirstValue(ClaimsNames.IssueTime));
@@ -122,7 +123,8 @@ namespace WebTennisFieldReservation
 
             app.MapControllerRoute(
                 name: "default",
-                pattern: "{controller=Home}/{action=Index}/{id?}");
+                pattern: "{controller=Home}/{action=Index}/{id?}"
+            );
 
             app.Run();
         }
