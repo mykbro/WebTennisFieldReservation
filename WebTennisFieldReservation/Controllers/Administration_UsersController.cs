@@ -18,19 +18,6 @@ namespace WebTennisFieldReservation.Controllers
             _repo = repo;
         }
 
-        public async Task<IActionResult> Index()
-        {
-            List<UserPartialModel> users = await _repo.GetAllUsersDataAsync();
-            return View(users);
-        }
-
-        [HttpPost("{id:guid}/delete")]
-        public async Task<IActionResult> Delete(Guid id)
-        {
-            //we should probably check that the user was deleted 
-            int deletedUsers = await _repo.DeleteUserByIdAsync(id);
-
-            return RedirectToAction("Index");
-        }
+        
     }
 }

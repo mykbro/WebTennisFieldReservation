@@ -14,7 +14,7 @@
 <td>@Model.Email</td>
 <td>@Model.BirthDate.ToShortDateString()</td>
 <td>
-    <form method="post" asp-action="Delete" asp-route-id="@Model.Id">
+    <form method="post" asp-action="DeleteUser" asp-route-id="@Model.Id">
         <button type="submit" class="btn btn-sm btn-danger">Delete</button>
     </form>
 </td>

@@ -1,0 +1,80 @@
+﻿@model EditTemplateModel
+
+@{
+    ViewData["Title"] = "Create a new template";
+    string[] weekDays = { "monday" , "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday" };
+}
+
+<h3>@ViewData["Title"]</h3>
+<div class="row my-3">   
+    <div class="col-8">
+        <form>
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="mb-3">
+                <label asp-for="Name"></label>
+                <input class="form-control" asp-for="Name"/>
+                <span class="text-danger" asp-validation-for="Name"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Description"></label>
+                <input class="form-control" asp-for="Description"/>
+                <span class="text-danger" asp-validation-for="Description"></span>
+            </div>
+            <div class="mb-3">           
+                <table class="table">
+                    <thead>
+                        <tr id="weekday_names">
+                            <th>@*just to leave the space*@</th>
+                            <th>Mon</th>
+                            <th>Tue</th>
+                            <th>Wed</th>
+                            <th>Thu</th>
+                            <th>Fri</th>
+                            <th>Sat</th>
+                            <th>Sun</th>
+                        </tr>
+                        <tr id="weekday_checkboxes">
+                            <th>@*just to leave the space*@</th>
+                            <th><input id="select_all_monday" type="checkbox" onchange="selectAllCheckboxes('monday')"/></th>                   
+                            <th><input id="select_all_tuesday" type="checkbox" onchange="selectAllCheckboxes('tuesday')"/></th>                  
+                            <th><input id="select_all_wednesday" type="checkbox" onchange="selectAllCheckboxes('wednesday')"/></th>                   
+                            <th><input id="select_all_thursday" type="checkbox" onchange="selectAllCheckboxes('thursday')"/></th>                 
+                            <th><input id="select_all_friday" type="checkbox" onchange="selectAllCheckboxes('friday')"/></th>                   
+                            <th><input id="select_all_saturday" type="checkbox" onchange="selectAllCheckboxes('saturday')"/></th>                  
+                            <th><input id="select_all_sunday" type="checkbox" onchange="selectAllCheckboxes('sunday')"/></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for(int i = 0; i < 24; i++)
+                        {
+                            <tr>
+                                <th>@i</th>
+                                @foreach(string s in weekDays)
+                                {       
+                                    <partial name="_TemplateRowPartial" model="new TemplateRowModel(s, i)"/>
+                                }
+                            </tr>
+                        }                                 
+                    </tbody>
+                </table>
+            </div>
+        </form>
+    </div>   
+</div>
+
+@section Scripts{
+    <script type="text/javascript">
+
+        function selectAllCheckboxes(dayOfWeek){
+            var checkBoxes = document.getElementsByClassName(dayOfWeek);
+            var isChecked = document.getElementById('select_all_'+ dayOfWeek).checked;
+
+            for(var i=0;i < checkBoxes.length;i++){
+                checkBoxes[i].checked = isChecked;
+            }        
+        }
+    </script>
+
+    <partial name="_ValidationScriptsPartial" />
+}
+
