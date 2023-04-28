@@ -162,19 +162,7 @@ namespace WebTennisFieldReservation.Data
             };
 
             //we need to populate the navigation property TemplateEntries in order to autopopulate the entries with the correct auto-generated TemplateId
-            foreach(int templateEntryData in templateData.TemplateEntries)
-            {
-                //we need to decode the value to -> (dayOfWeek, hour)
-                int dow = templateEntryData % 7;
-                int hour = templateEntryData / 7;
-
-                templateToAdd.CourtAvailabilityTemplateEntries.Add(new CourtAvailabilityTemplateEntry()
-                {
-                    //CourtAvailabilityTemplate = templateToAdd,        //no need... automatically tracked by EF
-                    DaySlot = (byte) hour,
-                    WeekDay = (byte) dow
-                });
-            }
+            templateToAdd.CourtAvailabilityTemplateEntries = GenerateTemplateEntriesFromModel(templateData);
 
             //we add the template (with its entries) to the dbContext
             await _context.AddAsync(templateToAdd);
@@ -213,6 +201,76 @@ namespace WebTennisFieldReservation.Data
         public Task<int> DeleteTemplateByIdAsync(int id)
         {
             return _context.CourtsAvailabilityTemplates.Where(t => t.Id == id).ExecuteDeleteAsync();
+        }
+
+        public Task<EditTemplateModel?> GetTemplateDataByIdAsync(int id)
+        {
+            //we must include the TemplateEntrie
+            return _context.CourtsAvailabilityTemplates.Where(t => t.Id == id)
+                .Include(t => t.CourtAvailabilityTemplateEntries)
+                .Select(t => new EditTemplateModel()
+                {
+                    Name = t.Name,
+                    Description = t.Description,
+                    //we must convert from TemplateEntries to int identifiers
+                    TemplateEntries = t.CourtAvailabilityTemplateEntries.Select(entry => entry.DaySlot * 7 + entry.WeekDay).ToList()
+                }).SingleOrDefaultAsync();
+        }
+
+        public async Task<int> UpdateTemplateByIdAsync(int id, EditTemplateModel templateData)
+        {
+            //we cannot use ExecuteUpdate due to linked navigation properties
+            CourtAvailabilityTemplate? template = await _context.CourtsAvailabilityTemplates
+                .Where(t => t.Id == id)
+                .Include(t => t.CourtAvailabilityTemplateEntries)
+                .SingleOrDefaultAsync();          
+
+            //we do not care about any possible update between the read step and the update step... last update win
+
+            if (template == null)
+            {
+                return 0;
+            }
+            else
+            {
+                template.Name = templateData.Name;
+                template.Description = templateData.Description;
+                template.CourtAvailabilityTemplateEntries = GenerateTemplateEntriesFromModel(templateData);
+
+                try
+                {
+                    int updatedRows = await _context.SaveChangesAsync();
+                    //we return 1 anyway... updatedRows will take into account the nr of updated TemplateEntries
+                    return 1;   
+                }
+                catch(DbUpdateException ex)
+                {
+                    //duplicate name
+                    return -1;
+                }
+            }
+        }
+        
+        //helper method
+        private List<CourtAvailabilityTemplateEntry> GenerateTemplateEntriesFromModel(EditTemplateModel templateData)
+        {
+            List<CourtAvailabilityTemplateEntry> toReturn = new List<CourtAvailabilityTemplateEntry> ();
+
+            foreach (int templateEntryData in templateData.TemplateEntries)
+            {
+                //we need to decode the value to -> (dayOfWeek, hour)
+                int dow = templateEntryData % 7;
+                int hour = templateEntryData / 7;
+
+                toReturn.Add(new CourtAvailabilityTemplateEntry()
+                {
+                    //CourtAvailabilityTemplate = templateToAdd,        //no need... automatically tracked by EF                    
+                    DaySlot = (byte) hour,
+                    WeekDay = (byte) dow
+                });
+            }
+
+            return toReturn;
         }
     }
 }

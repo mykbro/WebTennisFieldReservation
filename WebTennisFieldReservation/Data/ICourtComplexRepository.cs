@@ -28,5 +28,7 @@ namespace WebTennisFieldReservation.Data
         public Task<bool> AddTemplateAsync(EditTemplateModel templateData);
         public Task<List<TemplateRowModel>> GetAllTemplatesAsync();
         public Task<int> DeleteTemplateByIdAsync(int id);
+        public Task<EditTemplateModel?> GetTemplateDataByIdAsync(int id);
+        public Task<int> UpdateTemplateByIdAsync(int id, EditTemplateModel templateData);
     }
 }

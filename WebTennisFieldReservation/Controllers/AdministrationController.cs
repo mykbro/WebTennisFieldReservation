@@ -66,23 +66,12 @@ namespace WebTennisFieldReservation.Controllers
 		{
             if(ModelState.IsValid)
             {
-                //we also need to check that the TemplateEntries posted are not repeated and inside the [0 - 167] range (167 = 7*24 - 1)
-                int distinctEntries = templateData.TemplateEntries.Distinct().Count();
-
-                if(distinctEntries != templateData.TemplateEntries.Count)
+                //we also need to check that the TemplateEntries posted are not repeated and inside the [0 - 167] range (167 = 7*24 - 1)                
+                if (!AreTemplateEntriesOk(templateData))
                 {
 					ModelState.AddModelError("", "Malformed posted data");
 					return View();
-				}
-
-                for(int i = 0; i < templateData.TemplateEntries.Count; i++)
-                {
-                    if (templateData.TemplateEntries[i] < 0 || templateData.TemplateEntries[i] > 167)
-                    {
-						ModelState.AddModelError("", "Malformed posted data");
-						return View();
-					}
-                }
+				}                
 
                 bool templateAdded = await _repo.AddTemplateAsync(templateData);
 
@@ -105,8 +94,52 @@ namespace WebTennisFieldReservation.Controllers
         [HttpGet("templates/{id:int}/details")]
         public async Task<IActionResult> TemplateDetails(int id)
         {
-            return View();
+            EditTemplateModel? templateData = await _repo.GetTemplateDataByIdAsync(id);
+
+            if (templateData != null)
+            {
+                return View(templateData);
+            }
+            else
+            {
+                return NotFound();
+            }            
         }
+
+        [HttpPost("templates/{id:int}/details")]
+        public async Task<IActionResult> TemplateDetails(int id, EditTemplateModel templateData)
+        {
+            if (ModelState.IsValid)
+            {
+                //we also need to check that the TemplateEntries posted are not repeated and inside the [0 - 167] range (167 = 7*24 - 1)                
+                if (!AreTemplateEntriesOk(templateData))
+                {
+                    ModelState.AddModelError("", "Malformed posted data");
+                    return View();
+                }
+
+                int templatesUpdated = await _repo.UpdateTemplateByIdAsync(id, templateData);
+                
+                if (templatesUpdated == 1)
+                {
+                    return RedirectToAction(nameof(Templates));
+                }
+                else if(templatesUpdated == 0)
+                {
+                    return NotFound();
+                }
+                else //returned -1
+                {
+                    ModelState.AddModelError("", "Template name already used");
+                    return View(templateData);
+                }
+            }
+            else
+            {
+                return View(templateData);
+            }
+        }
+
 
         [HttpPost("templates/{id:int}/delete")]
         public async Task<IActionResult> DeleteTemplate(int id)
@@ -123,6 +156,37 @@ namespace WebTennisFieldReservation.Controllers
             }            
         }
 
+
+
+
+
+        // 
+
+        private bool AreTemplateEntriesOk(EditTemplateModel templateData)
+        {
+            // entries must be distinct and between [0 - 167]
+            // (in this way we iterate the list a couple of times... the count is still low so we can do it,
+            //  however we can do everything in one loop using a Set for distinctness checks)
+
+            //we check if the count of distinct values is the same as the total count
+            int distinctEntries = templateData.TemplateEntries.Distinct().Count();
+
+            if (distinctEntries != templateData.TemplateEntries.Count)
+            {
+                return false;
+            }
+
+            //we then check that the elements are in the interval
+            for (int i = 0; i < templateData.TemplateEntries.Count; i++)
+            {
+                if (templateData.TemplateEntries[i] < 0 || templateData.TemplateEntries[i] > 167)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
 
     }
 }
