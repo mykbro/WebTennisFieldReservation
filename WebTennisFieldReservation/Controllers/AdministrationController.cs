@@ -60,6 +60,12 @@ namespace WebTennisFieldReservation.Controllers
             return View();
         }
 
+		[HttpPost("templates/create")]
+		public IActionResult CreateTemplate(EditTemplateModel templateData)
+		{
+            return Ok();
+		}
 
-    }
+
+	}
 }
