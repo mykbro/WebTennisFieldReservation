@@ -1,7 +1,7 @@
 ﻿
 namespace WebTennisFieldReservation.Models.Administration
 {
-    public class UserPartialModel
+    public class UserRowModel
     {
         
         public Guid Id { get; set; }

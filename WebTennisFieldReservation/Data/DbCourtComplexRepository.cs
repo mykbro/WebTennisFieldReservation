@@ -88,9 +88,9 @@ namespace WebTennisFieldReservation.Data
                 .SingleOrDefaultAsync();
         }
 
-        public Task<List<UserPartialModel>> GetAllUsersDataAsync()
+        public Task<List<UserRowModel>> GetAllUsersDataAsync()
         {
-            return _context.Users.Select(user => new UserPartialModel() { 
+            return _context.Users.Select(user => new UserRowModel() { 
                 Id = user.Id,
                 Address = user.Address,
                 BirthDate = user.BirthDate,
@@ -199,6 +199,20 @@ namespace WebTennisFieldReservation.Data
                 }
                 
             }            
+        }
+
+        public Task<List<TemplateRowModel>> GetAllTemplatesAsync()
+        {
+            return _context.CourtsAvailabilityTemplates.Select(t => new TemplateRowModel() {
+                Id = t.Id,
+                Name = t.Name,
+                Description = t.Description
+            }).ToListAsync();
+        }
+
+        public Task<int> DeleteTemplateByIdAsync(int id)
+        {
+            return _context.CourtsAvailabilityTemplates.Where(t => t.Id == id).ExecuteDeleteAsync();
         }
     }
 }

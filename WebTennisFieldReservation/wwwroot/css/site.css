@@ -20,3 +20,8 @@ body {
 input.input-validation-error{
     border-color: red;
 }
+
+button.square{
+    width: 20px;   
+    padding: 0px;
+}

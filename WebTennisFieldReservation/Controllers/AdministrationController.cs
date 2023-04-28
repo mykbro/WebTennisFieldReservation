@@ -27,7 +27,7 @@ namespace WebTennisFieldReservation.Controllers
 		[HttpGet("users")]
 		public async Task<IActionResult> Users()
 		{
-			List<UserPartialModel> users = await _repo.GetAllUsersDataAsync();
+			List<UserRowModel> users = await _repo.GetAllUsersDataAsync();
 			return View(users);
 		}
 		
@@ -39,10 +39,11 @@ namespace WebTennisFieldReservation.Controllers
         }
 
         [HttpGet("templates")]
-        public IActionResult Templates()
+        public async Task<IActionResult> Templates()
         {
-            //return View();
-            return RedirectToAction(nameof(CreateTemplate));
+
+            List<TemplateRowModel> templates = await _repo.GetAllTemplatesAsync();
+            return View(templates);
         }
 
 		[HttpPost("users/{id:guid}/delete")]
@@ -52,14 +53,7 @@ namespace WebTennisFieldReservation.Controllers
 			int deletedUsers = await _repo.DeleteUserByIdAsync(id);
 
 			return RedirectToAction(nameof(Users));
-		}
-
-        [HttpGet]
-        public IActionResult Templates()
-        {
-            
-            return View();
-        }
+		}     
 
         [HttpGet("templates/create")]
         public IActionResult CreateTemplate()
@@ -72,6 +66,24 @@ namespace WebTennisFieldReservation.Controllers
 		{
             if(ModelState.IsValid)
             {
+                //we also need to check that the TemplateEntries posted are not repeated and inside the [0 - 167] range (167 = 7*24 - 1)
+                int distinctEntries = templateData.TemplateEntries.Distinct().Count();
+
+                if(distinctEntries != templateData.TemplateEntries.Count)
+                {
+					ModelState.AddModelError("", "Malformed posted data");
+					return View();
+				}
+
+                for(int i = 0; i < templateData.TemplateEntries.Count; i++)
+                {
+                    if (templateData.TemplateEntries[i] < 0 || templateData.TemplateEntries[i] > 167)
+                    {
+						ModelState.AddModelError("", "Malformed posted data");
+						return View();
+					}
+                }
+
                 bool templateAdded = await _repo.AddTemplateAsync(templateData);
 
                 if (templateAdded)
@@ -90,6 +102,27 @@ namespace WebTennisFieldReservation.Controllers
             }
 		}
 
+        [HttpGet("templates/{id:int}/details")]
+        public async Task<IActionResult> TemplateDetails(int id)
+        {
+            return View();
+        }
 
-	}
+        [HttpPost("templates/{id:int}/delete")]
+        public async Task<IActionResult> DeleteTemplate(int id)
+        {
+            int deletedRows = await _repo.DeleteTemplateByIdAsync(id);
+
+            if(deletedRows == 1) 
+            {
+                return RedirectToAction(nameof(Templates));
+            }
+            else
+            {
+                return NotFound();
+            }            
+        }
+
+
+    }
 }

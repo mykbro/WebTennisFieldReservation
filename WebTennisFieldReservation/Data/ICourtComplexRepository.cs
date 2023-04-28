@@ -16,7 +16,7 @@ namespace WebTennisFieldReservation.Data
         public Task<bool> IsAdminAsync(Guid id);
         public Task<(string Firstname, string Lastname, string Email)> GetAuthenticatedUserDataAsync(Guid id, Guid securityStamp);
 
-        public Task<List<UserPartialModel>> GetAllUsersDataAsync();
+        public Task<List<UserRowModel>> GetAllUsersDataAsync();
         public Task<EditUserDataModel?> GetUserDataByIdAsync(Guid id);
         public Task<int> UpdateUserDataByIdAsync(Guid id, EditUserDataModel userData);
 
@@ -26,5 +26,7 @@ namespace WebTennisFieldReservation.Data
         public Task<int> DeleteUserByIdAsync(Guid id);
 
         public Task<bool> AddTemplateAsync(EditTemplateModel templateData);
+        public Task<List<TemplateRowModel>> GetAllTemplatesAsync();
+        public Task<int> DeleteTemplateByIdAsync(int id);
     }
 }

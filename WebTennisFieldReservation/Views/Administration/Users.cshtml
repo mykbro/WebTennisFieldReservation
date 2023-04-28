@@ -1,19 +1,19 @@
-﻿@model List<UserPartialModel>
+﻿@model List<UserRowModel>
 
 @*
     For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 *@
 
 @{
-    ViewData["Title"] = "User administration";
+    ViewData["Title"] = "Users administration";
     int counter = 1;
 }
 
 <div class="row">
-    <table>
+    <table class="table table-hover">
         <thead class="fw-bold">
             <tr>
-                <th></th>
+                <th>#</th>
                 <th>Id</th>
                 <th>First name</th>                
                 <th>Last name</th>
@@ -27,12 +27,14 @@
             <tr>
 
             </tr>
-            @foreach(UserPartialModel userData in Model)
+            @foreach(UserRowModel userData in Model)
             {
                 <tr>
                     <td>@counter</td>
                     <partial name="_UserDataPartial" model=@userData />
-                    @{counter++;}
+                    @{
+                        counter++;
+                    }
                 </tr>
             }     
         </tbody>

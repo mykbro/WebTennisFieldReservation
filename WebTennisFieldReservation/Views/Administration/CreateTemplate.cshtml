@@ -24,7 +24,7 @@
             <div class="mb-3">           
                 <table class="table">
                     <thead>
-                        <tr id="weekday_names">
+                        <tr>
                             <th>@*just to leave the space*@</th>
                             <th>@*just to leave the space*@</th>
                             <th>Mon</th>
@@ -35,7 +35,7 @@
                             <th>Sat</th>
                             <th>Sun</th>
                         </tr>
-                        <tr id="weekday_checkboxes">
+                        <tr>
                             <th>@*just to leave the space*@</th>
                             <th>@*just to leave the space*@</th>
                                              
@@ -43,9 +43,11 @@
                             {
                                 <th>
                                    <div class="d-inline-block">
-                                       <button type="button" class="btn btn-group" onclick="selectAllCheckboxes('dow_@dow', true)">+</button>
-                                       <button type="button" class="btn btn-group" onclick="selectAllCheckboxes('dow_@dow', false)">-</button>
-                                   </div>                                        
+                                       <button type="button" class="btn btn-primary square" onclick="selectAllCheckboxes('dow_@dow', true)">+</button>
+                                    </div>
+                                   <div class="d-inline-block">
+                                       <button type="button" class="btn btn-primary square" onclick="selectAllCheckboxes('dow_@dow', false)">-</button>  
+                                   </div>                                    
                                 </th>  
                             }  
                         </tr>
@@ -60,10 +62,12 @@
 
                                 <td>@displayHour</td>
                                 <td>
-                                   <div class="d-inline-block">
-                                       <button type="button" class="btn btn-group" onclick="selectAllCheckboxes(@hour, true)">+</button>
-                                       <button type="button" class="btn btn-group" onclick="selectAllCheckboxes(@hour, false)">-</button>
-                                   </div>                                        
+                                    <div class="d-inline-block">
+                                       <button type="button" class="btn btn-primary square" onclick="selectAllCheckboxes(@hour, true)">+</button>  
+                                    </div>
+                                     <div class="d-inline-block">
+                                       <button type="button" class="btn btn-primary square" onclick="selectAllCheckboxes(@hour, false)">-</button> 
+                                    </div>                                                                   
                                 </td> 
 
                                 @for(int dayOfWeek = 0; dayOfWeek < 7; dayOfWeek++)
@@ -87,16 +91,7 @@
 </div>
 
 @section Scripts{
-    <script>
-        function selectAllCheckboxes(dayOfWeek, check){
-            var checkBoxes = document.getElementsByClassName(dayOfWeek);            
-
-            for(var i=0;i < checkBoxes.length;i++){
-                checkBoxes[i].checked = check;
-            }        
-        }
-    </script>
-
+    <script src="/js/template.js" type="text/javascript"></script>
     <partial name="_ValidationScriptsPartial" />
 }
 
