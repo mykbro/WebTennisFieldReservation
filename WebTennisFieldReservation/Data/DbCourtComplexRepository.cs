@@ -152,5 +152,42 @@ namespace WebTennisFieldReservation.Data
         {
             return _context.Users.Where(user => user.Id == id).ExecuteDeleteAsync();
         }
+
+        public async Task<bool> AddTemplateAsync(EditTemplateModel templateData)
+        {
+            templateData.CourtAvailabilityTemplateEntries
+            
+            _context.CourtsAvailabilityTemplates.Add(templateData);
+
+
+
+
+
+
+            //we retrieve the highest id so far
+            try
+            {
+                int maxId = await _context.CourtsAvailabilityTemplates.Select(temp => temp.Id).MaxAsync();
+            }
+            catch(InvalidOperationException ex)
+            {
+                
+            }
+            
+            
+            
+            //we need to check for name uniqueness
+            try
+            {
+                await _context.SaveChangesAsync();
+                //we then need to check for the id
+                int templateID = await _context.CourtsAvailabilityTemplates.Where(temp => temp.Name == templateData.Name).Select(temp => temp.Id).SingleOrDefaultAsync();
+
+            }
+            catch(DbUpdateException ex)
+            {
+                return false;
+            }
+        }
     }
 }

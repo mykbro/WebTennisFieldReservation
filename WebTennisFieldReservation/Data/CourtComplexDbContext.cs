@@ -39,7 +39,7 @@ namespace WebTennisFieldReservation.Data
         {
             //base.OnModelCreating(modelBuilder);
 
-            modelBuilder.Entity<CourtAvailabilityTemplateEntry>().HasKey(entry => new { entry.CourtId, entry.WeekDay, entry.DaySlot});
+            modelBuilder.Entity<CourtAvailabilityTemplateEntry>().HasKey(entry => new { entry.TemplateId, entry.WeekDay, entry.DaySlot});
             modelBuilder.Entity<CourtAvailabilityOverride>().HasKey(entry => new { entry.CourtId, entry.Day, entry.DaySlot });
             modelBuilder.Entity<ReservationEntry>().HasKey(entry => new { entry.ReservationId, entry.ReservationEntryWeakId});
         }

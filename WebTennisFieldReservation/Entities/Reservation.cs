@@ -13,5 +13,6 @@ namespace WebTennisFieldReservation.Entities
 
         // Navigation
         public User User { get; set; } = null!;
+        public ICollection<ReservationEntry> ReservationEntries { get; set; } = new List<ReservationEntry>();
     }
 }

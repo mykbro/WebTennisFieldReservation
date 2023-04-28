@@ -18,5 +18,6 @@ namespace WebTennisFieldReservation.Entities
 
         // Navigation        
         public CourtAvailabilityTemplate Template { get; set; } = null!;
+        public ICollection<ReservationEntry> ReservationEntries { get; set;} = new List<ReservationEntry>();
     }
 }

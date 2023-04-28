@@ -12,5 +12,12 @@ namespace WebTennisFieldReservation.Entities
         [Required]
         [StringLength(64)]
         public string Name { get; set; } = null!;
+       
+        [StringLength(256)]
+        public string? Description { get; set; }
+
+        //navigation propertiese
+        public ICollection<CourtAvailabilityTemplateEntry> CourtAvailabilityTemplateEntries { get; set; } = new List<CourtAvailabilityTemplateEntry>();
+        public ICollection<Court> Courts { get; set; } = new List<Court>();
     }
 }

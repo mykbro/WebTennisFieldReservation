@@ -51,6 +51,9 @@ namespace WebTennisFieldReservation.Entities
         [Required]
         public bool EmailConfirmed { get; set; }
         #endregion
+
+        // Navigation
+        public ICollection<Reservation> Reservations { get; set; } = new List<Reservation>();
             
     }
 }

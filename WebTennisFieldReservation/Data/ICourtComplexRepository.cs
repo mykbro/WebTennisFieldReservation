@@ -24,5 +24,7 @@ namespace WebTennisFieldReservation.Data
         public Task<int> UpdatePasswordDataByIdAsync(Guid id, byte[] pwdHash, byte[] salt, int iters, Guid newSecurityStamp);
 
         public Task<int> DeleteUserByIdAsync(Guid id);
+
+        public Task<bool> AddTemplateAsync(EditTemplateModel templateData);
     }
 }

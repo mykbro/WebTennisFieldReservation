@@ -14,7 +14,7 @@ namespace WebTennisFieldReservation.Entities
         [Required]
         public int ReservationEntryWeakId { get; set;}
 
-        [Required]
+        [ForeignKey(nameof(Court))]
         public int CourtId { get; set;}
         [Required]
         public DateTime Day { get; set; }
@@ -24,5 +24,6 @@ namespace WebTennisFieldReservation.Entities
 
         // Navigation
         public Reservation Reservation { get; set; } = null!;
+        public Court Court { get; set; } = null!;
     }
 }
