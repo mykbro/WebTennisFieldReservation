@@ -155,39 +155,50 @@ namespace WebTennisFieldReservation.Data
 
         public async Task<bool> AddTemplateAsync(EditTemplateModel templateData)
         {
-            templateData.CourtAvailabilityTemplateEntries
+            CourtAvailabilityTemplate templateToAdd = new CourtAvailabilityTemplate()
+            {
+                Name = templateData.Name,
+                Description = templateData.Description
+            };
+
+            //we need to populate the navigation property TemplateEntries in order to autopopulate the entries with the correct auto-generated TemplateId
+            foreach(int templateEntryData in templateData.TemplateEntries)
+            {
+                //we need to decode the value to -> (dayOfWeek, hour)
+                int dow = templateEntryData % 7;
+                int hour = templateEntryData / 7;
+
+                templateToAdd.CourtAvailabilityTemplateEntries.Add(new CourtAvailabilityTemplateEntry()
+                {
+                    //CourtAvailabilityTemplate = templateToAdd,        //no need... automatically tracked by EF
+                    DaySlot = (byte) hour,
+                    WeekDay = (byte) dow
+                });
+            }
+
+            //we add the template (with its entries) to the dbContext
+            await _context.AddAsync(templateToAdd);
             
-            _context.CourtsAvailabilityTemplates.Add(templateData);
-
-
-
-
-
-
-            //we retrieve the highest id so far
+            //we need to check for template Name uniqueness
             try
             {
-                int maxId = await _context.CourtsAvailabilityTemplates.Select(temp => temp.Id).MaxAsync();
-            }
-            catch(InvalidOperationException ex)
-            {
-                
-            }
-            
-            
-            
-            //we need to check for name uniqueness
-            try
-            {
-                await _context.SaveChangesAsync();
-                //we then need to check for the id
-                int templateID = await _context.CourtsAvailabilityTemplates.Where(temp => temp.Name == templateData.Name).Select(temp => temp.Id).SingleOrDefaultAsync();
-
+                await _context.SaveChangesAsync();  
+                return true;
             }
             catch(DbUpdateException ex)
             {
-                return false;
-            }
+                if(ex.InnerException is SqlException sqlEx)
+                {
+                    //we should also check for error 2601 (duplicate row)
+                    return false;
+                }
+                else
+                {
+                    //if we're here it's not due to uniqueness constraint
+                    throw;
+                }
+                
+            }            
         }
     }
 }

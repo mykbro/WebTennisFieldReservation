@@ -54,6 +54,13 @@ namespace WebTennisFieldReservation.Controllers
 			return RedirectToAction(nameof(Users));
 		}
 
+        [HttpGet]
+        public IActionResult Templates()
+        {
+            
+            return View();
+        }
+
         [HttpGet("templates/create")]
         public IActionResult CreateTemplate()
         {
@@ -61,9 +68,26 @@ namespace WebTennisFieldReservation.Controllers
         }
 
 		[HttpPost("templates/create")]
-		public IActionResult CreateTemplate(EditTemplateModel templateData)
+		public async Task<IActionResult> CreateTemplate(EditTemplateModel templateData)
 		{
-            return Ok();
+            if(ModelState.IsValid)
+            {
+                bool templateAdded = await _repo.AddTemplateAsync(templateData);
+
+                if (templateAdded)
+                {
+                    return RedirectToAction(nameof(Templates));
+                }
+                else
+                {
+                    ModelState.AddModelError("", "Template name already used");
+                    return View();
+                }                
+            }
+            else
+            {
+                return View();
+            }
 		}
 
 

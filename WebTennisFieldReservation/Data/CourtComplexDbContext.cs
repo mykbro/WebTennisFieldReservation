@@ -29,7 +29,7 @@ namespace WebTennisFieldReservation.Data
 
             if (log)
             {
-                optionsBuilder.LogTo(Console.WriteLine, LogLevel.Information);
+                optionsBuilder.LogTo(Console.WriteLine, new[] {RelationalEventId.TransactionStarted, RelationalEventId.TransactionCommitted, RelationalEventId.TransactionRolledBack, RelationalEventId.CommandExecuted });
             }
 
             return new CourtComplexDbContext(optionsBuilder.Options);
