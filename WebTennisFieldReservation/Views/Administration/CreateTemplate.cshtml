@@ -38,13 +38,16 @@
                         <tr id="weekday_checkboxes">
                             <th>@*just to leave the space*@</th>
                             <th>@*just to leave the space*@</th>
-                            <th><input id="select_all_dow0" type="checkbox" onchange="selectAllCheckboxes('dow0')"/></th>                   
-                            <th><input id="select_all_dow1" type="checkbox" onchange="selectAllCheckboxes('dow1')"/></th>                  
-                            <th><input id="select_all_dow2" type="checkbox" onchange="selectAllCheckboxes('dow2')"/></th>                   
-                            <th><input id="select_all_dow3" type="checkbox" onchange="selectAllCheckboxes('dow3')"/></th>                 
-                            <th><input id="select_all_dow4" type="checkbox" onchange="selectAllCheckboxes('dow4')"/></th>                   
-                            <th><input id="select_all_dow5" type="checkbox" onchange="selectAllCheckboxes('dow5')"/></th>                  
-                            <th><input id="select_all_dow6" type="checkbox" onchange="selectAllCheckboxes('dow6')"/></th>
+                                             
+                            @for(int dow = 0; dow < 7; dow++)
+                            {
+                                <th>
+                                   <div class="d-inline-block">
+                                       <button type="button" class="btn btn-group" onclick="selectAllCheckboxes('dow_@dow', true)">+</button>
+                                       <button type="button" class="btn btn-group" onclick="selectAllCheckboxes('dow_@dow', false)">-</button>
+                                   </div>                                        
+                                </th>  
+                            }  
                         </tr>
                     </thead>
                     <tbody>
@@ -54,17 +57,23 @@
                                 @{
                                     string displayHour = $"{hour:d2}:00 - {hour + 1:d2}:00";
                                 }
+
                                 <td>@displayHour</td>
-                                <td><input id="select_all_@hour" type="checkbox" onchange="selectAllCheckboxes('@hour')" /></td>
+                                <td>
+                                   <div class="d-inline-block">
+                                       <button type="button" class="btn btn-group" onclick="selectAllCheckboxes(@hour, true)">+</button>
+                                       <button type="button" class="btn btn-group" onclick="selectAllCheckboxes(@hour, false)">-</button>
+                                   </div>                                        
+                                </td> 
+
                                 @for(int dayOfWeek = 0; dayOfWeek < 7; dayOfWeek++)
                                 {
                                     @*<partial name="_TemplateRowPartial" model="new TemplateRowModel(dayOfWeek, hour)"/>*@
                                     <td>
-                                        @{
-                                            string dowClass = "dow" + dayOfWeek;
+                                        @{                                            
                                             int checkBoxId = hour * 7 + dayOfWeek;
                                         }
-	                                    <input type="checkbox" id="@checkBoxId" class="@dowClass @hour" name="TemplateEntries" value="@checkBoxId"/>
+	                                    <input type="checkbox" id="@checkBoxId" class="dow_@dayOfWeek @hour" name="TemplateEntries" value="@checkBoxId"/>
                                     </td>
                                 }
                             </tr>
@@ -79,12 +88,11 @@
 
 @section Scripts{
     <script>
-        function selectAllCheckboxes(dayOfWeek){
-            var checkBoxes = document.getElementsByClassName(dayOfWeek);
-            var isChecked = document.getElementById('select_all_' + dayOfWeek).checked;
+        function selectAllCheckboxes(dayOfWeek, check){
+            var checkBoxes = document.getElementsByClassName(dayOfWeek);            
 
             for(var i=0;i < checkBoxes.length;i++){
-                checkBoxes[i].checked = isChecked;
+                checkBoxes[i].checked = check;
             }        
         }
     </script>
