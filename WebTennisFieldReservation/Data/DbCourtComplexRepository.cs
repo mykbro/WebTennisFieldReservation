@@ -162,7 +162,13 @@ namespace WebTennisFieldReservation.Data
             };
 
             //we need to populate the navigation property TemplateEntries in order to autopopulate the entries with the correct auto-generated TemplateId
-            templateToAdd.TemplateEntries = templateData.TemplateEntryModels.Select(modelEntry => new TemplateEntry() { WeekSlot = modelEntry.WeekSlot, Price = modelEntry.Price}).ToList();
+            for(int i=0; i < templateData.TemplateEntryModels.Length; i++)
+            {
+                if (templateData.TemplateEntryModels[i].IsSelected)
+                {
+                    templateToAdd.TemplateEntries.Add(new TemplateEntry() { WeekSlot = i, Price = templateData.TemplateEntryModels[i].Price ?? 0m });
+                }
+            }   
 
             //we add the template (with its entries) to the dbContext
             await _context.AddAsync(templateToAdd);
@@ -203,17 +209,42 @@ namespace WebTennisFieldReservation.Data
             return _context.Templates.Where(t => t.Id == id).ExecuteDeleteAsync();
         }
 
-        public Task<EditTemplateModel?> GetTemplateDataByIdAsync(int id)
+        public async Task<EditTemplateModel?> GetTemplateDataByIdAsync(int id)
         {
-            //we must include the TemplateEntrie
-            return _context.Templates.Where(t => t.Id == id)
+            //we must include the TemplateEntries
+            Template? t = await _context.Templates
+                .Where(t => t.Id == id)
                 .Include(t => t.TemplateEntries)
-                .Select(t => new EditTemplateModel()
+                .SingleOrDefaultAsync();
+
+            if (t != null)
+            {
+                EditTemplateModel toReturn = new EditTemplateModel()
                 {
                     Name = t.Name,
-                    Description = t.Description,                    
-                    TemplateEntryModels = t.TemplateEntries.Select(entry => new TemplateEntryModel() { WeekSlot = entry.WeekSlot, Price = entry.Price}).ToList()
-                }).SingleOrDefaultAsync();
+                    Description = t.Description,
+                    TemplateEntryModels = new TemplateEntryModel[168]       
+                };  
+
+                //we need to initialize all the entries in the array
+                for(int i=0; i < 168; i++)
+                {
+                    toReturn.TemplateEntryModels[i] = new TemplateEntryModel();
+                }
+
+                //and we populate the entries that we have in the database
+                foreach(TemplateEntry entry in t.TemplateEntries)
+                {
+                    toReturn.TemplateEntryModels[entry.WeekSlot].IsSelected = true;
+                    toReturn.TemplateEntryModels[entry.WeekSlot].Price = entry.Price;
+                }
+
+                return toReturn;
+            }
+            else
+            {
+                return null;
+            }          
         }
 
         public async Task<int> UpdateTemplateByIdAsync(int id, EditTemplateModel templateData)
@@ -234,7 +265,18 @@ namespace WebTennisFieldReservation.Data
             {
                 template.Name = templateData.Name;
                 template.Description = templateData.Description;
-                template.TemplateEntries = templateData.TemplateEntryModels.Select(entry => new TemplateEntry() { WeekSlot = entry.WeekSlot, Price = entry.Price}).ToList();
+
+                //we need to clear the old entries...
+                template.TemplateEntries.Clear();
+
+                //...and we need to insert the new entries (which can be the same as the old one :D)
+                for (int i = 0; i < templateData.TemplateEntryModels.Length; i++)
+                {
+                    if (templateData.TemplateEntryModels[i].IsSelected)
+                    {
+                        template.TemplateEntries.Add(new TemplateEntry() { WeekSlot = i, Price = templateData.TemplateEntryModels[i].Price ?? 0m });
+                    }
+                }
 
                 try
                 {

@@ -65,20 +65,7 @@ namespace WebTennisFieldReservation.Controllers
 		public async Task<IActionResult> CreateTemplate(EditTemplateModel templateData)
 		{
             if(ModelState.IsValid)
-            {
-                /* we leave the check to the db and the entry model
-                //we also need to check that the TemplateEntries posted are not repeated and inside the [0 - 167] range (167 = 7*24 - 1)                
-                if (!AreTemplateEntriesOk(templateData))
-                {
-					ModelState.AddModelError("", "Malformed posted data");
-					return View();
-				}                
-                */
-
-                //we first need to "clean" our entries from the null values (that we need to accept for non-sequential entries)
-                templateData.TemplateEntryModels.RemoveAll(item => item is null);
-
-                //we can then proceed
+            {  
                 bool templateAdded = await _repo.AddTemplateAsync(templateData);
 
                 if (templateAdded)
@@ -116,11 +103,7 @@ namespace WebTennisFieldReservation.Controllers
         public async Task<IActionResult> TemplateDetails(int id, EditTemplateModel templateData)
         {
             if (ModelState.IsValid)
-            {
-                //we first need to "clean" our entries from the null values (that we need to accept for non-sequential entries)
-                templateData.TemplateEntryModels.RemoveAll(item => item is null);
-
-                //we can then proceed
+            {                 
                 int templatesUpdated = await _repo.UpdateTemplateByIdAsync(id, templateData);
                 
                 if (templatesUpdated == 1)

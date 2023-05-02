@@ -5,12 +5,10 @@
 }
 
 <h3>@ViewData["Title"]</h3>
-<div class="row my-3">
-    <div class="col-1">
-    </div>
+<div class="row my-3">    
     <div class="col-10">
         <form method="post">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div asp-validation-summary="All" class="text-danger"></div>
             <div class="mb-3">
                 <label asp-for="Name"></label>
                 <input class="form-control" asp-for="Name"/>
@@ -22,7 +20,7 @@
                 <span class="text-danger" asp-validation-for="Description"></span>
             </div>
             <div class="mb-3">           
-                <table class="table">
+                <table class="table text-nowrap">
                     <thead>
                         <tr>
                             <th>@*just to leave the space*@</th>
@@ -53,6 +51,7 @@
                         </tr>
                     </thead>
                     <tbody>
+                        
                         @for(int hour = 0; hour < 24; hour++)
                         {
                             <tr>
@@ -76,14 +75,22 @@
                                     <td>
                                         @{                                            
                                             int checkBoxId = dayOfWeek * 24 + hour;
-                                        }
-                                        <input type="hidden" name="TemplateEntryModels.Index" value="@checkBoxId" />   @*this field allows us to pass lists with non-sequential indexes*@
-	                                    <input type="checkbox" id="@checkBoxId" class="dow_@dayOfWeek @hour" name="TemplateEntryModels[@checkBoxId].WeekSlot" value="@checkBoxId"/>
-                                        @*<input type="hidden" name="TemplateEntryModels[@checkBoxId].Price" value="0.50"/>*@
+                                        }              
+                                        
+                                       
+                                            <div class="d-inline">
+                                            <input type="checkbox" name="TemplateEntryModels[@checkBoxId].IsSelected" value="true" class="dow_@dayOfWeek @hour " />                                         
+                                            </div>
+                                            <div class="d-inline">
+                                            <input type="text" style="width: 80px" name="TemplateEntryModels[@checkBoxId].Price" class="" />
+                                            </div>                                        
+                                            <span>€</span>
+                                        
+                                        
                                     </td>
                                 }
                             </tr>
-                        }                                 
+                        }                        
                     </tbody>
                 </table>
             </div>

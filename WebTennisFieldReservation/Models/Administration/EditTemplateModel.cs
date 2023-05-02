@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
+using WebTennisFieldReservation.ValidationAttributes;
 
 namespace WebTennisFieldReservation.Models.Administration
 {
@@ -14,7 +15,8 @@ namespace WebTennisFieldReservation.Models.Administration
         [DisplayName("Template description")]
         public string? Description { get; set; }
 
-        [Required]        
-        public List<TemplateEntryModel> TemplateEntryModels { get; set; } = new List<TemplateEntryModel>();
+        [Required]
+        [ArrayLength(168)]
+        public TemplateEntryModel[] TemplateEntryModels { get; set; } = null!;
     }
 }

@@ -1,15 +1,14 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using WebTennisFieldReservation.ValidationAttributes;
 
 namespace WebTennisFieldReservation.Models.Administration
 {
     public class TemplateEntryModel
-    { 
-        
-        [Required]
-        [Range(0, 167)]
-        public int WeekSlot { get; set; }
+    {         
+        [Required]        
+        public bool IsSelected { get; set; }
 
-        [Required]
-        public decimal Price { get; set; }
+        [PositiveAndNotNullIfSelected(ErrorMessage = "A positive price must be provided for selected entries")]
+        public decimal? Price { get; set; }
     }
 }
