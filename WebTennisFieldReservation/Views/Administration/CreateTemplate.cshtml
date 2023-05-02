@@ -77,6 +77,7 @@
                                         @{                                            
                                             int checkBoxId = dayOfWeek * 24 + hour;
                                         }
+                                        <input type="hidden" name="TemplateEntryModels.Index" value="@checkBoxId" />   @*this field allows us to pass lists with non-sequential indexes*@
 	                                    <input type="checkbox" id="@checkBoxId" class="dow_@dayOfWeek @hour" name="TemplateEntryModels[@checkBoxId].WeekSlot" value="@checkBoxId"/>
                                         @*<input type="hidden" name="TemplateEntryModels[@checkBoxId].Price" value="0.50"/>*@
                                     </td>

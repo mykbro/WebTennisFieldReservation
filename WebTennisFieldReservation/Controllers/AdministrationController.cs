@@ -75,6 +75,10 @@ namespace WebTennisFieldReservation.Controllers
 				}                
                 */
 
+                //we first need to "clean" our entries from the null values (that we need to accept for non-sequential entries)
+                templateData.TemplateEntryModels.RemoveAll(item => item is null);
+
+                //we can then proceed
                 bool templateAdded = await _repo.AddTemplateAsync(templateData);
 
                 if (templateAdded)
@@ -112,8 +116,11 @@ namespace WebTennisFieldReservation.Controllers
         public async Task<IActionResult> TemplateDetails(int id, EditTemplateModel templateData)
         {
             if (ModelState.IsValid)
-            {                
+            {
+                //we first need to "clean" our entries from the null values (that we need to accept for non-sequential entries)
+                templateData.TemplateEntryModels.RemoveAll(item => item is null);
 
+                //we can then proceed
                 int templatesUpdated = await _repo.UpdateTemplateByIdAsync(id, templateData);
                 
                 if (templatesUpdated == 1)

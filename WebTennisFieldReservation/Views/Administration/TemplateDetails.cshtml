@@ -80,8 +80,9 @@
                                             @{
                                                 int checkBoxId = dayOfWeek * 24 + hour;
                                                 bool wasSelected = selectedSlots.Contains(checkBoxId);
-                                            }
-	                                        <input type="checkbox" id="@checkBoxId" class="dow_@dayOfWeek @hour"  checked="@wasSelected" name="TemplateEntryModels[@checkBoxId].WeekSlot" value="@checkBoxId"/>
+                                            }  
+                                            <input type="hidden" name="TemplateEntryModels.Index" value="@checkBoxId" />   @*this field allows us to pass lists with non-sequential indexes*@
+	                                        <input type="checkbox" id="@checkBoxId" class="dow_@dayOfWeek @hour" checked="@wasSelected" name="TemplateEntryModels[@checkBoxId].WeekSlot" value="@checkBoxId"/>
                                         </td>
                                     }
                                 </tr>
