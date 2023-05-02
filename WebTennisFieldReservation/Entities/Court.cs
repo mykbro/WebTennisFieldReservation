@@ -13,11 +13,7 @@ namespace WebTennisFieldReservation.Entities
         [Required]
         public string Name { get; set; } = null!;
 
-        [ForeignKey(nameof(Template))]
-        public int TemplateId { get; set; }
-
-        // Navigation        
-        public CourtAvailabilityTemplate Template { get; set; } = null!;
+        // Navigation 
         public ICollection<ReservationEntry> ReservationEntries { get; set;} = new List<ReservationEntry>();
 
     }

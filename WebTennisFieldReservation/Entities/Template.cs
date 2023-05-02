@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations;
 namespace WebTennisFieldReservation.Entities
 {
     [Index(nameof(Name), IsUnique = true)]
-    public class CourtAvailabilityTemplate
+    public class Template
     {
         [Key]
         public int Id { get; set; }
@@ -17,7 +17,6 @@ namespace WebTennisFieldReservation.Entities
         public string? Description { get; set; }
 
         //navigation propertiese
-        public ICollection<CourtAvailabilityTemplateEntry> CourtAvailabilityTemplateEntries { get; set; } = new List<CourtAvailabilityTemplateEntry>();
-        public ICollection<Court> Courts { get; set; } = new List<Court>();
+        public ICollection<TemplateEntry> TemplateEntries { get; set; } = new List<TemplateEntry>();        
     }
 }

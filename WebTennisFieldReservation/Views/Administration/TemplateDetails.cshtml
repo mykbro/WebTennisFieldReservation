@@ -53,36 +53,40 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @for(int hour = 0; hour < 24; hour++)
-                        {
-                            <tr>
-                                @{
-                                    string displayHour = $"{hour:d2}:00 - {hour + 1:d2}:00";
-                                }
+                        @{
+                            List<int> selectedSlots = Model.TemplateEntryModels.Select(entry => entry.WeekSlot).ToList();
 
-                                <td>@displayHour</td>
-                                <td>
-                                    <div class="d-inline-block">
-                                       <button type="button" class="btn btn-primary square" onclick="selectAllCheckboxes(@hour, true)">+</button>  
-                                    </div>
-                                     <div class="d-inline-block">
-                                       <button type="button" class="btn btn-primary square" onclick="selectAllCheckboxes(@hour, false)">-</button> 
-                                    </div>                                                                   
-                                </td> 
+                            @for(int hour = 0; hour < 24; hour++)
+                            {
+                                <tr>
+                                    @{
+                                        string displayHour = $"{hour:d2}:00 - {hour + 1:d2}:00";
+                                    }
 
-                                @for(int dayOfWeek = 0; dayOfWeek < 7; dayOfWeek++)
-                                {
-                                    @*<partial name="_TemplateRowPartial" model="new TemplateRowModel(dayOfWeek, hour)"/>*@
+                                    <td>@displayHour</td>
                                     <td>
-                                        @{
-                                            int checkBoxId = hour * 7 + dayOfWeek;
-                                            bool wasSelected = Model.TemplateEntries.Contains(checkBoxId);
-                                        }
-	                                    <input type="checkbox" id="@checkBoxId" class="dow_@dayOfWeek @hour" name="TemplateEntries" value="@checkBoxId" checked="@wasSelected" />
-                                    </td>
-                                }
-                            </tr>
-                        }                                 
+                                        <div class="d-inline-block">
+                                           <button type="button" class="btn btn-primary square" onclick="selectAllCheckboxes(@hour, true)">+</button>  
+                                        </div>
+                                         <div class="d-inline-block">
+                                           <button type="button" class="btn btn-primary square" onclick="selectAllCheckboxes(@hour, false)">-</button> 
+                                        </div>                                                                   
+                                    </td> 
+
+                                    @for(int dayOfWeek = 0; dayOfWeek < 7; dayOfWeek++)
+                                    {
+                                        @*<partial name="_TemplateRowPartial" model="new TemplateRowModel(dayOfWeek, hour)"/>*@
+                                        <td>
+                                            @{
+                                                int checkBoxId = dayOfWeek * 24 + hour;
+                                                bool wasSelected = selectedSlots.Contains(checkBoxId);
+                                            }
+	                                        <input type="checkbox" id="@checkBoxId" class="dow_@dayOfWeek @hour"  checked="@wasSelected" name="TemplateEntryModels[@checkBoxId].WeekSlot" value="@checkBoxId"/>
+                                        </td>
+                                    }
+                                </tr>
+                            }         
+                        }                                                
                     </tbody>
                 </table>
             </div>

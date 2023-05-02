@@ -10,9 +10,8 @@ namespace WebTennisFieldReservation.Data
         public DbSet<User> Users { get; set; } = null!;
         public DbSet<AdminUser> AdminUsers { get; set; } = null!;
         public DbSet<Court> Courts { get; set; } = null!;
-        public DbSet<CourtAvailabilityTemplate> CourtsAvailabilityTemplates { get; set; } = null!;
-        public DbSet<CourtAvailabilityTemplateEntry> CourtAvailabilityTemplateEntries { get; set; } = null!;
-        public DbSet<CourtAvailabilityOverride> CourtAvailabilityOverrides { get; set; } = null!;
+        public DbSet<Template> Templates { get; set; } = null!;
+        public DbSet<TemplateEntry> TemplateEntries { get; set; } = null!;       
         public DbSet<Reservation> Reservations { get; set; } = null!;
         public DbSet<ReservationEntry> ReservationEntries { get; set; } = null!;
 
@@ -29,6 +28,7 @@ namespace WebTennisFieldReservation.Data
 
             if (log)
             {
+                optionsBuilder.EnableSensitiveDataLogging();
                 optionsBuilder.LogTo(Console.WriteLine, new[] {RelationalEventId.TransactionStarted, RelationalEventId.TransactionCommitted, RelationalEventId.TransactionRolledBack, RelationalEventId.CommandExecuted });
             }
 
@@ -39,8 +39,7 @@ namespace WebTennisFieldReservation.Data
         {
             //base.OnModelCreating(modelBuilder);
 
-            modelBuilder.Entity<CourtAvailabilityTemplateEntry>().HasKey(entry => new { entry.TemplateId, entry.WeekDay, entry.DaySlot});
-            modelBuilder.Entity<CourtAvailabilityOverride>().HasKey(entry => new { entry.CourtId, entry.Day, entry.DaySlot });
+            modelBuilder.Entity<TemplateEntry>().HasKey(entry => new { entry.TemplateId, entry.WeekSlot});           
             modelBuilder.Entity<ReservationEntry>().HasKey(entry => new { entry.ReservationId, entry.ReservationEntryWeakId});
         }
     }

@@ -75,9 +75,10 @@
                                     @*<partial name="_TemplateRowPartial" model="new TemplateRowModel(dayOfWeek, hour)"/>*@
                                     <td>
                                         @{                                            
-                                            int checkBoxId = hour * 7 + dayOfWeek;
+                                            int checkBoxId = dayOfWeek * 24 + hour;
                                         }
-	                                    <input type="checkbox" id="@checkBoxId" class="dow_@dayOfWeek @hour" name="TemplateEntries" value="@checkBoxId"/>
+	                                    <input type="checkbox" id="@checkBoxId" class="dow_@dayOfWeek @hour" name="TemplateEntryModels[@checkBoxId].WeekSlot" value="@checkBoxId"/>
+                                        @*<input type="hidden" name="TemplateEntryModels[@checkBoxId].Price" value="0.50"/>*@
                                     </td>
                                 }
                             </tr>

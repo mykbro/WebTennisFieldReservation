@@ -155,14 +155,14 @@ namespace WebTennisFieldReservation.Data
 
         public async Task<bool> AddTemplateAsync(EditTemplateModel templateData)
         {
-            CourtAvailabilityTemplate templateToAdd = new CourtAvailabilityTemplate()
+            Template templateToAdd = new Template()
             {
                 Name = templateData.Name,
                 Description = templateData.Description
             };
 
             //we need to populate the navigation property TemplateEntries in order to autopopulate the entries with the correct auto-generated TemplateId
-            templateToAdd.CourtAvailabilityTemplateEntries = GenerateTemplateEntriesFromModel(templateData);
+            templateToAdd.TemplateEntries = templateData.TemplateEntryModels.Select(modelEntry => new TemplateEntry() { WeekSlot = modelEntry.WeekSlot, Price = modelEntry.Price}).ToList();
 
             //we add the template (with its entries) to the dbContext
             await _context.AddAsync(templateToAdd);
@@ -191,7 +191,7 @@ namespace WebTennisFieldReservation.Data
 
         public Task<List<TemplateRowModel>> GetAllTemplatesAsync()
         {
-            return _context.CourtsAvailabilityTemplates.Select(t => new TemplateRowModel() {
+            return _context.Templates.Select(t => new TemplateRowModel() {
                 Id = t.Id,
                 Name = t.Name,
                 Description = t.Description
@@ -200,29 +200,28 @@ namespace WebTennisFieldReservation.Data
 
         public Task<int> DeleteTemplateByIdAsync(int id)
         {
-            return _context.CourtsAvailabilityTemplates.Where(t => t.Id == id).ExecuteDeleteAsync();
+            return _context.Templates.Where(t => t.Id == id).ExecuteDeleteAsync();
         }
 
         public Task<EditTemplateModel?> GetTemplateDataByIdAsync(int id)
         {
             //we must include the TemplateEntrie
-            return _context.CourtsAvailabilityTemplates.Where(t => t.Id == id)
-                .Include(t => t.CourtAvailabilityTemplateEntries)
+            return _context.Templates.Where(t => t.Id == id)
+                .Include(t => t.TemplateEntries)
                 .Select(t => new EditTemplateModel()
                 {
                     Name = t.Name,
-                    Description = t.Description,
-                    //we must convert from TemplateEntries to int identifiers
-                    TemplateEntries = t.CourtAvailabilityTemplateEntries.Select(entry => entry.DaySlot * 7 + entry.WeekDay).ToList()
+                    Description = t.Description,                    
+                    TemplateEntryModels = t.TemplateEntries.Select(entry => new TemplateEntryModel() { WeekSlot = entry.WeekSlot, Price = entry.Price}).ToList()
                 }).SingleOrDefaultAsync();
         }
 
         public async Task<int> UpdateTemplateByIdAsync(int id, EditTemplateModel templateData)
         {
             //we cannot use ExecuteUpdate due to linked navigation properties
-            CourtAvailabilityTemplate? template = await _context.CourtsAvailabilityTemplates
+            Template? template = await _context.Templates
                 .Where(t => t.Id == id)
-                .Include(t => t.CourtAvailabilityTemplateEntries)
+                .Include(t => t.TemplateEntries)
                 .SingleOrDefaultAsync();          
 
             //we do not care about any possible update between the read step and the update step... last update win
@@ -235,7 +234,7 @@ namespace WebTennisFieldReservation.Data
             {
                 template.Name = templateData.Name;
                 template.Description = templateData.Description;
-                template.CourtAvailabilityTemplateEntries = GenerateTemplateEntriesFromModel(templateData);
+                template.TemplateEntries = templateData.TemplateEntryModels.Select(entry => new TemplateEntry() { WeekSlot = entry.WeekSlot, Price = entry.Price}).ToList();
 
                 try
                 {
@@ -248,29 +247,13 @@ namespace WebTennisFieldReservation.Data
                     //duplicate name
                     return -1;
                 }
-            }
-        }
-        
-        //helper method
-        private List<CourtAvailabilityTemplateEntry> GenerateTemplateEntriesFromModel(EditTemplateModel templateData)
-        {
-            List<CourtAvailabilityTemplateEntry> toReturn = new List<CourtAvailabilityTemplateEntry> ();
-
-            foreach (int templateEntryData in templateData.TemplateEntries)
-            {
-                //we need to decode the value to -> (dayOfWeek, hour)
-                int dow = templateEntryData % 7;
-                int hour = templateEntryData / 7;
-
-                toReturn.Add(new CourtAvailabilityTemplateEntry()
+                catch (InvalidOperationException ex)
                 {
-                    //CourtAvailabilityTemplate = templateToAdd,        //no need... automatically tracked by EF                    
-                    DaySlot = (byte) hour,
-                    WeekDay = (byte) dow
-                });
+                    //duplicate weekslots (exception thrown by EF and not the db)
+                    return -1;
+                }
             }
-
-            return toReturn;
-        }
+        }       
+        
     }
 }

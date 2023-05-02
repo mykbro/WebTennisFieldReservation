@@ -15,6 +15,6 @@ namespace WebTennisFieldReservation.Models.Administration
         public string? Description { get; set; }
 
         [Required]
-        public List<int> TemplateEntries { get; set; } = new List<int>();
+        public List<TemplateEntryModel> TemplateEntryModels { get; set; } = new List<TemplateEntryModel>();
     }
 }

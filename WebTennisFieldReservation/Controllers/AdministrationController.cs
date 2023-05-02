@@ -66,12 +66,14 @@ namespace WebTennisFieldReservation.Controllers
 		{
             if(ModelState.IsValid)
             {
+                /* we leave the check to the db and the entry model
                 //we also need to check that the TemplateEntries posted are not repeated and inside the [0 - 167] range (167 = 7*24 - 1)                
                 if (!AreTemplateEntriesOk(templateData))
                 {
 					ModelState.AddModelError("", "Malformed posted data");
 					return View();
 				}                
+                */
 
                 bool templateAdded = await _repo.AddTemplateAsync(templateData);
 
@@ -110,13 +112,7 @@ namespace WebTennisFieldReservation.Controllers
         public async Task<IActionResult> TemplateDetails(int id, EditTemplateModel templateData)
         {
             if (ModelState.IsValid)
-            {
-                //we also need to check that the TemplateEntries posted are not repeated and inside the [0 - 167] range (167 = 7*24 - 1)                
-                if (!AreTemplateEntriesOk(templateData))
-                {
-                    ModelState.AddModelError("", "Malformed posted data");
-                    return View();
-                }
+            {                
 
                 int templatesUpdated = await _repo.UpdateTemplateByIdAsync(id, templateData);
                 
@@ -156,12 +152,8 @@ namespace WebTennisFieldReservation.Controllers
             }            
         }
 
-
-
-
-
-        // 
-
+        
+        /* we now leave the checks to the database and the entry model
         private bool AreTemplateEntriesOk(EditTemplateModel templateData)
         {
             // entries must be distinct and between [0 - 167]
@@ -169,17 +161,17 @@ namespace WebTennisFieldReservation.Controllers
             //  however we can do everything in one loop using a Set for distinctness checks)
 
             //we check if the count of distinct values is the same as the total count
-            int distinctEntries = templateData.TemplateEntries.Distinct().Count();
+            int distinctEntries = templateData.TemplateEntryModels.Distinct().Count();
 
-            if (distinctEntries != templateData.TemplateEntries.Count)
+            if (distinctEntries != templateData.TemplateEntryModels.Count)
             {
                 return false;
             }
 
             //we then check that the elements are in the interval
-            for (int i = 0; i < templateData.TemplateEntries.Count; i++)
+            for (int i = 0; i < templateData.TemplateEntryModels.Count; i++)
             {
-                if (templateData.TemplateEntries[i] < 0 || templateData.TemplateEntries[i] > 167)
+                if (templateData.TemplateEntryModels[i] < 0 || templateData.TemplateEntryModels[i] > 167)
                 {
                     return false;
                 }
@@ -187,6 +179,7 @@ namespace WebTennisFieldReservation.Controllers
 
             return true;
         }
+        */
 
     }
 }
