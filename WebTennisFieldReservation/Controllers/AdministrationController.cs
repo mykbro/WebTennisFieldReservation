@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Routing.Template;
 using WebTennisFieldReservation.Constants.Names;
 using WebTennisFieldReservation.Data;
 using WebTennisFieldReservation.Models.Administration;
-using WebTennisFieldReservation.Entities;
 
 namespace WebTennisFieldReservation.Controllers
 {
@@ -28,7 +27,7 @@ namespace WebTennisFieldReservation.Controllers
 		[HttpGet("users")]
 		public async Task<IActionResult> Users()
 		{
-			List<User> users = await _repo.GetAllUsersDataAsync();  
+			List<UserRowModel> users = await _repo.GetAllUsersDataAsync();
 			return View(users);
 		}
 		
@@ -81,25 +80,8 @@ namespace WebTennisFieldReservation.Controllers
 		public async Task<IActionResult> CreateTemplate(TemplateModel templateData)
 		{
             if(ModelState.IsValid)
-            {
-                Template templateToAdd = new Template()
-                {
-                    Name = templateData.Name,
-                    Description = templateData.Description
-                };
-
-                //we need to populate the navigation property TemplateEntries in order to autopopulate the entries with the correct auto-generated TemplateId
-                for (int i = 0; i < templateData.TemplateEntryModels.Count; i++)
-                {
-                    if (templateData.TemplateEntryModels[i].IsSelected)
-                    {
-                        //here Price is not null but we cannot use ! (dunno why) so we use ?? "0m"
-                        templateToAdd.TemplateEntries.Add(new TemplateEntry() { WeekSlot = i, Price = templateData.TemplateEntryModels[i].Price ?? 0m });
-                    }
-                }
-
-                //we try to add the template
-                bool templateAdded = await _repo.AddTemplateAsync(templateToAdd);
+            {  
+                bool templateAdded = await _repo.AddTemplateAsync(templateData);
 
                 if (templateAdded)
                 {

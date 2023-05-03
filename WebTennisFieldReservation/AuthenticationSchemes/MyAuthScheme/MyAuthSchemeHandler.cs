@@ -8,7 +8,6 @@ using System.Security.Cryptography;
 using System.Text.Encodings.Web;
 using WebTennisFieldReservation.Data;
 using WebTennisFieldReservation.Constants.Names;
-using WebTennisFieldReservation.Entities;
 
 namespace WebTennisFieldReservation.AuthenticationSchemes.MyAuthScheme
 {
@@ -70,13 +69,13 @@ namespace WebTennisFieldReservation.AuthenticationSchemes.MyAuthScheme
 
                         //we check in the db if the id is still there and the secStamp is still the same
                         //and contextually we retrieve the user data that we need in every request
-                        User? userData = await _repo.GetAuthenticatedUserDataAsync(id, secStamp);
+                        var userData = await _repo.GetAuthenticatedUserDataAsync(id, secStamp);
 
                         if(userData != default)
                         {
                             //we add user data claims to the principal
                             var identity = principal.Identity as ClaimsIdentity;
-                            identity!.AddClaim(new Claim(ClaimsNames.Fullname, userData.FirstName + " " + userData.LastName));
+                            identity!.AddClaim(new Claim(ClaimsNames.Fullname, userData.Firstname + " " + userData.Lastname));
                             identity!.AddClaim(new Claim(ClaimsNames.Email, userData.Email));
 
                             //and we return the principal in an auth ticket

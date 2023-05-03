@@ -250,14 +250,7 @@ namespace WebTennisFieldReservation.Controllers
                     {
                         var pwdInfo = pwdHasher.GeneratePasswordAndSalt(modelData.Password);
                         
-                        int usersUpdated = await repo.ResetUserPasswordAsync(new User()
-                        {
-                            Id = secTok.UserId,
-                            SecurityStamp = secTok.SecurityStamp,
-                            PwdHash = pwdInfo.Password,
-                            PwdSalt = pwdInfo.Salt,
-                            Pbkdf2Iterations = pwdHasher.Iterations
-                        }, Guid.NewGuid());
+                        int usersUpdated = await repo.ResetUserPasswordAsync(secTok.UserId, secTok.SecurityStamp, pwdInfo.Password, pwdInfo.Salt, pwdHasher.Iterations, Guid.NewGuid());
 
                         if (usersUpdated == 1) 
                         { 
@@ -296,13 +289,13 @@ namespace WebTennisFieldReservation.Controllers
         {
             if (ModelState.IsValid)
             {               
-                User partialUserData = await repo.GetDataForLoginCheckAsync(loginData.Email);
+                var partialUserData = await repo.GetDataForLoginCheckAsync(loginData.Email);
 
                 // we check if a confirmed user was found
                 if(partialUserData != default)
                 {
                     // we check if the passwords match (using the db iters, not the live value in the pwdHasher
-                    if(pwdHasher.ValidatePassword(loginData.Password, partialUserData.PwdHash, partialUserData.PwdSalt, partialUserData.Pbkdf2Iterations))
+                    if(pwdHasher.ValidatePassword(loginData.Password, partialUserData.pwdHash, partialUserData.salt, partialUserData.iters))
                     {
                         // we check if the user is an admin
                         bool isAdmin = await repo.IsAdminAsync(partialUserData.Id);
@@ -361,21 +354,12 @@ namespace WebTennisFieldReservation.Controllers
             if (authResult.Succeeded)
             {
                 //we check for user data for this id
-                User? userData = await repo.GetUserDataByIdAsync(id);
+                EditUserDataModel? userData = await repo.GetUserDataByIdAsync(id);
                 
                 //if any we populate the view
                 if(userData != null)
                 {
-                    var model = new EditUserDataModel() 
-                    { 
-                        FirstName = userData.FirstName, 
-                        LastName = userData.LastName,
-                        Address = userData.Address,
-                        BirthDate = userData.BirthDate,
-                        Email = userData.Email
-                    };
-
-                    return View(model);
+                    return View(userData);
                 }
                 else
                 {
@@ -411,18 +395,8 @@ namespace WebTennisFieldReservation.Controllers
                     //we first need to lowerCase the Email field
                     userData.Email = userData.Email.ToLower();
 
-                    //we try to update the user's data (will fail on a duplicate email)
-                    var user = new User()
-                    {
-                        Id = id,
-                        FirstName = userData.FirstName,
-                        LastName = userData.LastName,
-                        Address = userData.Address,
-                        BirthDate = userData.BirthDate,
-                        Email = userData.Email
-                    };
-
-                    int usersUpdated = await repo.UpdateUserDataAsync(user);
+                    //we try to update the user's data (will fail on a duplicate email)                    
+                    int usersUpdated = await repo.UpdateUserDataByIdAsync(id, userData);
 
                     if(usersUpdated == 1) 
                     {
@@ -516,7 +490,7 @@ namespace WebTennisFieldReservation.Controllers
                         if (userSecurityData != default)
                         {
                             //if we found something as we should we check the supplied password with the one in the db
-                            bool pwdValid = pwdHasher.ValidatePassword(pwdData.CurrentPassword, userSecurityData.PwdHash, userSecurityData.PwdSalt, userSecurityData.Pbkdf2Iterations);
+                            bool pwdValid = pwdHasher.ValidatePassword(pwdData.CurrentPassword, userSecurityData.pwdHash, userSecurityData.salt, userSecurityData.iters);
 
                             if (pwdValid)
                             {
@@ -525,15 +499,7 @@ namespace WebTennisFieldReservation.Controllers
                                 Guid newSecStamp = Guid.NewGuid();
 
                                 //we can update the password with the current iters and a new securityStamp
-                                var user = new User()
-                                {
-                                    Id = id,
-                                    PwdHash = newPwdData.Password,
-                                    PwdSalt = newPwdData.Salt,
-                                    Pbkdf2Iterations = pwdHasher.Iterations
-                                };
-
-                                int usersUpdated = await repo.UpdatePasswordDataAsync(user, newSecStamp);
+                                int usersUpdated = await repo.UpdatePasswordDataByIdAsync(id, newPwdData.Password, newPwdData.Salt, pwdHasher.Iterations, newSecStamp);
 
                                 //we do a little check
                                 if (usersUpdated != 1)
