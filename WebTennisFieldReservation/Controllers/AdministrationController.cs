@@ -44,7 +44,7 @@ namespace WebTennisFieldReservation.Controllers
         public async Task<IActionResult> Templates()
         {
 
-            List<Template> templates = await _repo.GetAllTemplatesAsync();
+            List<TemplateRowModel> templates = await _repo.GetAllTemplatesAsync();
             return View(templates);
         }
 
@@ -124,31 +124,10 @@ namespace WebTennisFieldReservation.Controllers
         {
             //we share the view between Create and Details (edit)            
 
-            Template? t = await _repo.GetTemplateDataByIdAsync(id);
+            TemplateModel? templateData = await _repo.GetTemplateDataByIdAsync(id);
 
-            if (t != null)
+            if (templateData != null)
             {
-                //we need to map the Template data to the TemplateModel
-                TemplateModel templateData = new TemplateModel()
-                {
-                    Name = t.Name,
-                    Description = t.Description,
-                    TemplateEntryModels = new List<TemplateEntryModel>(168)
-                };
-
-                //we need to initialize all the entries in the array, we can do it with a singleton to spare a lot of instantiations
-                TemplateEntryModel singleton = new TemplateEntryModel();
-                for (int i = 0; i < 168; i++)
-                {
-                    templateData.TemplateEntryModels.Add(singleton);
-                }
-
-                //and we update only the entries that we have in the database
-                foreach (TemplateEntry entry in t.TemplateEntries)
-                {
-                    templateData.TemplateEntryModels[entry.WeekSlot] = new TemplateEntryModel() { IsSelected = true, Price = entry.Price };
-                }
-           
                 ViewData["Title"] = "Edit template";
                 return View("CreateOrEditTemplate", templateData);
             }
@@ -162,26 +141,8 @@ namespace WebTennisFieldReservation.Controllers
         public async Task<IActionResult> TemplateDetails(int id, TemplateModel templateData)
         {
             if (ModelState.IsValid)
-            {
-                Template toUpdate = new Template()
-                {
-                    Id = id,
-                    Name = templateData.Name,
-                    Description = templateData.Description
-                };
-
-                //we need to map the entries (which can be the same as the old one :D)
-                for (int i = 0; i < templateData.TemplateEntryModels.Count; i++)
-                {
-                    if (templateData.TemplateEntryModels[i].IsSelected)
-                    {
-                        //here Price is not null but we cannot use ! (dunno why) so we use ?? "0m"
-                        toUpdate.TemplateEntries.Add(new TemplateEntry() { WeekSlot = i, Price = templateData.TemplateEntryModels[i].Price ?? 0m });
-                    }
-                }
-
-                //we try to update the template
-                int templatesUpdated = await _repo.UpdateTemplateAsync(toUpdate);
+            {                 
+                int templatesUpdated = await _repo.UpdateTemplateByIdAsync(id, templateData);
                 
                 if (templatesUpdated == 1)
                 {

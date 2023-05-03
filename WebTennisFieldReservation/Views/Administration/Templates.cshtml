@@ -1,4 +1,4 @@
-﻿@model List<Template>
+﻿@model List<TemplateRowModel>
 
 
 @{
@@ -18,7 +18,7 @@
                 </tr>            
             </thead>
             <tbody>         
-                @foreach(Template templateData in Model)
+                @foreach(TemplateRowModel templateData in Model)
                 {
                     <tr>
                         <td>@counter</td>
