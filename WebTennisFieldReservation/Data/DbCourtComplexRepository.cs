@@ -162,7 +162,7 @@ namespace WebTennisFieldReservation.Data
             };
 
             //we need to populate the navigation property TemplateEntries in order to autopopulate the entries with the correct auto-generated TemplateId
-            for(int i=0; i < templateData.TemplateEntryModels.Length; i++)
+            for(int i=0; i < templateData.TemplateEntryModels.Count; i++)
             {
                 if (templateData.TemplateEntryModels[i].IsSelected)
                 {
@@ -224,20 +224,20 @@ namespace WebTennisFieldReservation.Data
                 {
                     Name = t.Name,
                     Description = t.Description,
-                    TemplateEntryModels = new TemplateEntryModel[168]       
+                    TemplateEntryModels = new List<TemplateEntryModel>(168)       
                 };
 
-                //we need to initialize all the entries in the array
+                //we need to initialize all the entries in the array, we can do it with a singleton to spare a lot of instantiations
+                TemplateEntryModel singleton = new TemplateEntryModel();
                 for(int i=0; i < 168; i++)
                 {
-                    toReturn.TemplateEntryModels[i] = new TemplateEntryModel();
+                    toReturn.TemplateEntryModels.Add(singleton);
                 }
 
                 //and we update only the entries that we have in the database
                 foreach(TemplateEntry entry in t.TemplateEntries)
                 {
-                    toReturn.TemplateEntryModels[entry.WeekSlot].IsSelected = true;
-                    toReturn.TemplateEntryModels[entry.WeekSlot].Price = entry.Price;
+                    toReturn.TemplateEntryModels[entry.WeekSlot] = new TemplateEntryModel() { IsSelected = true, Price = entry.Price};
                 }
 
                 return toReturn;
@@ -271,7 +271,7 @@ namespace WebTennisFieldReservation.Data
                 template.TemplateEntries.Clear();
 
                 //...and we need to insert the new entries (which can be the same as the old one :D)
-                for (int i = 0; i < templateData.TemplateEntryModels.Length; i++)
+                for (int i = 0; i < templateData.TemplateEntryModels.Count; i++)
                 {
                     if (templateData.TemplateEntryModels[i].IsSelected)
                     {

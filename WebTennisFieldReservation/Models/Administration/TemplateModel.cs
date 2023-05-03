@@ -16,7 +16,7 @@ namespace WebTennisFieldReservation.Models.Administration
         public string? Description { get; set; }
 
         [Required]
-        [ArrayLength(168)]
-        public TemplateEntryModel[] TemplateEntryModels { get; set; } = null!;
+        [CollectionLength(168)]
+        public List<TemplateEntryModel> TemplateEntryModels { get; set; } = null!;
     }
 }

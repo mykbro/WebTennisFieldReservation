@@ -63,9 +63,14 @@ namespace WebTennisFieldReservation.Controllers
 
             //we prepare an empty model to pass to the shared (between Create and Edit) view
             //every IsSelected will be initialized to 'false' and every Price to 'null'
-            //WATCH OUT that by using Array.Fill we use the same instance for all the array items but here it is fine !!
-            var emptyTemplate = new TemplateModel() { TemplateEntryModels = new TemplateEntryModel[168] };
-            Array.Fill(emptyTemplate.TemplateEntryModels, new TemplateEntryModel());
+            //we create only ONE instance that we use to fill the whole list... here it's fine
+            var emptyTemplate = new TemplateModel() { TemplateEntryModels = new List<TemplateEntryModel>(168) };
+            TemplateEntryModel singleton = new TemplateEntryModel();
+            
+            for(int i = 0; i < 168; i++)
+            {
+                emptyTemplate.TemplateEntryModels.Add(singleton);
+            } 
 
             ViewData["Title"] = "Create a new template";
             return View("CreateOrEditTemplate", emptyTemplate);
