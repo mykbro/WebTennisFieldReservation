@@ -55,11 +55,11 @@ namespace WebTennisFieldReservation.Controllers
                     Email = registrationInfo.Email.ToLower(),       //note the .ToLower()
                     Address = registrationInfo.Address,
                     BirthDate = registrationInfo.BirthDate,
-                    EmailConfirmed = true,                          //set to true just for testing
+                    EmailConfirmed = false,                          
                     RegistrationTimestamp = DateTimeOffset.Now,
                     Pbkdf2Iterations = pwdHasher.Iterations,
                     SecurityStamp = Guid.NewGuid(),
-                    PwdHash = pwdInfo.Password,
+                    PwdHash = pwdInfo.PasswordHash,
                     PwdSalt = pwdInfo.Salt
                 };
 
@@ -237,7 +237,7 @@ namespace WebTennisFieldReservation.Controllers
         }
 
         [HttpPost("resetpassword")]
-        public async Task<IActionResult> ResetPassword(PasswordResetModel modelData, [FromServices] ICourtComplexRepository repo, [FromServices] ITokenManager tokenManager, [FromServices] IPasswordHasher pwdHasher, [FromServices] TokenManagerSettings tokenManagerSettings)
+        public async Task<IActionResult> ResetPassword(PasswordResetRequestModel modelData, [FromServices] ICourtComplexRepository repo, [FromServices] ITokenManager tokenManager, [FromServices] IPasswordHasher pwdHasher, [FromServices] TokenManagerSettings tokenManagerSettings)
         {
             if (ModelState.IsValid)
             {
@@ -249,8 +249,17 @@ namespace WebTennisFieldReservation.Controllers
                     if (DateTimeOffset.Now <= secTok.IssueTime.Add(TimeSpan.FromMinutes(tokenManagerSettings.PwdResetValidTimeSpanInMinutes)))
                     {
                         var pwdInfo = pwdHasher.GeneratePasswordAndSalt(modelData.Password);
-                        
-                        int usersUpdated = await repo.ResetUserPasswordAsync(secTok.UserId, secTok.SecurityStamp, pwdInfo.Password, pwdInfo.Salt, pwdHasher.Iterations, Guid.NewGuid());
+
+                        var pwdResetModel = new PasswordResetModel()
+                        {
+                            OldSecurityStamp = secTok.SecurityStamp,
+                            NewSecurityStamp = Guid.NewGuid(),
+                            PasswordHash = pwdInfo.PasswordHash,
+                            Salt = pwdInfo.Salt,
+                            Iters = pwdHasher.Iterations
+                        };
+
+                        int usersUpdated = await repo.ResetUserPasswordAsync(secTok.UserId, pwdResetModel);
 
                         if (usersUpdated == 1) 
                         { 
@@ -295,13 +304,13 @@ namespace WebTennisFieldReservation.Controllers
                 if(partialUserData != default)
                 {
                     // we check if the passwords match (using the db iters, not the live value in the pwdHasher
-                    if(pwdHasher.ValidatePassword(loginData.Password, partialUserData.pwdHash, partialUserData.salt, partialUserData.iters))
+                    if(pwdHasher.ValidatePassword(loginData.Password, partialUserData.PwdHash, partialUserData.Salt, partialUserData.Iters))
                     {
                         // we check if the user is an admin
                         bool isAdmin = await repo.IsAdminAsync(partialUserData.Id);
 
                         // we can then proceed to build the claimsprincipal and signIn
-                        ClaimsPrincipal userCp = claimsFactory.CreatePrincipal(partialUserData.Id, partialUserData.SecurityStamp, isAdmin, DateTimeOffset.Now);
+                        ClaimsPrincipal userCp = claimsFactory.CreatePrincipal(partialUserData.Id, partialUserData.SecuritStamp, isAdmin, DateTimeOffset.Now);
                         await HttpContext.SignInAsync(AuthenticationSchemesNames.MyAuthScheme, userCp, loginData.RememberMe ? RememberMeProperty : DoNotRememberMeProperty);
 
                         // we check if the returnUrl is valid
@@ -354,7 +363,7 @@ namespace WebTennisFieldReservation.Controllers
             if (authResult.Succeeded)
             {
                 //we check for user data for this id
-                EditUserDataModel? userData = await repo.GetUserDataByIdAsync(id);
+                UserModel? userData = await repo.GetUserDataByIdAsync(id);
                 
                 //if any we populate the view
                 if(userData != null)
@@ -381,7 +390,7 @@ namespace WebTennisFieldReservation.Controllers
 
         [HttpPost("{id:guid}/details")]
         //[Authorize(Policy = AuthorizationPoliciesNames.SameUser)]
-        public async Task<IActionResult> Details(EditUserDataModel userData, Guid id, [FromServices] ICourtComplexRepository repo, [FromServices] IAuthorizationService authorizer)
+        public async Task<IActionResult> Details(UserModel userData, Guid id, [FromServices] ICourtComplexRepository repo, [FromServices] IAuthorizationService authorizer)
         {
             
             //we first check for authZ
@@ -490,7 +499,7 @@ namespace WebTennisFieldReservation.Controllers
                         if (userSecurityData != default)
                         {
                             //if we found something as we should we check the supplied password with the one in the db
-                            bool pwdValid = pwdHasher.ValidatePassword(pwdData.CurrentPassword, userSecurityData.pwdHash, userSecurityData.salt, userSecurityData.iters);
+                            bool pwdValid = pwdHasher.ValidatePassword(pwdData.CurrentPassword, userSecurityData.PasswordHash, userSecurityData.Salt, userSecurityData.Iters);
 
                             if (pwdValid)
                             {
@@ -499,7 +508,15 @@ namespace WebTennisFieldReservation.Controllers
                                 Guid newSecStamp = Guid.NewGuid();
 
                                 //we can update the password with the current iters and a new securityStamp
-                                int usersUpdated = await repo.UpdatePasswordDataByIdAsync(id, newPwdData.Password, newPwdData.Salt, pwdHasher.Iterations, newSecStamp);
+                                var pwdUpdateModel = new PasswordUpdateModel()
+                                {
+                                    PasswordHash = newPwdData.PasswordHash,
+                                    Salt = newPwdData.Salt,
+                                    Iters = pwdHasher.Iterations,
+                                    NewSecurityStamp = newSecStamp
+                                };
+                                
+                                int usersUpdated = await repo.UpdatePasswordDataByIdAsync(id, pwdUpdateModel);
 
                                 //we do a little check
                                 if (usersUpdated != 1)
@@ -562,6 +579,7 @@ namespace WebTennisFieldReservation.Controllers
             string mailBody = String.Format(confirmationMailBodyTemplate, Url.Action(nameof(ConfirmEmail), "users", new { token = tokenString }, Request.Scheme, Request.Host.Value));
 
             //return mailSender.SendEmailAsync(recipientEmail, confirmationMailSubject, mailBody);
+            Console.WriteLine(mailBody);
             return Task.CompletedTask;
         }
 
@@ -573,6 +591,7 @@ namespace WebTennisFieldReservation.Controllers
             string mailBody = String.Format(resetPwdMailBodyTemplate, Url.Action(nameof(ResetPassword), "users", new { token = tokenString }, Request.Scheme, Request.Host.Value));
 
             //return mailSender.SendEmailAsync(recipientEmail, resetPwdMailSubject, mailBody);
+            Console.WriteLine(mailBody);
             return Task.CompletedTask;
         }
 

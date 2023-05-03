@@ -49,29 +49,36 @@ namespace WebTennisFieldReservation.Data
                         .ExecuteUpdateAsync(user => user.SetProperty(user => user.EmailConfirmed, true));
         }
 
-        public Task<(Guid Id, Guid SecurityStamp)> GetDataForTokenAsync(string email)
+        public Task<DataForTokenModel?> GetDataForTokenAsync(string email)
         {
             //we check if a user exists with Email == email otherwise we return default
-            return _context.Users.Where(user => user.Email.Equals(email)).Select(user => new ValueTuple<Guid, Guid>(user.Id, user.SecurityStamp)).SingleOrDefaultAsync();
+            return _context.Users.Where(user => user.Email.Equals(email)).Select(user => new DataForTokenModel() { Id = user.Id, SecurityStamp = user.SecurityStamp }).SingleOrDefaultAsync();
         }
 
-        public Task<int> ResetUserPasswordAsync(Guid id, Guid oldSecurityStamp, byte[] pwdHash, byte[] salt, int iters, Guid newSecurityStamp)
+        public Task<int> ResetUserPasswordAsync(Guid id, PasswordResetModel pwdResetData)
         {
             //we should probaly check if email is confirmed
-            return _context.Users.Where(user => user.Id == id && user.SecurityStamp == oldSecurityStamp)
+            return _context.Users.Where(user => user.Id == id && user.SecurityStamp == pwdResetData.OldSecurityStamp)
                 .ExecuteUpdateAsync(user =>                
-                    user.SetProperty(user => user.PwdHash, pwdHash)
-                        .SetProperty(user => user.PwdSalt, salt)
-                        .SetProperty(user => user.Pbkdf2Iterations, iters)
-                        .SetProperty(user => user.SecurityStamp, newSecurityStamp)
+                    user.SetProperty(user => user.PwdHash, pwdResetData.PasswordHash)
+                        .SetProperty(user => user.PwdSalt, pwdResetData.Salt)
+                        .SetProperty(user => user.Pbkdf2Iterations, pwdResetData.Iters)
+                        .SetProperty(user => user.SecurityStamp, pwdResetData.NewSecurityStamp)
                 );
         }
 
-        public Task<(Guid Id, Guid SecurityStamp, byte[] pwdHash, byte[] salt, int iters)> GetDataForLoginCheckAsync(string email)
+        public Task<DataForLoginCheckModel?> GetDataForLoginCheckAsync(string email)
         {
             //we check email confirmed
             return _context.Users.Where(user => user.Email == email && user.EmailConfirmed == true)
-                .Select(user => new ValueTuple<Guid, Guid, byte[], byte[], int>(user.Id, user.SecurityStamp, user.PwdHash, user.PwdSalt, user.Pbkdf2Iterations))
+                .Select(user => new DataForLoginCheckModel()
+                {
+                    Id = user.Id, 
+                    SecuritStamp = user.SecurityStamp, 
+                    PwdHash = user.PwdHash, 
+                    Salt = user.PwdSalt, 
+                    Iters = user.Pbkdf2Iterations 
+                })
                 .SingleOrDefaultAsync();
         }
 
@@ -81,10 +88,10 @@ namespace WebTennisFieldReservation.Data
             return admin != null;
         }
 
-        public Task<(string Firstname, string Lastname, string Email)> GetAuthenticatedUserDataAsync(Guid id, Guid securityStamp)
+        public Task<AuthenticatedUserDataModel?> GetAuthenticatedUserDataAsync(Guid id, Guid securityStamp)
         {
             return _context.Users.Where(user => user.Id == id && user.SecurityStamp == securityStamp)
-                .Select(user => new ValueTuple<string, string, string>(user.FirstName, user.LastName, user.Email))
+                .Select(user => new AuthenticatedUserDataModel() { FirstName = user.FirstName, LastName = user.LastName, Email = user.Email })
                 .SingleOrDefaultAsync();
         }
 
@@ -100,10 +107,10 @@ namespace WebTennisFieldReservation.Data
             }).ToListAsync();
         }
 
-        public Task<EditUserDataModel?> GetUserDataByIdAsync(Guid id)
+        public Task<UserModel?> GetUserDataByIdAsync(Guid id)
         {
             return _context.Users.Where(user => user.Id == id).Select(user => 
-                new EditUserDataModel(){ 
+                new UserModel(){ 
                     Address = user.Address,
                     BirthDate = user.BirthDate,
                     Email = user.Email,
@@ -112,7 +119,7 @@ namespace WebTennisFieldReservation.Data
                 }).SingleOrDefaultAsync();
         }
 
-        public async Task<int> UpdateUserDataByIdAsync(Guid id, EditUserDataModel userData)
+        public async Task<int> UpdateUserDataByIdAsync(Guid id, UserModel userData)
         {
             try
             {
@@ -131,20 +138,20 @@ namespace WebTennisFieldReservation.Data
             }
         }
 
-        public Task<(byte[] pwdHash, byte[] salt, int iters)> GetPasswordDataByIdAsync(Guid id)
+        public Task<PasswordDataModel?> GetPasswordDataByIdAsync(Guid id)
         {
             return _context.Users.Where(user => user.Id == id)
-                .Select(user => new ValueTuple<byte[], byte[], int>(user.PwdHash, user.PwdSalt, user.Pbkdf2Iterations))
+                .Select(user => new PasswordDataModel() { PasswordHash = user.PwdHash, Salt = user.PwdSalt, Iters = user.Pbkdf2Iterations })
                 .SingleOrDefaultAsync();
         }
 
-        public Task<int> UpdatePasswordDataByIdAsync(Guid id, byte[] pwdHash, byte[] salt, int iters, Guid newSecurityStamp)
+        public Task<int> UpdatePasswordDataByIdAsync(Guid id, PasswordUpdateModel pwdUpdateData)
         {
             return _context.Users.Where(user => user.Id == id).ExecuteUpdateAsync(user =>
-                    user.SetProperty(user => user.PwdHash, pwdHash)
-                        .SetProperty(user => user.PwdSalt, salt)
-                        .SetProperty(user => user.Pbkdf2Iterations, iters)
-                        .SetProperty(user => user.SecurityStamp, newSecurityStamp)
+                    user.SetProperty(user => user.PwdHash, pwdUpdateData.PasswordHash)
+                        .SetProperty(user => user.PwdSalt, pwdUpdateData.Salt)
+                        .SetProperty(user => user.Pbkdf2Iterations, pwdUpdateData.Iters)
+                        .SetProperty(user => user.SecurityStamp, pwdUpdateData.NewSecurityStamp)
                     );                        
         }
 

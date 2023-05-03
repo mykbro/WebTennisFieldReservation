@@ -75,7 +75,7 @@ namespace WebTennisFieldReservation.AuthenticationSchemes.MyAuthScheme
                         {
                             //we add user data claims to the principal
                             var identity = principal.Identity as ClaimsIdentity;
-                            identity!.AddClaim(new Claim(ClaimsNames.Fullname, userData.Firstname + " " + userData.Lastname));
+                            identity!.AddClaim(new Claim(ClaimsNames.Fullname, userData.FirstName + " " + userData.LastName));
                             identity!.AddClaim(new Claim(ClaimsNames.Email, userData.Email));
 
                             //and we return the principal in an auth ticket

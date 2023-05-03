@@ -1,8 +1,7 @@
 ﻿namespace WebTennisFieldReservation.Models.Users
 {
-    public class PasswordResetModel
+    public class PasswordUpdateModel
     {
-        public Guid OldSecurityStamp { get; set; }
         public Guid NewSecurityStamp { get; set; }
         public byte[] PasswordHash { get; set; } = null!;
         public byte[] Salt { get; set; } = null!;
