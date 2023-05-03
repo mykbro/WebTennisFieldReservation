@@ -58,7 +58,16 @@ namespace WebTennisFieldReservation.Controllers
         [HttpGet("templates/create")]
         public IActionResult CreateTemplate()
         {
-            return View();
+            //we share the view between Create and Details (edit)            
+
+            //we prepare an empty model to pass to the shared (between Create and Edit) view
+            //every IsSelected will be initialized to 'false' and every Price to 'null'
+            //WATCH OUT that by using Array.Fill we use the same instance for all the array items but here it is fine !!
+            var emptyTemplate = new EditTemplateModel() { TemplateEntryModels = new TemplateEntryModel[168] };
+            Array.Fill(emptyTemplate.TemplateEntryModels, new TemplateEntryModel());
+
+            ViewData["Title"] = "Create a new template";
+            return View("CreateOrEditTemplate", emptyTemplate);
         }
 
 		[HttpPost("templates/create")]
@@ -74,24 +83,29 @@ namespace WebTennisFieldReservation.Controllers
                 }
                 else
                 {
+                    ViewData["Title"] = "Create a new template";
                     ModelState.AddModelError("", "Template name already used");
-                    return View();
+                    return View("CreateOrEditTemplate", templateData);
                 }                
             }
             else
             {
-                return View();
+                ViewData["Title"] = "Create a new template";
+                return View("CreateOrEditTemplate", templateData);
             }
 		}
 
         [HttpGet("templates/{id:int}/details")]
         public async Task<IActionResult> TemplateDetails(int id)
         {
+            //we share the view between Create and Details (edit)            
+
             EditTemplateModel? templateData = await _repo.GetTemplateDataByIdAsync(id);
 
             if (templateData != null)
             {
-                return View(templateData);
+                ViewData["Title"] = "Edit template";
+                return View("CreateOrEditTemplate", templateData);
             }
             else
             {
@@ -116,13 +130,15 @@ namespace WebTennisFieldReservation.Controllers
                 }
                 else //returned -1
                 {
+                    ViewData["Title"] = "Edit template";
                     ModelState.AddModelError("", "Template name already used");
-                    return View(templateData);
+                    return View("CreateOrEditTemplate", templateData);
                 }
             }
             else
             {
-                return View(templateData);
+                ViewData["Title"] = "Edit template";
+                return View("CreateOrEditTemplate", templateData);
             }
         }
 

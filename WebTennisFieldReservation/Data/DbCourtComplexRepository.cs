@@ -166,6 +166,7 @@ namespace WebTennisFieldReservation.Data
             {
                 if (templateData.TemplateEntryModels[i].IsSelected)
                 {
+                    //here Price is not null but we cannot use ! (dunno why) so we use ?? "0m"
                     templateToAdd.TemplateEntries.Add(new TemplateEntry() { WeekSlot = i, Price = templateData.TemplateEntryModels[i].Price ?? 0m });
                 }
             }   
@@ -224,7 +225,7 @@ namespace WebTennisFieldReservation.Data
                     Name = t.Name,
                     Description = t.Description,
                     TemplateEntryModels = new TemplateEntryModel[168]       
-                };  
+                };
 
                 //we need to initialize all the entries in the array
                 for(int i=0; i < 168; i++)
@@ -232,7 +233,7 @@ namespace WebTennisFieldReservation.Data
                     toReturn.TemplateEntryModels[i] = new TemplateEntryModel();
                 }
 
-                //and we populate the entries that we have in the database
+                //and we update only the entries that we have in the database
                 foreach(TemplateEntry entry in t.TemplateEntries)
                 {
                     toReturn.TemplateEntryModels[entry.WeekSlot].IsSelected = true;
@@ -274,6 +275,7 @@ namespace WebTennisFieldReservation.Data
                 {
                     if (templateData.TemplateEntryModels[i].IsSelected)
                     {
+                        //here Price is not null but we cannot use ! (dunno why) so we use ?? "0m"
                         template.TemplateEntries.Add(new TemplateEntry() { WeekSlot = i, Price = templateData.TemplateEntryModels[i].Price ?? 0m });
                     }
                 }

@@ -15,6 +15,7 @@ namespace WebTennisFieldReservation.ValidationAttributes
                 }
                 else
                 {
+                    
                     return new ValidationResult(ErrorMessage);
                 }
             }

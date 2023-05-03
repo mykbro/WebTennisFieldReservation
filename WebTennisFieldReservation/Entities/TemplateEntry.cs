@@ -12,7 +12,7 @@ namespace WebTennisFieldReservation.Entities
         public int WeekSlot { get; set; }  //[0 - 167] where 0 is Monday 00:00-01:00, 1 is Monday 01:00-02:00, ... , 167 is Sunday 23:00-24:00 (can be a byte)
 
         [Required]
-        [Column(TypeName="decimal(18,2)")]
+        [Column(TypeName="decimal(18,2)")]        
         public decimal Price{ get; set; }
 
         //navigation

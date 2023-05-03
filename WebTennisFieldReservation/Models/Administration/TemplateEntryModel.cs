@@ -8,7 +8,8 @@ namespace WebTennisFieldReservation.Models.Administration
         [Required]        
         public bool IsSelected { get; set; }
 
-        [PositiveAndNotNullIfSelected(ErrorMessage = "A positive price must be provided for selected entries")]
+        [PositiveAndNotNullIfSelected(ErrorMessage = "A positive price must be provided for selected entries")]        
+        [DataType(DataType.Currency)]        
         public decimal? Price { get; set; }
     }
 }
