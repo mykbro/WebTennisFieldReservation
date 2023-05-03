@@ -15,6 +15,12 @@ namespace WebTennisFieldReservation.Data
             _context = CourtComplexDbContext.CreateDbContext(connString, log);
         }
 
+        // necessary for scoped injection
+        public void Dispose()
+        {
+            _context.Dispose();
+        }
+
         public async Task<bool> AddUserAsync(User u)
         {
             _context.Users.Add(u);
@@ -28,18 +34,7 @@ namespace WebTennisFieldReservation.Data
             {
                 return false;
             }
-        }
-
-        // necessary for scoped injection
-        public void Dispose()
-        {
-            _context.Dispose();
-        }
-
-        public Task<IEnumerable<User>> GetUsersHavingMail(string email)
-        {
-            throw new NotImplementedException();
-        }
+        }  
 
         public Task<int> ConfirmUserEmailAsync(Guid id, Guid securityStamp)
         {
@@ -49,29 +44,36 @@ namespace WebTennisFieldReservation.Data
                         .ExecuteUpdateAsync(user => user.SetProperty(user => user.EmailConfirmed, true));
         }
 
-        public Task<(Guid Id, Guid SecurityStamp)> GetDataForTokenAsync(string email)
+        public Task<User?> GetDataForTokenAsync(string email)
         {
             //we check if a user exists with Email == email otherwise we return default
-            return _context.Users.Where(user => user.Email.Equals(email)).Select(user => new ValueTuple<Guid, Guid>(user.Id, user.SecurityStamp)).SingleOrDefaultAsync();
+            return _context.Users.Where(user => user.Email.Equals(email)).Select(user => new User() { Id = user.Id, SecurityStamp = user.SecurityStamp }).SingleOrDefaultAsync();
         }
 
-        public Task<int> ResetUserPasswordAsync(Guid id, Guid oldSecurityStamp, byte[] pwdHash, byte[] salt, int iters, Guid newSecurityStamp)
+        public Task<int> ResetUserPasswordAsync(User userData, Guid newSecurityStamp)
         {
             //we should probaly check if email is confirmed
-            return _context.Users.Where(user => user.Id == id && user.SecurityStamp == oldSecurityStamp)
+            return _context.Users.Where(user => user.Id == userData.Id && user.SecurityStamp == userData.SecurityStamp)
                 .ExecuteUpdateAsync(user =>                
-                    user.SetProperty(user => user.PwdHash, pwdHash)
-                        .SetProperty(user => user.PwdSalt, salt)
-                        .SetProperty(user => user.Pbkdf2Iterations, iters)
+                    user.SetProperty(user => user.PwdHash, userData.PwdHash)
+                        .SetProperty(user => user.PwdSalt, userData.PwdSalt)
+                        .SetProperty(user => user.Pbkdf2Iterations, userData.Pbkdf2Iterations)
                         .SetProperty(user => user.SecurityStamp, newSecurityStamp)
                 );
         }
 
-        public Task<(Guid Id, Guid SecurityStamp, byte[] pwdHash, byte[] salt, int iters)> GetDataForLoginCheckAsync(string email)
+        public Task<User?> GetDataForLoginCheckAsync(string email)
         {
             //we check email confirmed
             return _context.Users.Where(user => user.Email == email && user.EmailConfirmed == true)
-                .Select(user => new ValueTuple<Guid, Guid, byte[], byte[], int>(user.Id, user.SecurityStamp, user.PwdHash, user.PwdSalt, user.Pbkdf2Iterations))
+                .Select(user => new User() 
+                { 
+                    Id = user.Id, 
+                    SecurityStamp = user.SecurityStamp, 
+                    PwdHash = user.PwdHash, 
+                    PwdSalt = user.PwdSalt, 
+                    Pbkdf2Iterations = user.Pbkdf2Iterations
+                }) 
                 .SingleOrDefaultAsync();
         }
 
@@ -81,16 +83,16 @@ namespace WebTennisFieldReservation.Data
             return admin != null;
         }
 
-        public Task<(string Firstname, string Lastname, string Email)> GetAuthenticatedUserDataAsync(Guid id, Guid securityStamp)
+        public Task<User?> GetAuthenticatedUserDataAsync(Guid id, Guid securityStamp)
         {
             return _context.Users.Where(user => user.Id == id && user.SecurityStamp == securityStamp)
-                .Select(user => new ValueTuple<string, string, string>(user.FirstName, user.LastName, user.Email))
+                .Select(user => new User() { FirstName = user.FirstName, LastName = user.LastName, Email = user.Email })
                 .SingleOrDefaultAsync();
         }
 
-        public Task<List<UserRowModel>> GetAllUsersDataAsync()
+        public Task<List<User>> GetAllUsersDataAsync()
         {
-            return _context.Users.Select(user => new UserRowModel() { 
+            return _context.Users.Select(user => new User() { 
                 Id = user.Id,
                 Address = user.Address,
                 BirthDate = user.BirthDate,
@@ -100,10 +102,10 @@ namespace WebTennisFieldReservation.Data
             }).ToListAsync();
         }
 
-        public Task<EditUserDataModel?> GetUserDataByIdAsync(Guid id)
+        public Task<User?> GetUserDataByIdAsync(Guid id)
         {
             return _context.Users.Where(user => user.Id == id).Select(user => 
-                new EditUserDataModel(){ 
+                new User(){ 
                     Address = user.Address,
                     BirthDate = user.BirthDate,
                     Email = user.Email,
@@ -112,11 +114,11 @@ namespace WebTennisFieldReservation.Data
                 }).SingleOrDefaultAsync();
         }
 
-        public async Task<int> UpdateUserDataByIdAsync(Guid id, EditUserDataModel userData)
+        public async Task<int> UpdateUserDataAsync(User userData)
         {
             try
             {
-                int updatedUsers = await _context.Users.Where(user => user.Id == id).ExecuteUpdateAsync( user => 
+                int updatedUsers = await _context.Users.Where(user => user.Id == userData.Id).ExecuteUpdateAsync( user => 
                     user.SetProperty(user => user.Address, userData.Address)
                         .SetProperty(user => user.FirstName, userData.FirstName)
                         .SetProperty(user => user.LastName, userData.LastName)
@@ -131,19 +133,19 @@ namespace WebTennisFieldReservation.Data
             }
         }
 
-        public Task<(byte[] pwdHash, byte[] salt, int iters)> GetPasswordDataByIdAsync(Guid id)
+        public Task<User?> GetPasswordDataByIdAsync(Guid id)
         {
             return _context.Users.Where(user => user.Id == id)
-                .Select(user => new ValueTuple<byte[], byte[], int>(user.PwdHash, user.PwdSalt, user.Pbkdf2Iterations))
+                .Select(user => new User() { PwdHash = user.PwdHash, PwdSalt = user.PwdSalt, Pbkdf2Iterations = user.Pbkdf2Iterations })
                 .SingleOrDefaultAsync();
         }
 
-        public Task<int> UpdatePasswordDataByIdAsync(Guid id, byte[] pwdHash, byte[] salt, int iters, Guid newSecurityStamp)
+        public Task<int> UpdatePasswordDataAsync(User userData, Guid newSecurityStamp)
         {
-            return _context.Users.Where(user => user.Id == id).ExecuteUpdateAsync(user =>
-                    user.SetProperty(user => user.PwdHash, pwdHash)
-                        .SetProperty(user => user.PwdSalt, salt)
-                        .SetProperty(user => user.Pbkdf2Iterations, iters)
+            return _context.Users.Where(user => user.Id == userData.Id).ExecuteUpdateAsync(user =>
+                    user.SetProperty(user => user.PwdHash, userData.PwdHash)
+                        .SetProperty(user => user.PwdSalt, userData.PwdSalt)
+                        .SetProperty(user => user.Pbkdf2Iterations, userData.Pbkdf2Iterations)
                         .SetProperty(user => user.SecurityStamp, newSecurityStamp)
                     );                        
         }
@@ -153,23 +155,8 @@ namespace WebTennisFieldReservation.Data
             return _context.Users.Where(user => user.Id == id).ExecuteDeleteAsync();
         }
 
-        public async Task<bool> AddTemplateAsync(TemplateModel templateData)
-        {
-            Template templateToAdd = new Template()
-            {
-                Name = templateData.Name,
-                Description = templateData.Description
-            };
-
-            //we need to populate the navigation property TemplateEntries in order to autopopulate the entries with the correct auto-generated TemplateId
-            for(int i=0; i < templateData.TemplateEntryModels.Count; i++)
-            {
-                if (templateData.TemplateEntryModels[i].IsSelected)
-                {
-                    //here Price is not null but we cannot use ! (dunno why) so we use ?? "0m"
-                    templateToAdd.TemplateEntries.Add(new TemplateEntry() { WeekSlot = i, Price = templateData.TemplateEntryModels[i].Price ?? 0m });
-                }
-            }   
+        public async Task<bool> AddTemplateAsync(Template templateToAdd)
+        {           
 
             //we add the template (with its entries) to the dbContext
             await _context.AddAsync(templateToAdd);
