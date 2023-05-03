@@ -183,9 +183,9 @@ namespace WebTennisFieldReservation.Data
             }            
         }
 
-        public Task<List<TemplateRowModel>> GetAllTemplatesAsync()
+        public Task<List<Template>> GetAllTemplatesAsync()
         {
-            return _context.Templates.Select(t => new TemplateRowModel() {
+            return _context.Templates.Select(t => new Template() {
                 Id = t.Id,
                 Name = t.Name,
                 Description = t.Description
@@ -197,53 +197,26 @@ namespace WebTennisFieldReservation.Data
             return _context.Templates.Where(t => t.Id == id).ExecuteDeleteAsync();
         }
 
-        public async Task<TemplateModel?> GetTemplateDataByIdAsync(int id)
+        public Task<Template?> GetTemplateDataByIdAsync(int id)
         {
             //we must include the TemplateEntries
-            Template? t = await _context.Templates
+            return _context.Templates
                 .Where(t => t.Id == id)
                 .Include(t => t.TemplateEntries)
                 .SingleOrDefaultAsync();
-
-            if (t != null)
-            {
-                TemplateModel toReturn = new TemplateModel()
-                {
-                    Name = t.Name,
-                    Description = t.Description,
-                    TemplateEntryModels = new List<TemplateEntryModel>(168)       
-                };
-
-                //we need to initialize all the entries in the array, we can do it with a singleton to spare a lot of instantiations
-                TemplateEntryModel singleton = new TemplateEntryModel();
-                for(int i=0; i < 168; i++)
-                {
-                    toReturn.TemplateEntryModels.Add(singleton);
-                }
-
-                //and we update only the entries that we have in the database
-                foreach(TemplateEntry entry in t.TemplateEntries)
-                {
-                    toReturn.TemplateEntryModels[entry.WeekSlot] = new TemplateEntryModel() { IsSelected = true, Price = entry.Price};
-                }
-
-                return toReturn;
-            }
-            else
-            {
-                return null;
-            }          
+            
         }
 
-        public async Task<int> UpdateTemplateByIdAsync(int id, TemplateModel templateData)
+        public async Task<int> UpdateTemplateAsync(Template templateData)
         {
-            //we cannot use ExecuteUpdate due to linked navigation properties
-            Template? template = await _context.Templates
-                .Where(t => t.Id == id)
-                .Include(t => t.TemplateEntries)
-                .SingleOrDefaultAsync();          
+            /* we cannot use ExecuteUpdate due to linked navigation properties */
+            /* also we do not care about any possible update between the read step and the update step... last update win */
 
-            //we do not care about any possible update between the read step and the update step... last update win
+            //we retrieve the template we have in the db linked to the id
+            Template? template = await _context.Templates
+                .Where(t => t.Id == templateData.Id)
+                .Include(t => t.TemplateEntries)
+                .SingleOrDefaultAsync();                      
 
             if (template == null)
             {
@@ -251,22 +224,12 @@ namespace WebTennisFieldReservation.Data
             }
             else
             {
+                //we update it
                 template.Name = templateData.Name;
                 template.Description = templateData.Description;
+                template.TemplateEntries = templateData.TemplateEntries;
 
-                //we need to clear the old entries...
-                template.TemplateEntries.Clear();
-
-                //...and we need to insert the new entries (which can be the same as the old one :D)
-                for (int i = 0; i < templateData.TemplateEntryModels.Count; i++)
-                {
-                    if (templateData.TemplateEntryModels[i].IsSelected)
-                    {
-                        //here Price is not null but we cannot use ! (dunno why) so we use ?? "0m"
-                        template.TemplateEntries.Add(new TemplateEntry() { WeekSlot = i, Price = templateData.TemplateEntryModels[i].Price ?? 0m });
-                    }
-                }
-
+                //and we try to save the changes
                 try
                 {
                     int updatedRows = await _context.SaveChangesAsync();
