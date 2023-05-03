@@ -1,0 +1,22 @@
+﻿@model CourtModel
+
+<h3>@ViewData["Title"]</h3>
+<div class="row my-3">    
+    <div class="col-10">
+        <form method="post">    
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="mb-3">
+                <label asp-for="Name"></label>
+                <input class="form-control" asp-for="Name"/>
+                <span class="text-danger" asp-validation-for="Name"></span>
+            </div>          
+            
+            <button type="submit" class="btn btn-primary">Submit</button>
+        </form>
+    </div>   
+</div>
+
+@section Scripts{   
+    <partial name="_ValidationScriptsPartial" />
+}
+

@@ -153,7 +153,7 @@ namespace WebTennisFieldReservation.Data
             return _context.Users.Where(user => user.Id == id).ExecuteDeleteAsync();
         }
 
-        public async Task<bool> AddTemplateAsync(EditTemplateModel templateData)
+        public async Task<bool> AddTemplateAsync(TemplateModel templateData)
         {
             Template templateToAdd = new Template()
             {
@@ -210,7 +210,7 @@ namespace WebTennisFieldReservation.Data
             return _context.Templates.Where(t => t.Id == id).ExecuteDeleteAsync();
         }
 
-        public async Task<EditTemplateModel?> GetTemplateDataByIdAsync(int id)
+        public async Task<TemplateModel?> GetTemplateDataByIdAsync(int id)
         {
             //we must include the TemplateEntries
             Template? t = await _context.Templates
@@ -220,7 +220,7 @@ namespace WebTennisFieldReservation.Data
 
             if (t != null)
             {
-                EditTemplateModel toReturn = new EditTemplateModel()
+                TemplateModel toReturn = new TemplateModel()
                 {
                     Name = t.Name,
                     Description = t.Description,
@@ -248,7 +248,7 @@ namespace WebTennisFieldReservation.Data
             }          
         }
 
-        public async Task<int> UpdateTemplateByIdAsync(int id, EditTemplateModel templateData)
+        public async Task<int> UpdateTemplateByIdAsync(int id, TemplateModel templateData)
         {
             //we cannot use ExecuteUpdate due to linked navigation properties
             Template? template = await _context.Templates
@@ -297,7 +297,63 @@ namespace WebTennisFieldReservation.Data
                     return -1;
                 }
             }
-        }       
-        
+        }
+
+        public async Task<bool> AddCourtAsync(CourtModel courtData)
+        {
+            _context.Courts.Add(new Court() { Name = courtData.Name });
+
+            //we need to check for court Name uniqueness
+            try
+            {
+                await _context.SaveChangesAsync();
+                return true;
+            }
+            catch (DbUpdateException ex)
+            {
+                if (ex.InnerException is SqlException sqlEx)
+                {
+                    //we should also check for error 2601 (duplicate row)
+                    return false;
+                }
+                else
+                {
+                    //if we're here it's not due to uniqueness constraint
+                    throw;
+                }
+
+            }
+        }
+
+        public Task<List<CourtRowModel>> GetAllCourtsAsync()
+        {
+            return _context.Courts.Select(c => new CourtRowModel() { Id = c.Id, Name = c.Name }).ToListAsync();
+        }
+
+        public Task<int> DeleteCourtByIdAsync(int id)
+        {
+            return _context.Courts.Where(c => c.Id == id).ExecuteDeleteAsync();
+        }
+
+        public Task<CourtModel?> GetCourtDataByIdAsync(int id)
+        {
+            return _context.Courts.Where(c => c.Id == id).Select(c => new CourtModel() { Name = c.Name}).SingleOrDefaultAsync();
+        }
+
+        public async Task<int> UpdateCourtByIdAsync(int id, CourtModel courtData)
+        {
+            try
+            {
+                int updatedCourts = await _context.Courts.Where(c => c.Id == id).ExecuteUpdateAsync(c =>
+                            c.SetProperty(c => c.Name, courtData.Name)
+                        );
+
+                return updatedCourts;
+            }
+            catch(SqlException ex)
+            {
+                return -1;
+            }
+        }
     }
 }

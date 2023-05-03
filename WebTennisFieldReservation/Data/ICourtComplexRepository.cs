@@ -25,10 +25,16 @@ namespace WebTennisFieldReservation.Data
 
         public Task<int> DeleteUserByIdAsync(Guid id);
 
-        public Task<bool> AddTemplateAsync(EditTemplateModel templateData);
+        public Task<bool> AddTemplateAsync(TemplateModel templateData);
         public Task<List<TemplateRowModel>> GetAllTemplatesAsync();
         public Task<int> DeleteTemplateByIdAsync(int id);
-        public Task<EditTemplateModel?> GetTemplateDataByIdAsync(int id);
-        public Task<int> UpdateTemplateByIdAsync(int id, EditTemplateModel templateData);
+        public Task<TemplateModel?> GetTemplateDataByIdAsync(int id);
+        public Task<int> UpdateTemplateByIdAsync(int id, TemplateModel templateData);
+
+        public Task<bool> AddCourtAsync(CourtModel courtData);
+        public Task<List<CourtRowModel>> GetAllCourtsAsync();
+        public Task<int> DeleteCourtByIdAsync(int id);
+        public Task<CourtModel?> GetCourtDataByIdAsync(int id);
+        public Task<int> UpdateCourtByIdAsync(int id, CourtModel courtData);
     }
 }

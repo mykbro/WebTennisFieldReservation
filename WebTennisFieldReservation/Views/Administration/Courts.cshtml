@@ -1,8 +1,8 @@
-﻿@model List<TemplateRowModel>
+﻿@model List<CourtRowModel>
 
 
 @{
-    ViewData["Title"] = "Templates administration";
+    ViewData["Title"] = "Courts administration";
     int counter = 1;
 }
 
@@ -12,24 +12,22 @@
             <thead class="fw-bold">
                 <tr>
                     <th>#</th>
-                    <th>Name</th>
-                    <th>Description</th> 
+                    <th>Name</th>                    
                     <th>@*Buttons*@</th>                    
                 </tr>            
             </thead>
-            <tbody>         
-                @foreach(TemplateRowModel templateData in Model)
+            <tbody>            
+                @foreach(CourtRowModel courtData in Model)
                 {
                     <tr>
                         <td>@counter</td>
-                        <td>@templateData.Name</td>
-                        <td>@templateData.Description</td>
+                        <td>@courtData.Name</td>                       
                         <td>      
                             <div class="d-inline-block">
-                                <a class="btn btn-primary" asp-action="TemplateDetails" asp-route-id="@templateData.Id">Edit</a>      
+                                <a class="btn btn-primary" asp-action="CourtDetails" asp-route-id="@courtData.Id">Edit</a>      
                             </div>
                             <div class="d-inline-block">
-                                 <form method="post" asp-action="DeleteTemplate" asp-route-id="@templateData.Id">
+                                 <form method="post" asp-action="DeleteCourt" asp-route-id="@courtData.Id">
                                     <button type="submit" class="btn btn-danger">Delete</button>
                                 </form>  
                             </div>                             
@@ -44,6 +42,6 @@
         </table>
     </div>    
     <div>
-        <a asp-action="CreateTemplate" class="btn btn-primary">Add Template +</a>
+        <a asp-action="CreateCourt" class="btn btn-primary">Add Court +</a>
     </div>
 </div>

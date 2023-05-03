@@ -33,9 +33,10 @@ namespace WebTennisFieldReservation.Controllers
 		
 
 		[HttpGet("courts")]
-        public IActionResult Courts()
+        public async Task<IActionResult> Courts()
         {
-            return View();
+            List<CourtRowModel> courts = await _repo.GetAllCourtsAsync();
+            return View(courts);
         }
 
         [HttpGet("templates")]
@@ -63,7 +64,7 @@ namespace WebTennisFieldReservation.Controllers
             //we prepare an empty model to pass to the shared (between Create and Edit) view
             //every IsSelected will be initialized to 'false' and every Price to 'null'
             //WATCH OUT that by using Array.Fill we use the same instance for all the array items but here it is fine !!
-            var emptyTemplate = new EditTemplateModel() { TemplateEntryModels = new TemplateEntryModel[168] };
+            var emptyTemplate = new TemplateModel() { TemplateEntryModels = new TemplateEntryModel[168] };
             Array.Fill(emptyTemplate.TemplateEntryModels, new TemplateEntryModel());
 
             ViewData["Title"] = "Create a new template";
@@ -71,7 +72,7 @@ namespace WebTennisFieldReservation.Controllers
         }
 
 		[HttpPost("templates/create")]
-		public async Task<IActionResult> CreateTemplate(EditTemplateModel templateData)
+		public async Task<IActionResult> CreateTemplate(TemplateModel templateData)
 		{
             if(ModelState.IsValid)
             {  
@@ -100,7 +101,7 @@ namespace WebTennisFieldReservation.Controllers
         {
             //we share the view between Create and Details (edit)            
 
-            EditTemplateModel? templateData = await _repo.GetTemplateDataByIdAsync(id);
+            TemplateModel? templateData = await _repo.GetTemplateDataByIdAsync(id);
 
             if (templateData != null)
             {
@@ -114,7 +115,7 @@ namespace WebTennisFieldReservation.Controllers
         }
 
         [HttpPost("templates/{id:int}/details")]
-        public async Task<IActionResult> TemplateDetails(int id, EditTemplateModel templateData)
+        public async Task<IActionResult> TemplateDetails(int id, TemplateModel templateData)
         {
             if (ModelState.IsValid)
             {                 
@@ -158,7 +159,99 @@ namespace WebTennisFieldReservation.Controllers
             }            
         }
 
-        
+        [HttpPost("courts/{id:int}/delete")]
+        public async Task<IActionResult> DeleteCourt(int id)
+        {
+            int deletedRows = await _repo.DeleteCourtByIdAsync(id);
+
+            if (deletedRows == 1)
+            {
+                return RedirectToAction(nameof(Courts));
+            }
+            else
+            {
+                return NotFound();
+            }
+        }
+
+        [HttpGet("courts/create")]
+        public IActionResult CreateCourt()
+        {
+            ViewData["Title"] = "Create a new court";
+            return View("CreateOrEditCourt");
+        }
+
+        [HttpPost("courts/create")]
+        public async Task<IActionResult> CreateCourt(CourtModel courtData)
+        {
+            if(ModelState.IsValid) 
+            { 
+                bool wasAdded = await _repo.AddCourtAsync(courtData);
+
+                if(wasAdded)
+                {
+                    return RedirectToAction(nameof(Courts));
+                }
+                else
+                {
+                    ModelState.AddModelError("", "Court name already used");
+                    ViewData["Title"] = "Create a new court";
+                    return View("CreateOrEditCourt");
+                }
+            }
+            else
+            {
+                ViewData["Title"] = "Create a new court";
+                return View("CreateOrEditCourt");
+            }            
+        }
+
+        [HttpGet("courts/{id:int}/details")]
+        public async Task<IActionResult> CourtDetails(int id)
+        {
+            CourtModel? courtData = await _repo.GetCourtDataByIdAsync(id);
+
+            if(courtData != null)
+            {
+                ViewData["Title"] = "Edit court";
+                return View("CreateOrEditCourt", courtData);
+            }
+            else
+            {
+                return NotFound();
+            }
+        }
+
+        [HttpPost("courts/{id:int}/details")]
+        public async Task<IActionResult> CourtDetails(int id, CourtModel courtData)
+        {
+            if(ModelState.IsValid)
+            {
+                int updatedUsers = await _repo.UpdateCourtByIdAsync(id, courtData);
+
+                if(updatedUsers == 1)
+                {
+                    return RedirectToAction(nameof(Courts));
+                }
+                else if(updatedUsers == 0)
+                {                    
+                    return NotFound();
+                }
+                else //-1
+                {
+                    ModelState.AddModelError("", "Court name already used");
+                    ViewData["Title"] = "Edit court";
+                    return View("CreateOrEditCourt");
+                }
+            }
+            else
+            {
+                ViewData["Title"] = "Edit court";
+                return View("CreateOrEditCourt", courtData);
+            }            
+        }
+
+
         /* we now leave the checks to the database and the entry model
         private bool AreTemplateEntriesOk(EditTemplateModel templateData)
         {
