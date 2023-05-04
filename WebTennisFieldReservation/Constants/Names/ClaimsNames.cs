@@ -8,5 +8,6 @@
         public const string IssueTime = nameof(IssueTime);
         public const string Fullname = nameof(Fullname);
         public const string Email = nameof(Email);
+        public const string RememberMe = nameof(RememberMe);
     }
 }

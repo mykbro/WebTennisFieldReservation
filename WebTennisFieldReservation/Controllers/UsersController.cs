@@ -10,21 +10,14 @@ using WebTennisFieldReservation.Settings;
 using WebTennisFieldReservation.Utilities;
 using System.Security.Cryptography;
 using Microsoft.AspNetCore.Authentication;
+using WebTennisFieldReservation.Constants;
 
 namespace WebTennisFieldReservation.Controllers
 {
     [Route("/users")]
     [AutoValidateAntiforgeryToken]
     public class UsersController : Controller
-    {
-               
-        private static readonly AuthenticationProperties RememberMeProperty = new AuthenticationProperties() { IsPersistent = true };
-        private static readonly AuthenticationProperties DoNotRememberMeProperty = new AuthenticationProperties() { IsPersistent = false };
-
-
-        public UsersController()
-        {           
-        }
+    {  
 
         /*
         public IActionResult Index()
@@ -60,7 +53,7 @@ namespace WebTennisFieldReservation.Controllers
                     Pbkdf2Iterations = pwdHasher.Iterations,
                     SecurityStamp = Guid.NewGuid(),
                     PwdHash = pwdInfo.PasswordHash,
-                    PwdSalt = pwdInfo.Salt
+                    PwdSalt = pwdInfo.Salt                                     
                 };
 
                 bool userAdded = await repo.AddUserAsync(toAdd);
@@ -310,8 +303,10 @@ namespace WebTennisFieldReservation.Controllers
                         bool isAdmin = await repo.IsAdminAsync(partialUserData.Id);
 
                         // we can then proceed to build the claimsprincipal and signIn
-                        ClaimsPrincipal userCp = claimsFactory.CreatePrincipal(partialUserData.Id, partialUserData.SecuritStamp, isAdmin, DateTimeOffset.Now);
-                        await HttpContext.SignInAsync(AuthenticationSchemesNames.MyAuthScheme, userCp, loginData.RememberMe ? RememberMeProperty : DoNotRememberMeProperty);
+                        // we must also pass the "RememberMe" value for when we change our password in order to apply the same choice on the signIn renewal
+                        ClaimsPrincipal userCp = claimsFactory.CreatePrincipal(partialUserData.Id, partialUserData.SecuritStamp, isAdmin, DateTimeOffset.Now, loginData.RememberMe);
+                        AuthenticationProperties authProp = loginData.RememberMe ? AuthenticationPropertiesConsts.RememberMe : AuthenticationPropertiesConsts.DoNotRememberMe;
+                        await HttpContext.SignInAsync(AuthenticationSchemesNames.MyAuthScheme, userCp, authProp);
 
                         // we check if the returnUrl is valid
                         if(Url.IsLocalUrl(returnUrl))
@@ -498,7 +493,7 @@ namespace WebTennisFieldReservation.Controllers
 
                         if (userSecurityData != default)
                         {
-                            //if we found something as we should we check the supplied password with the one in the db
+                            //if we found something (as we should) we check the supplied password with the one in the db
                             bool pwdValid = pwdHasher.ValidatePassword(pwdData.CurrentPassword, userSecurityData.PasswordHash, userSecurityData.Salt, userSecurityData.Iters);
 
                             if (pwdValid)
@@ -526,8 +521,11 @@ namespace WebTennisFieldReservation.Controllers
 
                                 //we resign-in the user with the updated security stamp
                                 bool wasAdmin = Boolean.Parse(User.FindFirstValue(ClaimsNames.IsAdmin));
-                                var claimsPrincipal = claimsPrincipalFactory.CreatePrincipal(id, newSecStamp, wasAdmin, DateTimeOffset.Now);
-                                await HttpContext.SignInAsync(AuthenticationSchemesNames.MyAuthScheme, claimsPrincipal);
+                                bool wasRememberMe = Boolean.Parse(User.FindFirstValue(ClaimsNames.RememberMe));
+                                var claimsPrincipal = claimsPrincipalFactory.CreatePrincipal(id, newSecStamp, wasAdmin, DateTimeOffset.Now, wasRememberMe);
+                                AuthenticationProperties authProp = wasRememberMe ? AuthenticationPropertiesConsts.RememberMe : AuthenticationPropertiesConsts.DoNotRememberMe;
+
+                                await HttpContext.SignInAsync(AuthenticationSchemesNames.MyAuthScheme, claimsPrincipal, authProp);
 
                                 //and we return to the details page for this user
                                 return RedirectToAction(nameof(Details), new { id = id });
