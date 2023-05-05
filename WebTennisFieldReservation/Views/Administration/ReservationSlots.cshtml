@@ -43,15 +43,13 @@
 					<td>@*DaySlot*@</td>
 					@for(int i=0; i < 7; i++)
 					{
-						<td id="weekday_@i">@Model.MondayDateForTheWeek.AddDays(i).ToShortDateString()</td>
+						<td id="weekday_@i"></td>
 					}
 				</tr>
 			</thead>
 			<tbody>                        
                 @for(int hour = 0; hour < 24; hour++)
                 {
-					string mondayAsString = @Model.MondayDateForTheWeek.ToString("dd-MM-yyyy");
-
 					<tr>
                         @{
                             string displayHour = $"{hour:d2}:00 - {hour + 1:d2}:00";
@@ -79,7 +77,7 @@
                 }                        
             </tbody>
 		</table>
-		<input type="hidden" id="mondayDate" value="@Model.MondayDateForTheWeek.ToShortDateString()" />
+		<input type="hidden" id="mondayDate" value="" />
 	</div>
 </div>
 
@@ -101,29 +99,34 @@
 		//}
 		$(function(){
 			//findMonday($('#dateSelector').val());
+			updateDates();
 
 			$('#dateSelector').on('change', function(){
-				const options = {
+				updateDates();
+			});
+		});
+
+		function updateDates(){
+			const options = {
 					  day: '2-digit',
 					  year: 'numeric',
 					  month: '2-digit'					  
-					}
+			}
 
-				var selectedDate = $(this).val();
+			var selectedDate = $('#dateSelector').val();
 
-				if(!isNaN(Date.parse(selectedDate))){
+			if(!isNaN(Date.parse(selectedDate))){
 
-					var mondayDate = findMonday(selectedDate);
+				var mondayDate = findMonday(selectedDate);
 				
-					for(var i = 0; i < 7; i++){
-						var date = addDays(mondayDate, i);
-						$('#weekday_' + i).text(date.toLocaleDateString('it-IT', options));
-					}
-
-					$('#mondayDate').val(mondayDate.toLocaleDateString('it-IT', options))
+				for(var i = 0; i < 7; i++){
+					var date = addDays(mondayDate, i);
+					$('#weekday_' + i).text(date.toLocaleDateString('it-IT', options));
 				}
-			});
-		});
+
+				$('#mondayDate').val(mondayDate.toLocaleDateString('it-IT', options))
+			}
+		}
 
 		function findMonday(date){
 			var selectedDate = new Date(date);

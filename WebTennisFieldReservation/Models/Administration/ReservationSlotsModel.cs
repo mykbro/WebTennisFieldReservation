@@ -10,7 +10,5 @@ namespace WebTennisFieldReservation.Models.Administration
 
 		[DataType(DataType.Date)]
 		public DateTime DefaultDate { get; set; }
-
-		public DateTime MondayDateForTheWeek { get; set; }
 	}
 }
