@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using WebTennisFieldReservation.Entities;
 using WebTennisFieldReservation.Models.Administration;
+using WebTennisFieldReservation.Models.Api;
 using WebTennisFieldReservation.Models.Users;
 
 namespace WebTennisFieldReservation.Data
@@ -212,6 +213,15 @@ namespace WebTennisFieldReservation.Data
             }).ToListAsync();
         }
 
+        public Task<List<TemplateSelectionModel>> GetAllTemplatesForDropdownAsync()
+        {
+            return _context.Templates.Select(t => new TemplateSelectionModel()
+            {
+                Id = t.Id,
+                Name = t.Name,               
+            }).ToListAsync();
+        }
+
         public Task<int> DeleteTemplateByIdAsync(int id)
         {
             return _context.Templates.Where(t => t.Id == id).ExecuteDeleteAsync();
@@ -361,6 +371,11 @@ namespace WebTennisFieldReservation.Data
             {
                 return -1;
             }
+        }
+
+        public Task<List<CourtSelectionModel>> GetAllCourtsForDropdownAsync()
+        {
+            return _context.Courts.Select(c => new CourtSelectionModel() { Id = c.Id, Name = c.Name }).ToListAsync();
         }
     }
 }

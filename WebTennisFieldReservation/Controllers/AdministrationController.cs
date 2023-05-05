@@ -256,6 +256,27 @@ namespace WebTennisFieldReservation.Controllers
             }            
         }
 
+        [HttpGet("reservationslots")]
+        public async Task<IActionResult> ReservationSlots()
+        {           
+            DateTime today = DateTime.Now.Date;
+            DayOfWeek todayDOW = today.DayOfWeek;
+            int diffFromMonday = - ((int) todayDOW - 1 + 7) % 7;
+            DateTime monday = today.AddDays(diffFromMonday);
+
+			var model = new ReservationSlotsModel()
+            {
+                CourtItems = await _repo.GetAllCourtsForDropdownAsync(),
+                TemplateItems = await _repo.GetAllTemplatesForDropdownAsync(),
+                DefaultDate = today,
+                MondayDateForTheWeek = monday
+            };
+
+            return View(model);
+        }
+
+        
+
 
         /* we now leave the checks to the database and the entry model
         private bool AreTemplateEntriesOk(EditTemplateModel templateData)

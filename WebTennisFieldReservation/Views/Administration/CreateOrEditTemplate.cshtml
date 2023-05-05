@@ -75,9 +75,7 @@
                                         }  
 
                                         <div class="d-inline">
-                                            <input asp-for="TemplateEntryModels[checkBoxId].IsSelected" class="dow_@dayOfWeek @hour " />                                         
-                                        </div>
-                                        <div class="d-inline">
+                                            <input asp-for="TemplateEntryModels[checkBoxId].IsSelected" class="dow_@dayOfWeek @hour form-check" />  
                                             <input style="width: 80px; text-align: right" asp-for="TemplateEntryModels[checkBoxId].Price" class="form-control d-inline" />
                                         </div>                                        
                                         <span>€</span>                                        

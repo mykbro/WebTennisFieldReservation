@@ -1,6 +1,7 @@
 ﻿using WebTennisFieldReservation.Entities;
 using WebTennisFieldReservation.Models.Administration;
 using WebTennisFieldReservation.Models.Users;
+using WebTennisFieldReservation.Models.Api;
 
 namespace WebTennisFieldReservation.Data
 {
@@ -20,14 +21,18 @@ namespace WebTennisFieldReservation.Data
         public Task<int> UpdatePasswordDataByIdAsync(Guid id, PasswordUpdateModel pwdUpdateData);
         public Task<int> DeleteUserByIdAsync(Guid id);
 
+
         public Task<bool> AddTemplateAsync(TemplateModel templateData);
         public Task<List<TemplateRowModel>> GetAllTemplatesAsync();
+        public Task<List<TemplateSelectionModel>> GetAllTemplatesForDropdownAsync();
         public Task<int> DeleteTemplateByIdAsync(int id);
         public Task<TemplateModel?> GetTemplateDataByIdAsync(int id);
         public Task<int> UpdateTemplateByIdAsync(int id, TemplateModel templateData);
 
+
         public Task<bool> AddCourtAsync(CourtModel courtData);
         public Task<List<CourtRowModel>> GetAllCourtsAsync();
+        public Task<List<CourtSelectionModel>> GetAllCourtsForDropdownAsync();
         public Task<int> DeleteCourtByIdAsync(int id);
         public Task<CourtModel?> GetCourtDataByIdAsync(int id);
         public Task<int> UpdateCourtByIdAsync(int id, CourtModel courtData);

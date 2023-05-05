@@ -1,0 +1,141 @@
+﻿@model ReservationSlotsModel
+
+@{
+	ViewData["Title"] = "Manage reservation slots";
+}
+
+<h3>@ViewData["Title"]</h3>
+<div class="row my-4">
+	<div class="col-4">
+		<div class="form-group mb-3">
+			<label class="form-label">Select a court</label>
+			<select id="courtSelector" class="form-control dropdown" asp-items="new SelectList(Model.CourtItems, nameof(CourtSelectionModel.Id), nameof(CourtSelectionModel.Name))">				
+				<option disabled selected></option>
+			</select>
+		</div>
+		<div class="form-group mb-3">
+			<label class="form-label">Select a date</label>
+			<input id="dateSelector" asp-for="DefaultDate" class="form-control" />
+		</div>
+		<div class="form-group mb-3">
+			<label class="form-label">Select a template</label>
+			<select id="templateSelector" class="form-control dropdown" asp-items="new SelectList(Model.TemplateItems, nameof(TemplateSelectionModel.Id), nameof(TemplateSelectionModel.Name))">						
+				<option disabled selected></option>
+			</select>
+		</div>
+	</div>
+</div>
+<div class="row">
+	<div class="col-8">		
+		<table class="table text-nowrap">
+			<thead>
+				<tr>
+					<td>@*DaySlot*@</td>
+					<td>Mon</td>
+					<td>Tue</td>
+					<td>Wed</td>
+					<td>Thu</td>
+					<td>Fri</td>
+					<td>Sat</td>
+					<td>Sun</td>
+				</tr>
+				<tr>
+					<td>@*DaySlot*@</td>
+					@for(int i=0; i < 7; i++)
+					{
+						<td id="weekday_@i">@Model.MondayDateForTheWeek.AddDays(i).ToShortDateString()</td>
+					}
+				</tr>
+			</thead>
+			<tbody>                        
+                @for(int hour = 0; hour < 24; hour++)
+                {
+					string mondayAsString = @Model.MondayDateForTheWeek.ToString("dd-MM-yyyy");
+
+					<tr>
+                        @{
+                            string displayHour = $"{hour:d2}:00 - {hour + 1:d2}:00";
+                        }
+
+                        <td>@displayHour</td>                        
+
+                        @for(int dayOfWeek = 0; dayOfWeek < 7; dayOfWeek++)
+						{
+							<td>
+								@{
+									//int checkBoxId = dayOfWeek * 24 + hour;
+									int slotNr = dayOfWeek * 24 + hour;
+									//string divId =  $"{mondayAsString}_{slotNr}";
+								}  
+
+                                <div class="d-inline slot" id="@slotNr">
+                                    <input type="checkbox" class="form-check" name="isSelected" value="true"/> 
+                                    <input style="width: 80px; text-align: right" type="text" name="price" class="form-control d-inline" />									
+                                </div>                                        
+								<span>€</span>                                   
+                            </td>
+                        }
+                    </tr>
+                }                        
+            </tbody>
+		</table>
+		<input type="hidden" id="mondayDate" value="@Model.MondayDateForTheWeek.ToShortDateString()" />
+	</div>
+</div>
+
+@section Scripts{
+	<script>
+		//$(function () {
+		//	$('#courtSelector').on('focus', function(){populateDropdown('#courtSelector','Courts')});
+		//	$('#templateSelector').on('focus', function(){populateDropdown('#templateSelector','Templates')});
+		//});
+
+		//function populateDropdown(target, action){
+		//	$(target).empty();
+		//	$.get('/api/' + action, function(result){					
+		//		$(result).each(function(index, item){						
+		//			var option = '<option value="'+item.id+'">'+item.name+'</option>';
+		//			$(target).append(option);		
+		//		});
+		//	});
+		//}
+		$(function(){
+			//findMonday($('#dateSelector').val());
+
+			$('#dateSelector').on('change', function(){
+				const options = {
+					  day: '2-digit',
+					  year: 'numeric',
+					  month: '2-digit'					  
+					}
+
+				var selectedDate = $(this).val();
+
+				if(!isNaN(Date.parse(selectedDate))){
+
+					var mondayDate = findMonday(selectedDate);
+				
+					for(var i = 0; i < 7; i++){
+						var date = addDays(mondayDate, i);
+						$('#weekday_' + i).text(date.toLocaleDateString('it-IT', options));
+					}
+
+					$('#mondayDate').val(mondayDate.toLocaleDateString('it-IT', options))
+				}
+			});
+		});
+
+		function findMonday(date){
+			var selectedDate = new Date(date);
+			var selectedDOW = selectedDate.getDay();
+			var dayDiff = (selectedDOW - 1 + 7) % 7;
+			var mondayDate = addDays(selectedDate, - dayDiff);
+			return mondayDate;
+		}
+
+		function addDays(date, days){
+			return new Date(date.getFullYear(), date.getMonth(), date.getDate() + days);
+
+		}
+	</script>
+}
