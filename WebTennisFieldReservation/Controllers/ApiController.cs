@@ -34,9 +34,19 @@ namespace WebTennisFieldReservation.Controllers
         }
 
         [HttpPost("slots")]        
-		public IActionResult Slots()
+		public IActionResult Slots([FromBody] PostedReservationSlotsModel slotsData)
 		{
-            return Ok();
+            if(ModelState.IsValid)
+            {
+                
+                DateTime today = slotsData.MondayDateUtc.ToLocalTime();
+				return Ok();
+			}
+            else
+            {
+                return BadRequest();
+            }
+            
 		}
 	}
 }
