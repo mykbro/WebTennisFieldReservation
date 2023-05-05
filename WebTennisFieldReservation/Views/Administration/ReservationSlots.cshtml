@@ -78,6 +78,8 @@
             </tbody>
 		</table>
 		<input type="hidden" id="mondayDate" value="" />
+		<input type="hidden" id="csrfToken" value="@Model.CsrfToken" />
+		<button type="button" id="submitButton" class="btn btn-primary">Submit</button>
 	</div>
 </div>
 
@@ -103,6 +105,40 @@
 
 			$('#dateSelector').on('change', function(){
 				updateDates();
+			});
+
+			$('#submitButton').on('click', function(){
+				var slotsList = new Array();	
+
+				$('.slot').each(function(index, item){					
+					var isSelected = $(this).children()[0].checked;
+					
+					if(isSelected){
+						var price = $(this).children()[1].value;
+
+						if(price == ""){
+							price = 0;
+						}
+
+						var toPush = {
+							slot: item.id, 
+							price: price
+						}
+
+						slotsList.push(toPush);
+					}
+				});
+
+				$.ajax({
+					url: "/api/slots", 
+					type: "post",
+					data: JSON.stringify(slotsList), 
+					dataType: "application/json",
+					headers:{
+						"@HttpHeadersNames.X_CSRF_TOKEN":"@Model.CsrfToken"  
+					}
+				});
+
 			});
 		});
 

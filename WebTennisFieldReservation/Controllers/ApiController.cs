@@ -32,5 +32,11 @@ namespace WebTennisFieldReservation.Controllers
             List<TemplateSelectionModel> payload = await _repo.GetAllTemplatesForDropdownAsync();
             return Json(payload);
         }
-    }
+
+        [HttpPost("slots")]        
+		public IActionResult Slots()
+		{
+            return Ok();
+		}
+	}
 }

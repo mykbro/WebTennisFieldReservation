@@ -10,6 +10,8 @@ using WebTennisFieldReservation.AuthorizationPolicies.SameUser;
 using Microsoft.AspNetCore.Authorization;
 using System.Reflection.Metadata.Ecma335;
 using System.Security.Claims;
+using Microsoft.AspNetCore.Antiforgery;
+using Microsoft.AspNetCore.Mvc.ViewFeatures;
 
 namespace WebTennisFieldReservation
 {
@@ -37,10 +39,10 @@ namespace WebTennisFieldReservation
             // Add password hasher
             builder.Services.AddSingleton<IPasswordHasher>(new Pbkdf2PasswordHasher(passwordSettings.Iterations));
 
-            // Add data protection
+            // Add data protection (could have used just Configure)
             builder.Services.AddDataProtection(options =>
             {
-                options.ApplicationDiscriminator = dataProtectionSettings.AppDiscriminator;                
+                options.ApplicationDiscriminator = dataProtectionSettings.AppDiscriminator;
             }).PersistKeysToFileSystem(new DirectoryInfo(dataProtectionSettings.KeysFolderPath));
 
             // Add security token manager            
@@ -49,7 +51,7 @@ namespace WebTennisFieldReservation
 
             // Add mail sending service            
             string smtpPassword = File.ReadAllText(@"D:\smtppwd.txt");
-            
+
             SmtpClientFactory smtpClientFactory = new SmtpClientFactory(mailSenderSettings.HostName, mailSenderSettings.Port, mailSenderSettings.UseSSL, mailSenderSettings.User, smtpPassword);
             SmtpClientPoolSender smtpClientPoolSender = new SmtpClientPoolSender(smtpClientFactory, 1, 10);
             builder.Services.AddSingleton<ISingleUserMailSender>(new SingleUserPooledMailSender(smtpClientPoolSender, mailSenderSettings.User));
@@ -64,7 +66,7 @@ namespace WebTennisFieldReservation
                     options.AccessDeniedPath = "/home/forbidden";
                     options.ReturnUrlParameter = QueryFieldsNames.ReturnUrl;
                     options.LoginPath = "/users/login";
-                    options.LogoutPath = "/users/logout";                    
+                    options.LogoutPath = "/users/logout";
                 })
                 .AddScheme<MyAuthSchemeOptions, MyAuthSchemeHandler>(AuthenticationSchemesNames.MyAuthScheme, options =>
                 {
@@ -100,6 +102,12 @@ namespace WebTennisFieldReservation
             });
 
             builder.Services.AddSingleton<IAuthorizationHandler, SameUserAuthZHandler>();
+
+            // Add antiforgery header option for XHR Post calls           
+            builder.Services.AddAntiforgery(options =>
+            {
+                options.HeaderName = HttpHeadersNames.X_CSRF_TOKEN;
+            });
 
             //*************** BUILD ***************
             var app = builder.Build();

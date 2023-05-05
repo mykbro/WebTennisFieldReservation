@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Antiforgery;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing.Template;
 using WebTennisFieldReservation.Constants.Names;
@@ -63,7 +64,7 @@ namespace WebTennisFieldReservation.Controllers
 
             //we prepare an empty model to pass to the shared (between Create and Edit) view
             //every IsSelected will be initialized to 'false' and every Price to 'null'
-            //we create only ONE instance that we use to fill the whole list... here it's fine
+            //we create a SINGLE instance that we use to fill the whole list... here it's fine
             var emptyTemplate = new TemplateModel() { TemplateEntryModels = new List<TemplateEntryModel>(168) };
             TemplateEntryModel singleton = new TemplateEntryModel();
             
@@ -257,15 +258,16 @@ namespace WebTennisFieldReservation.Controllers
         }
 
         [HttpGet("reservationslots")]
-        public async Task<IActionResult> ReservationSlots()
+        public async Task<IActionResult> ReservationSlots([FromServices] IAntiforgery antiforgeryService)
         {           
-            DateTime today = DateTime.Now.Date;            
+            DateTime today = DateTime.Now.Date;
 
-			var model = new ReservationSlotsModel()
+            var model = new ReservationSlotsModel()
             {
                 CourtItems = await _repo.GetAllCourtsForDropdownAsync(),
                 TemplateItems = await _repo.GetAllTemplatesForDropdownAsync(),
-                DefaultDate = today                
+                DefaultDate = today,
+                CsrfToken = antiforgeryService.GetTokens(HttpContext).RequestToken!
             };
 
             return View(model);
