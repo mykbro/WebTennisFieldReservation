@@ -14,6 +14,7 @@ namespace WebTennisFieldReservation.Data
         public DbSet<TemplateEntry> TemplateEntries { get; set; } = null!;       
         public DbSet<Reservation> Reservations { get; set; } = null!;
         public DbSet<ReservationEntry> ReservationEntries { get; set; } = null!;
+        public DbSet<ReservationSlot> ReservationsSlots { get; set; } = null!;
 
         public CourtComplexDbContext(DbContextOptions options) : base(options)
         {

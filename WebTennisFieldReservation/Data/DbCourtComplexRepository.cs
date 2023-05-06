@@ -377,5 +377,43 @@ namespace WebTennisFieldReservation.Data
         {
             return _context.Courts.Select(c => new CourtSelectionModel() { Id = c.Id, Name = c.Name }).ToListAsync();
         }
-    }
+
+		public async Task<bool> AddReservationSlots(PostedReservationSlotsModel reservationSlotsData)
+		{
+            List<ReservationSlot> slotEntities = new List<ReservationSlot>(reservationSlotsData.SlotEntries.Count);     //we init capacity
+
+            foreach(ReservationSlotEntryModel entry in reservationSlotsData.SlotEntries)
+            {
+                //we map from weekSlot to (weekDat + daySlot)
+                int weekDayNr = entry.Slot / 24;
+                int daySlot = entry.Slot % 24;
+
+                //we calculate the date taking into account that the passed MondayDate is UTC
+                DateTime day = reservationSlotsData.MondayDateUtc.ToLocalTime().AddDays(weekDayNr);
+
+                //we create the entry and add it to the list
+                slotEntities.Add(new ReservationSlot()
+                {
+                    CourtId = reservationSlotsData.CourtId,
+                    Date = day,
+                    DaySlot = daySlot,
+                    Price = entry.Price
+                });
+            }
+
+            //we add the list to the context
+            _context.ReservationsSlots.AddRange(slotEntities);
+
+            //we try to make the insert in the db
+            try
+            {
+                await _context.SaveChangesAsync();
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+		}
+	}
 }

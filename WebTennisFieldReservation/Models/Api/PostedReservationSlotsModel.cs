@@ -8,7 +8,10 @@ namespace WebTennisFieldReservation.Models.Api
         public DateTime MondayDateUtc { get; set; }
 
         [Required]
-        public List<ReservationSlotEntry> SlotEntries { get; set; } = null!;
+        public int CourtId { get; set; }
+
+        [Required]
+        public List<ReservationSlotEntryModel> SlotEntries { get; set; } = null!;
 
     }
 }

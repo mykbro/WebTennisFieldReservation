@@ -34,13 +34,20 @@ namespace WebTennisFieldReservation.Controllers
         }
 
         [HttpPost("slots")]        
-		public IActionResult Slots([FromBody] PostedReservationSlotsModel slotsData)
+		public async Task<IActionResult> Slots([FromBody] PostedReservationSlotsModel slotsData)
 		{
             if(ModelState.IsValid)
-            {
-                
-                DateTime today = slotsData.MondayDateUtc.ToLocalTime();
-				return Ok();
+            {                
+                bool addOk = await _repo.AddReservationSlots(slotsData);
+
+			    if(addOk)
+                {
+                    return Ok();
+                }
+                else
+                {
+					return BadRequest();
+				}
 			}
             else
             {
