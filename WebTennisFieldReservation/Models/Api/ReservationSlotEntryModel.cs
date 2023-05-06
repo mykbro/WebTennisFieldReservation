@@ -5,7 +5,7 @@ namespace WebTennisFieldReservation.Models.Api
 	public class ReservationSlotEntryModel
 	{
 		[Required]
-		[Range(0, int.MaxValue)]
+		[Range(0, 167)]
 		public int Slot { get; set; }
 
 		[Required]

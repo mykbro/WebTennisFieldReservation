@@ -383,8 +383,6 @@ namespace WebTennisFieldReservation.Data
             List<ReservationSlot> slotEntities = new List<ReservationSlot>(reservationSlotsData.SlotEntries.Count);     //we init capacity
             DateTime mondayAsLocal = reservationSlotsData.MondayDateUtc.ToLocalTime();
 
-
-
 			foreach (ReservationSlotEntryModel entry in reservationSlotsData.SlotEntries)
             {
                 //we map from weekSlot to (weekDat + daySlot)
