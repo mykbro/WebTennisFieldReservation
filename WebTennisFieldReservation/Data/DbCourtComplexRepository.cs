@@ -381,15 +381,18 @@ namespace WebTennisFieldReservation.Data
 		public async Task<bool> AddReservationSlots(PostedReservationSlotsModel reservationSlotsData)
 		{
             List<ReservationSlot> slotEntities = new List<ReservationSlot>(reservationSlotsData.SlotEntries.Count);     //we init capacity
+            DateTime mondayAsLocal = reservationSlotsData.MondayDateUtc.ToLocalTime();
 
-            foreach(ReservationSlotEntryModel entry in reservationSlotsData.SlotEntries)
+
+
+			foreach (ReservationSlotEntryModel entry in reservationSlotsData.SlotEntries)
             {
                 //we map from weekSlot to (weekDat + daySlot)
                 int weekDayNr = entry.Slot / 24;
                 int daySlot = entry.Slot % 24;
 
                 //we calculate the date taking into account that the passed MondayDate is UTC
-                DateTime day = reservationSlotsData.MondayDateUtc.ToLocalTime().AddDays(weekDayNr);
+                DateTime day = mondayAsLocal.AddDays(weekDayNr);
 
                 //we create the entry and add it to the list
                 slotEntities.Add(new ReservationSlot()
@@ -401,19 +404,38 @@ namespace WebTennisFieldReservation.Data
                 });
             }
 
+            /*
             //we add the list to the context
             _context.ReservationsSlots.AddRange(slotEntities);
+            */
 
-            //we try to make the insert in the db
-            try
+            //we load the Court including its reserved slots in the date range
+            Court? court = await _context.Courts
+                .Where(c => c.Id == reservationSlotsData.CourtId)
+                .Include(c => c.ReservationSlots.Where(slot => mondayAsLocal <= slot.Date && slot.Date < mondayAsLocal.AddDays(7)))     //monday <= date < sunday
+                .SingleOrDefaultAsync();
+
+            if(court != null)
             {
-                await _context.SaveChangesAsync();
-                return true;
-            }
-            catch
+                //we update the courts' reservationSlots
+                court.ReservationSlots = slotEntities;
+
+				//we try to update the db
+				try
+				{
+					await _context.SaveChangesAsync();
+					return true;
+				}
+				catch
+				{
+					return false;
+				}
+			}
+            else
             {
                 return false;
             }
+            
 		}
 	}
 }

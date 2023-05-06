@@ -15,6 +15,6 @@ namespace WebTennisFieldReservation.Entities
 
         // Navigation 
         public ICollection<ReservationEntry> ReservationEntries { get; set;} = new List<ReservationEntry>();
-
-    }
+		public ICollection<ReservationSlot> ReservationSlots { get; set; } = new List<ReservationSlot>();
+	}
 }
