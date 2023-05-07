@@ -267,53 +267,54 @@ namespace WebTennisFieldReservation.Data
 
         public async Task<int> UpdateTemplateByIdAsync(int id, TemplateModel templateData)
         {
-            //we cannot use ExecuteUpdate due to linked navigation properties
-            Template? template = await _context.Templates
-                .Where(t => t.Id == id)
-                .Include(t => t.TemplateEntries)
-                .SingleOrDefaultAsync();          
+            //we add a template to tracked entities
+            Template template = new Template() { Id = id };
+            _context.Templates.Attach(template);
+           
+            //we update its properties (after attachment)
+            template.Name = templateData.Name;
+            template.Description = templateData.Description;
 
-            //we do not care about any possible update between the read step and the update step... last update win
+            //we init the entries to an empty list
+            template.TemplateEntries = new List<TemplateEntry>();
 
-            if (template == null)
+			//...and we need to insert the new entries (which can be the same as the old one :D)
+			for (int i = 0; i < templateData.TemplateEntryModels.Count; i++)
             {
-                return 0;
-            }
-            else
-            {
-                template.Name = templateData.Name;
-                template.Description = templateData.Description;
-
-                //we need to clear the old entries...
-                template.TemplateEntries.Clear();
-
-                //...and we need to insert the new entries (which can be the same as the old one :D)
-                for (int i = 0; i < templateData.TemplateEntryModels.Count; i++)
+                if (templateData.TemplateEntryModels[i].IsSelected)
                 {
-                    if (templateData.TemplateEntryModels[i].IsSelected)
-                    {
-                        //here Price is not null but we cannot use ! (dunno why) so we use ?? "0m"
-                        template.TemplateEntries.Add(new TemplateEntry() { WeekSlot = i, Price = templateData.TemplateEntryModels[i].Price ?? 0m });
-                    }
-                }
-
-                try
-                {
-                    int updatedRows = await _context.SaveChangesAsync();
-                    //we return 1 anyway... updatedRows will take into account the nr of updated TemplateEntries
-                    return 1;   
-                }
-                catch(DbUpdateException ex)
-                {
-                    //duplicate name
-                    return -1;
-                }
-                catch (InvalidOperationException ex)
-                {
-                    //duplicate weekslots (exception thrown by EF and not the db)
-                    return -1;
+                    //here Price is not null but we cannot use ! (dunno why) so we use ?? "0m"
+                    template.TemplateEntries.Add(new TemplateEntry() { WeekSlot = i, Price = templateData.TemplateEntryModels[i].Price ?? 0m });
                 }
             }
+
+            using(var trans = await _context.Database.BeginTransactionAsync()) 
+            {
+                //we delete all the entries
+                await _context.TemplateEntries.Where(entry => entry.TemplateId == id).ExecuteDeleteAsync();
+
+				//we try to update
+				try
+				{
+					int updatedRows = await _context.SaveChangesAsync();
+                    await trans.CommitAsync();
+					//we return 1 anyway... updatedRows will take into account the nr of updated TemplateEntries
+					return 1;
+				}
+				catch (DbUpdateException ex)
+				{
+					//duplicate name
+                    await trans.RollbackAsync();
+					return -1;
+				}
+				catch (InvalidOperationException ex)
+				{
+					//duplicate weekslots (exception thrown by EF and not the db)
+					await trans.RollbackAsync();
+					return -1;
+				}
+			}
+                
         }
 
         public async Task<bool> AddCourtAsync(CourtModel courtData)
