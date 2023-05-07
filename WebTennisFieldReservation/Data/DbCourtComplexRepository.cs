@@ -378,7 +378,7 @@ namespace WebTennisFieldReservation.Data
             return _context.Courts.Select(c => new CourtSelectionModel() { Id = c.Id, Name = c.Name }).ToListAsync();
         }
 
-		public async Task<bool> AddReservationSlots(PostedReservationSlotsModel reservationSlotsData)
+		public async Task<bool> AddReservationSlotsAsync(PostedReservationSlotsModel reservationSlotsData)
 		{
             List<ReservationSlot> slotEntities = new List<ReservationSlot>(reservationSlotsData.SlotEntries.Count);     //we init capacity
             DateTime mondayAsLocal = reservationSlotsData.MondayDateUtc.ToLocalTime();
@@ -402,38 +402,53 @@ namespace WebTennisFieldReservation.Data
                 });
             }
 
-            /*
-            //we add the list to the context
+            //we add all the entries to the context
             _context.ReservationsSlots.AddRange(slotEntities);
-            */
 
-            //we load the Court including its reserved slots in the date range
-            Court? court = await _context.Courts
-                .Where(c => c.Id == reservationSlotsData.CourtId)
-                .Include(c => c.ReservationSlots.Where(slot => mondayAsLocal <= slot.Date && slot.Date < mondayAsLocal.AddDays(7)))     //monday <= date < sunday
-                .SingleOrDefaultAsync();
+            //we atomically delete and update the slots in the date range (deafult isolation lvl, no reads)
+			using (var trans = await _context.Database.BeginTransactionAsync())
+            {  
+                
+                await _context.ReservationsSlots
+                    .Where(slot => slot.CourtId == reservationSlotsData.CourtId && mondayAsLocal <= slot.Date && slot.Date <= mondayAsLocal.AddDays(6))
+                    .ExecuteDeleteAsync();                 
 
-            if(court != null)
-            {
-                //we update the courts' reservationSlots
-                court.ReservationSlots = slotEntities;
-
-				//we try to update the db
 				try
 				{
 					await _context.SaveChangesAsync();
-					return true;
+					await trans.CommitAsync();
+                    return true;
 				}
 				catch
 				{
+                    await trans.RollbackAsync();
 					return false;
 				}
 			}
-            else
+		}
+
+		public async Task<List<ReservationSlotEntryModel>> GetReservationSlotsForCourtBetweenDatesAsync(int courtId, DateTime from, DateTime to)
+		{
+            List<ReservationSlot> slots = await _context.ReservationsSlots
+               .Where(slot => slot.CourtId == courtId && from <= slot.Date && slot.Date <= to).ToListAsync();
+
+            List<ReservationSlotEntryModel> slotModels = new List<ReservationSlotEntryModel>(slots.Count);
+
+            //we need to map from daySlot to weekSlot
+            foreach(ReservationSlot slot in slots)
             {
-                return false;
+                int daysFromMonday = (slot.Date - from).Days;
+
+                var slotModel = new ReservationSlotEntryModel()
+                {
+                    Price = slot.Price,
+                    Slot = daysFromMonday * 24 + slot.DaySlot
+				};
+
+                slotModels.Add(slotModel);
             }
-            
+
+            return slotModels;                
 		}
 	}
 }

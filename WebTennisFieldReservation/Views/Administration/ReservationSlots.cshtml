@@ -88,16 +88,21 @@
 		
 		$(function(){
 			//findMonday($('#dateSelector').val());
-			updateDates();
+			updateDates();			
 
 			$('#dateSelector').on('change', function(){
 				updateDates();
+				updateSlots();
+			});
+
+			$('#courtSelector').on('change', function(){				
+				updateSlots();
 			});
 
 			$('#submitButton').on('click', function(){
 				var slotsList = new Array();	
 
-				$('.slot').each(function(index, item){					
+				$('div.slot').each(function(index, item){					
 					var isSelected = $(this).children()[0].checked;
 					
 					if(isSelected){
@@ -124,7 +129,7 @@
 
 				$.ajax({
 					url: "/api/slots", 
-					type: "post",
+					type: "POST",
 					data: JSON.stringify(payload), 
 					contentType: "application/json; charset=utf-8",
 					headers:{
@@ -157,6 +162,24 @@
 			}
 		}
 
+		function updateSlots(){
+			$.ajax({
+				url: '/api/slots?mondayDateUtc=' + $('#mondayDateUtc').val() + '&courtId=' + $('#courtSelector').val(),
+				type: 'GET',
+				dataType: 'json',
+				success: function(result){
+					//we clear all the slots
+					clearSlots();
+					
+					//we populate the right ones
+					for(var i=0; i<result.length ; i++){
+						$('#'+result[i].slot).children()[0].checked = true;
+						$('#'+result[i].slot).children()[1].value = result[i].price;
+					}
+				}
+			});
+		}
+
 		function findMonday(date){
 			var selectedDate = new Date(date);
 			var selectedDOW = selectedDate.getDay();
@@ -167,7 +190,14 @@
 
 		function addDays(date, days){
 			return new Date(date.getFullYear(), date.getMonth(), date.getDate() + days);
-
 		}
+
+		function clearSlots(){
+			$('div.slot').each(function(index, item){
+				$(this).children()[0].checked = false;
+				$(this).children()[1].value = null;
+			});
+		}
+
 	</script>
 }

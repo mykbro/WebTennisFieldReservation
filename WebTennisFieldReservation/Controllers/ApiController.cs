@@ -38,7 +38,7 @@ namespace WebTennisFieldReservation.Controllers
 		{
             if(ModelState.IsValid)
             {                
-                bool addOk = await _repo.AddReservationSlots(slotsData);
+                bool addOk = await _repo.AddReservationSlotsAsync(slotsData);
 
 			    if(addOk)
                 {
@@ -48,6 +48,24 @@ namespace WebTennisFieldReservation.Controllers
                 {
 					return BadRequest();
 				}
+			}
+            else
+            {
+                return BadRequest();
+            }
+            
+		}
+
+		[HttpGet("slots")]
+		public async Task<IActionResult> Slots(int courtId, DateTime mondayDateUtc)
+		{
+            //we need to check that courtId and mondayDateUtc are valid
+            if (ModelState.IsValid)
+            {
+				DateTime mondayDate = mondayDateUtc.ToLocalTime();  //we convert to localTime
+
+				List<ReservationSlotEntryModel> slotModels = await _repo.GetReservationSlotsForCourtBetweenDatesAsync(courtId, mondayDate, mondayDate.AddDays(6));
+				return Json(slotModels);
 			}
             else
             {
