@@ -7,23 +7,25 @@
 <h3>@ViewData["Title"]</h3>
 <div class="row my-4">
 	<div class="col-4">
-		<div class="form-group mb-3">
+		<div class="mb-3">
 			<label class="form-label">Select a court</label>
-			<select id="courtSelector" class="form-control dropdown" asp-items="new SelectList(Model.CourtItems, nameof(CourtSelectionModel.Id), nameof(CourtSelectionModel.Name))">				
+			<select id="courtSelector" class="form-select" asp-items="new SelectList(Model.CourtItems, nameof(CourtSelectionModel.Id), nameof(CourtSelectionModel.Name))">				
 				<option disabled selected></option>
 			</select>
 		</div>
-		<div class="form-group mb-3">
+		<div class="mb-3">
 			<label class="form-label">Select a date</label>
 			<input id="dateSelector" asp-for="DefaultDate" class="form-control" />
-		</div>
-		<div class="form-group mb-3">
-			<label class="form-label">Select a template</label>
-			<select id="templateSelector" class="form-control dropdown" asp-items="new SelectList(Model.TemplateItems, nameof(TemplateSelectionModel.Id), nameof(TemplateSelectionModel.Name))">						
-				<option disabled selected></option>
-			</select>
-			<button type="button" class="btn btn-primary" id="fillButton">Fill</button>
-		</div>
+		</div>		
+		<div class="mb-3">
+			<label class="form-label">Select a template</label>			
+			<div class="d-flex">
+				<select id="templateSelector" class="form-select" asp-items="new SelectList(Model.TemplateItems, nameof(TemplateSelectionModel.Id), nameof(TemplateSelectionModel.Name))">						
+					<option disabled selected></option>
+				</select>
+				<button type="button" class="btn btn-primary ms-2" id="fillButton">Fill</button>	
+			</div>
+		</div>	
 	</div>
 </div>
 <div class="row">
@@ -80,7 +82,13 @@
 		</table>
 		<input type="hidden" id="mondayDateUtc" value="" />
 		<input type="hidden" id="csrfToken" value="@Model.CsrfToken" />
-		<button type="button" id="submitButton" class="btn btn-primary">Submit</button>
+		<div class="container">
+			<button type="button" id="submitButton" class="btn btn-primary">Submit</button>
+			<button type="button" id="clearButton" class="btn btn-info">Clear</button>
+			<span id="submitResult"></span>
+		</div>
+		
+		
 	</div>
 </div>
 
@@ -90,6 +98,10 @@
 		$(function(){
 			//findMonday($('#dateSelector').val());
 			updateDates();	//we populate on document ready		
+
+			$('#clearButton').click(function(){
+				clearSelections();
+			});
 
 			$('#dateSelector').on('change', function(){
 				updateDates();				
@@ -175,6 +187,25 @@
 					contentType: "application/json; charset=utf-8",
 					headers:{
 						"@HttpHeadersNames.X_CSRF_TOKEN":"@Model.CsrfToken"  
+					},
+					success: function(result){	
+						var resultSpan = document.getElementById('submitResult');						
+						resultSpan.className = 'text-success';
+						resultSpan.innerText = 'Submission OK !!';	
+
+						setTimeout(function(){
+							resultSpan.innerText = "";
+						}, 2000);
+					},
+					error: function(result){
+						var resultSpan = document.getElementById('submitResult');						
+						resultSpan.className = 'text-danger';
+						resultSpan.innerText = 'Submission FAILED !!';	
+						
+						setTimeout(function(){							
+							resultSpan.innerText = "";
+						}, 2000);
+							
 					}
 				});
 
@@ -241,11 +272,7 @@
 				$('#'+entries[i].slot).children()[0].checked = true;
 				$('#'+entries[i].slot).children()[1].value = entries[i].price;
 			}
-		}
-
-		function fetchAndFillSlotsIfDateAndCourtAreSelected(){
-			
-		}
+		}	
 
 	</script>
 }
