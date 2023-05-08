@@ -51,7 +51,7 @@
 				</tr>
 			</thead>
 			<tbody>                        
-                @for(int hour = 0; hour < 24; hour++)
+                @for(int hour = 6; hour < 24; hour++)
                 {
 					<tr>
                         @{
@@ -93,11 +93,10 @@
 </div>
 
 @section Scripts{
-	<script>
-		
+	<script>		
 		$(function(){
-			//findMonday($('#dateSelector').val());
-			updateDates();	//we populate on document ready		
+			//we populate dates on document ready	
+			updateDates();		
 
 			$('#clearButton').click(function(){
 				clearSelections();
@@ -212,8 +211,7 @@
 			});
 		});
 
-		function updateDates(){		
-
+		function updateDates(){
 			var selectedDate = $('#dateSelector').val();
 
 			if(selectedDate != ""){

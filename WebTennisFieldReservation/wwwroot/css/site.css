@@ -25,3 +25,17 @@ button.square{
     width: 20px;   
     padding: 0px;
 }
+
+label.cb-label div{
+    background-color: red;   
+}
+
+:checked + label.cb-label div{
+    background-color: lawngreen;
+}
+
+div.box{   
+    height: 25px;
+    width: 40px;   
+    border: 1px solid black;   
+}

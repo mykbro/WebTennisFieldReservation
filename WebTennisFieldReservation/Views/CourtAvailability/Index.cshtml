@@ -1,0 +1,57 @@
+﻿
+@{
+	ViewData["Title"] = "View available slots";
+}
+
+<h3 class="mb-3">@ViewData["Title"]</h3>
+<div class="row">
+	<div class="col-4">
+		<div class="mb-3">
+			<label class="form-label">Please select a date:</label>
+			<input type="date" class="form-control" id="dateSelector"/>
+		</div>
+	</div>
+</div>
+<div class="row">
+	<table class="text-nowrap table">
+		<thead>
+			<tr id="slotTableHeadRow">
+				<th>@*leaving space*@</th>
+			</tr>
+		</thead>
+		<tbody id="slotTableBody">
+		</tbody>
+	</table>
+</div>
+
+@section Scripts{
+	<script>
+		$(function(){
+			const slotTableHeadRow = document.getElementById('slotTableHeadRow');
+			const slotTableBody = document.getElementById('slotTableBody');
+
+			for(let i=0; i<3; i++){
+				let newTh = document.createElement('th');
+				newTh.innerText = 'Campo #'+i;
+				slotTableHeadRow.appendChild(newTh);
+			}
+
+			for(let hour=6; hour<24; hour++){
+				var newRow = document.createElement('tr');
+				let hourTd = document.createElement('td');
+				hourTd.innerText = ('0'+hour).slice(-2) + ':00-' + ('0'+(hour+1)).slice(-2) + ':00';
+
+				newRow.appendChild(hourTd);
+
+				for(let court=0; court<3; court++){
+					let slotTd = document.createElement('td');
+					let id = court*24 + hour;
+					slotTd.innerHTML = '<div><input type="checkbox" style="display: none" id="cb'+id+'"/><label class="cb-label" for="cb'+id+'"><div class="box"></div></label></div>';					
+					newRow.appendChild(slotTd);
+				}
+
+				slotTableBody.appendChild(newRow);
+			}
+		})
+	</script>
+}
