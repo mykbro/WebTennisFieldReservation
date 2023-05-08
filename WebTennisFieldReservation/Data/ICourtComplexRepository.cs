@@ -36,6 +36,8 @@ namespace WebTennisFieldReservation.Data
         public Task<int> UpdateCourtByIdAsync(int id, CourtModel courtData);
 
         public Task<bool> AddReservationSlotsAsync(PostedReservationSlotsModel reservationSlotsData);
-		public Task<List<ReservationSlotEntryModel>> GetReservationSlotsForCourtBetweenDatesAsync(int courtId, DateTime from, DateTime to);
+		public Task<List<ReservationSlotModel>> GetReservationSlotsForCourtBetweenDatesAsync(int courtId, DateTime from, DateTime to);
+
+		public Task<List<ReservationSlotModel>> GetReservatonSlotsFromTemplateAsync(int templateId);
 	}
 }

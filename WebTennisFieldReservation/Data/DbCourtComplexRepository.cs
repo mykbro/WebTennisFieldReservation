@@ -384,7 +384,7 @@ namespace WebTennisFieldReservation.Data
             List<ReservationSlot> slotEntities = new List<ReservationSlot>(reservationSlotsData.SlotEntries.Count);     //we init capacity
             DateTime mondayAsLocal = reservationSlotsData.MondayDateUtc.ToLocalTime();
 
-			foreach (ReservationSlotEntryModel entry in reservationSlotsData.SlotEntries)
+			foreach (ReservationSlotModel entry in reservationSlotsData.SlotEntries)
             {
                 //we map from weekSlot to (weekDat + daySlot)
                 int weekDayNr = entry.Slot / 24;
@@ -428,19 +428,19 @@ namespace WebTennisFieldReservation.Data
 			}
 		}
 
-		public async Task<List<ReservationSlotEntryModel>> GetReservationSlotsForCourtBetweenDatesAsync(int courtId, DateTime from, DateTime to)
+		public async Task<List<ReservationSlotModel>> GetReservationSlotsForCourtBetweenDatesAsync(int courtId, DateTime from, DateTime to)
 		{
             List<ReservationSlot> slots = await _context.ReservationsSlots
                .Where(slot => slot.CourtId == courtId && from <= slot.Date && slot.Date <= to).ToListAsync();
 
-            List<ReservationSlotEntryModel> slotModels = new List<ReservationSlotEntryModel>(slots.Count);
+            List<ReservationSlotModel> slotModels = new List<ReservationSlotModel>(slots.Count);
 
             //we need to map from daySlot to weekSlot
             foreach(ReservationSlot slot in slots)
             {
                 int daysFromMonday = (slot.Date - from).Days;
 
-                var slotModel = new ReservationSlotEntryModel()
+                var slotModel = new ReservationSlotModel()
                 {
                     Price = slot.Price,
                     Slot = daysFromMonday * 24 + slot.DaySlot
@@ -450,6 +450,19 @@ namespace WebTennisFieldReservation.Data
             }
 
             return slotModels;                
+		}
+
+		public Task<List<ReservationSlotModel>> GetReservatonSlotsFromTemplateAsync(int templateId)
+		{
+            //we just map TemplateEntries to ReservationSlotModels
+            return _context.TemplateEntries
+                .Where(entry => entry.TemplateId == templateId)
+                .Select(entry => new ReservationSlotModel()
+                {
+                    Slot = entry.WeekSlot,
+                    Price = entry.Price
+                })
+                .ToListAsync();
 		}
 	}
 }

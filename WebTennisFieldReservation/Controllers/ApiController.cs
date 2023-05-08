@@ -60,11 +60,12 @@ namespace WebTennisFieldReservation.Controllers
 		public async Task<IActionResult> Slots(int courtId, DateTime mondayDateUtc)
 		{
             //we need to check that courtId and mondayDateUtc are valid
+            //we skip the IsMonday date check
             if (ModelState.IsValid)
             {
 				DateTime mondayDate = mondayDateUtc.ToLocalTime();  //we convert to localTime
 
-				List<ReservationSlotEntryModel> slotModels = await _repo.GetReservationSlotsForCourtBetweenDatesAsync(courtId, mondayDate, mondayDate.AddDays(6));
+				List<ReservationSlotModel> slotModels = await _repo.GetReservationSlotsForCourtBetweenDatesAsync(courtId, mondayDate, mondayDate.AddDays(6));
 				return Json(slotModels);
 			}
             else
@@ -73,5 +74,19 @@ namespace WebTennisFieldReservation.Controllers
             }
             
 		}
+
+        [HttpGet("templateentries")]
+        public async Task<IActionResult> TemplateEntries(int templateId)
+        {
+            if (ModelState.IsValid)
+            {
+				List<ReservationSlotModel> slotModels = await _repo.GetReservatonSlotsFromTemplateAsync(templateId);
+                return Json(slotModels);
+            }
+            else
+            {
+                return BadRequest();
+            }
+        }
 	}
 }

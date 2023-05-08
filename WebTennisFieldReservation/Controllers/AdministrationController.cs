@@ -262,7 +262,7 @@ namespace WebTennisFieldReservation.Controllers
         {           
             DateTime today = DateTime.Now.Date;
 
-            var model = new ReservationSlotsModel()
+            var model = new ReservationSlotsPageModel()
             {
                 CourtItems = await _repo.GetAllCourtsForDropdownAsync(),
                 TemplateItems = await _repo.GetAllTemplatesForDropdownAsync(),

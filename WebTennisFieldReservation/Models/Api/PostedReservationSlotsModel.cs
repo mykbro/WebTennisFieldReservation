@@ -11,7 +11,7 @@ namespace WebTennisFieldReservation.Models.Api
         public int CourtId { get; set; }
 
         [Required]
-        public List<ReservationSlotEntryModel> SlotEntries { get; set; } = null!;
+        public List<ReservationSlotModel> SlotEntries { get; set; } = null!;
 
     }
 }

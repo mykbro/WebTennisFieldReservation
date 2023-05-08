@@ -2,7 +2,7 @@
 
 namespace WebTennisFieldReservation.Models.Api
 {
-	public class ReservationSlotEntryModel
+	public class ReservationSlotModel
 	{
 		[Required]
 		[Range(0, 167)]

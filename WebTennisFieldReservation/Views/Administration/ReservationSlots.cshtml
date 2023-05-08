@@ -1,4 +1,4 @@
-﻿@model ReservationSlotsModel
+﻿@model ReservationSlotsPageModel
 
 @{
 	ViewData["Title"] = "Manage reservation slots";
@@ -22,6 +22,7 @@
 			<select id="templateSelector" class="form-control dropdown" asp-items="new SelectList(Model.TemplateItems, nameof(TemplateSelectionModel.Id), nameof(TemplateSelectionModel.Name))">						
 				<option disabled selected></option>
 			</select>
+			<button type="button" class="btn btn-primary" id="fillButton">Fill</button>
 		</div>
 	</div>
 </div>
@@ -88,15 +89,55 @@
 		
 		$(function(){
 			//findMonday($('#dateSelector').val());
-			updateDates();			
+			updateDates();	//we populate on document ready		
 
 			$('#dateSelector').on('change', function(){
-				updateDates();
-				updateSlots();
+				updateDates();				
+				//we clear the current selection
+				clearSelections();
+
+				//we fetch if a court and a date are selected
+				mondayDate = $('#mondayDateUtc').val();
+				courtId = $('#courtSelector').val();
+
+				if(mondayDate != null && courtId != null){
+					fetchAndFillSlots(mondayDate, courtId);
+				}
 			});
 
 			$('#courtSelector').on('change', function(){				
-				updateSlots();
+				//we clear the current selection
+				clearSelections();
+				
+				//we fetch if a court and a date are selected
+				mondayDate = $('#mondayDateUtc').val();
+				courtId = $('#courtSelector').val();
+
+				if(mondayDate != null && courtId != null){
+					fetchAndFillSlots(mondayDate, courtId);
+				}
+			});
+
+			$('#fillButton').on('click', function(){
+				var templateId = $('#templateSelector').val();
+
+				if(templateId != null){
+					$.ajax({
+						url: '/api/templateentries?templateId='+templateId,
+						type: 'GET',
+						dataType: 'json',
+						success: function(result){
+							//we clear all the slots
+							clearSelections();
+					
+							//we populate the right ones
+							populateSlots(result);
+						}
+					});
+				}
+				else{
+					alert('Please select a template');
+				}
 			});
 
 			$('#submitButton').on('click', function(){
@@ -140,16 +181,16 @@
 			});
 		});
 
-		function updateDates(){
-			const options = {
-					  day: '2-digit',
-					  year: 'numeric',
-					  month: '2-digit'					  
-			}
+		function updateDates(){		
 
 			var selectedDate = $('#dateSelector').val();
 
-			if(!isNaN(Date.parse(selectedDate))){
+			if(selectedDate != ""){
+				const options = {
+					  day: '2-digit',
+					  year: 'numeric',
+					  month: '2-digit'					  
+				}
 
 				var mondayDate = findMonday(selectedDate);
 				
@@ -160,22 +201,18 @@
 				
 				$('#mondayDateUtc').val(mondayDate.toISOString());
 			}
+			else{
+				$('#mondayDateUtc').val(null);
+			}
 		}
 
-		function updateSlots(){
+		function fetchAndFillSlots(mondayDate, courtId){
 			$.ajax({
 				url: '/api/slots?mondayDateUtc=' + $('#mondayDateUtc').val() + '&courtId=' + $('#courtSelector').val(),
 				type: 'GET',
 				dataType: 'json',
-				success: function(result){
-					//we clear all the slots
-					clearSlots();
-					
-					//we populate the right ones
-					for(var i=0; i<result.length ; i++){
-						$('#'+result[i].slot).children()[0].checked = true;
-						$('#'+result[i].slot).children()[1].value = result[i].price;
-					}
+				success: function(result){					
+					populateSlots(result);
 				}
 			});
 		}
@@ -192,11 +229,22 @@
 			return new Date(date.getFullYear(), date.getMonth(), date.getDate() + days);
 		}
 
-		function clearSlots(){
+		function clearSelections(){
 			$('div.slot').each(function(index, item){
 				$(this).children()[0].checked = false;
 				$(this).children()[1].value = null;
 			});
+		}
+
+		function populateSlots(entries){
+			for(var i=0, len = entries.length; i<len ; i++){
+				$('#'+entries[i].slot).children()[0].checked = true;
+				$('#'+entries[i].slot).children()[1].value = entries[i].price;
+			}
+		}
+
+		function fetchAndFillSlotsIfDateAndCourtAreSelected(){
+			
 		}
 
 	</script>
