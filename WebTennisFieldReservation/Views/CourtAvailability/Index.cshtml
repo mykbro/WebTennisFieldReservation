@@ -27,14 +27,71 @@
 
 @section Scripts{
 	<script>
-		$(function(){
+		$(function(){	
+
+			$('#dateSelector').change(function(){
+				fetchAvailabilityData();
+			})
+
+			//fetchAvailabilityData();
+			$('#dateSelector').trigger('change');			
+		})
+
+		function fetchAvailabilityData(){
+			//we first fetch the courts and build an empty table
+			$.ajax({
+				type: 'GET',
+				url: '/api/courts',
+				dataType: 'json',
+				success: function(result){
+					//we create a full disabled table
+					buildDisabledTable(result);
+
+					//we then fetch the availability data
+					const date = document.getElementById('dateSelector').value;
+					
+					$.ajax({
+						type: 'GET',
+						url: 'api/availability?date='+date,
+						dataType: 'json',
+						success: function(result){
+							const numEntries = result.length;
+
+							for(let i = 0; i < numEntries; i++){
+								let id ='court'+result[i].courtId+'slot'+result[i].daySlot;
+								let isAvailable = result[i].isAvailable;
+
+								let divBox = document.getElementById('box-'+id);
+								divBox.innerText = result[i].price;
+								divBox.className = 'box';	//we remove the missingSlot class
+								
+								if(isAvailable){
+									document.getElementById('cb-'+id).disabled = false; 
+								}
+								else{
+									divBox.classList += ' slotTaken';
+								}
+								
+							}
+						}
+					})
+				}
+			});
+		}
+
+		function buildDisabledTable(courts){
+			const courtsNr = courts.length;
 			const slotTableHeadRow = document.getElementById('slotTableHeadRow');
 			const slotTableBody = document.getElementById('slotTableBody');
 
-			//we create the headers
-			for(let i=0; i<3; i++){
+			//we clear the previous body and head
+			slotTableBody.innerHTML = "";
+			slotTableHeadRow.innerHTML = "<th></th>";		//we init with an empty TH
+
+			//we create the headers 		
+			for(let i=0; i<courtsNr; i++){
 				let newTh = document.createElement('th');
-				newTh.innerText = 'Campo #'+i;
+				newTh.innerText = courts[i].name;
 				slotTableHeadRow.appendChild(newTh);
 			}
 
@@ -49,25 +106,26 @@
 				newRow.appendChild(hourTd);
 
 				//foreach column we add a new td to the row
-				for(let court=0; court<3; court++){					 
-					let id = court*24 + hour;
-
+				for(let i=0; i<courtsNr; i++){					 
+					let id = 'court'+courts[i].id+'slot'+hour;
 					let slotTd = document.createElement('td');
 
-					//we create a "box checkbox"
-					let outerDiv = document.createElement('div');
-					
+					//we create a "box"
+					let outerDiv = document.createElement('div');					
+					//we create an hidden checkbox...
 					let checkBox = document.createElement('input');
 					checkBox.type = 'checkbox';
 					checkBox.className = 'hidden';
-					checkBox.id = 'cb'+id;					
-					
+					checkBox.id = 'cb-'+id;
+					checkBox.disabled = true;
+					//...and its label
 					let label = document.createElement('label');
 					label.className = 'cb-label';
 					label.htmlFor = checkBox.id;
 
 					let boxDiv = document.createElement('div');
-					boxDiv.className = 'box';
+					boxDiv.id = "box-"+id;
+					boxDiv.className = 'box missingSlot';
 
 					label.appendChild(boxDiv);
 					outerDiv.appendChild(checkBox);
@@ -84,6 +142,7 @@
 				//we finally add the row to the body
 				slotTableBody.appendChild(newRow);
 			}
-		})
+
+		}
 	</script>
 }

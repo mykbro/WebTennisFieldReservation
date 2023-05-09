@@ -400,7 +400,7 @@ namespace WebTennisFieldReservation.Data
                     Date = day,
                     DaySlot = daySlot,
                     Price = entry.Price,
-                    IsAvailable = false
+                    IsAvailable = true
                 });
             }
 

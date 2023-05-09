@@ -30,17 +30,25 @@ button.square{
     display: none;
 }
 
-:checked + label.cb-label div.box{
-    background-color: lawngreen;
+div.box.missingSlot {
+    background-color: lightslategray;
 }
 
-:disabled + label.cb-label div.box {
-    background-color: dimgray;
+:checked + label.cb-label div.box {
+    background-color: yellow;
+}
+
+div.box.slotTaken {
+    background-color: red;
 }
 
 div.box {
-    background-color: red;
-    height: 25px;
-    width: 40px;
+    background-color: greenyellow;
+    height: 50px;
+    width: 100px;
     border: 1px solid black;
+    text-align: center;
+    padding: 12px 0;
 }
+
+

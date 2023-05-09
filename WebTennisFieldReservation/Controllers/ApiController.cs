@@ -20,6 +20,7 @@ namespace WebTennisFieldReservation.Controllers
         }
 
         [HttpGet("courts")]
+        [AllowAnonymous]
         public async Task<IActionResult> Courts()
         {
             List<CourtSelectionModel> payload = await _repo.GetAllCourtsForDropdownAsync();
@@ -57,15 +58,15 @@ namespace WebTennisFieldReservation.Controllers
 		}
 
 		[HttpGet("slots")]
-		public async Task<IActionResult> Slots(int courtId, DateTime mondayDateUtc)
+		public async Task<IActionResult> Slots(int? courtId, DateTime? mondayDateUtc)
 		{
             //we need to check that courtId and mondayDateUtc are valid
             //we skip the IsMonday date check
-            if (ModelState.IsValid)
+            if (courtId != null && mondayDateUtc != null)
             {
-				DateTime mondayDate = mondayDateUtc.ToLocalTime();  //we convert to localTime
+				DateTime mondayDate = mondayDateUtc.Value.ToLocalTime();  //we convert to localTime
 
-				List<ReservationSlotModel> slotModels = await _repo.GetReservationSlotsForCourtBetweenDatesAsync(courtId, mondayDate, mondayDate.AddDays(6));
+				List<ReservationSlotModel> slotModels = await _repo.GetReservationSlotsForCourtBetweenDatesAsync(courtId.Value, mondayDate, mondayDate.AddDays(6));
 				return Json(slotModels);
 			}
             else
@@ -76,11 +77,11 @@ namespace WebTennisFieldReservation.Controllers
 		}
 
         [HttpGet("templateentries")]
-        public async Task<IActionResult> TemplateEntries(int templateId)
+        public async Task<IActionResult> TemplateEntries(int? templateId)
         {
-            if (ModelState.IsValid)
+            if(templateId != null)
             {
-				List<ReservationSlotModel> slotModels = await _repo.GetReservatonSlotsFromTemplateAsync(templateId);
+				List<ReservationSlotModel> slotModels = await _repo.GetReservatonSlotsFromTemplateAsync(templateId.Value);
                 return Json(slotModels);
             }
             else
@@ -90,11 +91,12 @@ namespace WebTennisFieldReservation.Controllers
         }
 
 		[HttpGet("availability")]
-		public async Task<IActionResult> Availability(DateTime date)
+		[AllowAnonymous]
+		public async Task<IActionResult> Availability(DateTime? date)
 		{
-			if(ModelState.IsValid)
+			if(date != null)
             {
-                List<SlotAvailabilityModel> slots = await _repo.GetAllCourtsSlotAvailabilityForDate(date);
+                List<SlotAvailabilityModel> slots = await _repo.GetAllCourtsSlotAvailabilityForDate(date.Value);
                 return Json(slots);
             }
             else
