@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using WebTennisFieldReservation.Data;
+using WebTennisFieldReservation.Models.CourtAvailability;
 
 namespace WebTennisFieldReservation.Controllers
 {
@@ -15,7 +16,8 @@ namespace WebTennisFieldReservation.Controllers
 		
 		public IActionResult Index()
 		{
-			return View();
+			var pageData = new AvailabilityPageModel() { Today = DateTime.Now };
+			return View(pageData);
 		}
 	}
 }

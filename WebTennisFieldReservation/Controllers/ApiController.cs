@@ -88,5 +88,21 @@ namespace WebTennisFieldReservation.Controllers
                 return BadRequest();
             }
         }
+
+		[HttpGet("availability")]
+		public async Task<IActionResult> Availability(DateTime date)
+		{
+			if(ModelState.IsValid)
+            {
+                List<SlotAvailabilityModel> slots = await _repo.GetAllCourtsSlotAvailabilityForDate(date);
+                return Json(slots);
+            }
+            else
+            {
+                return BadRequest();
+            }
+		}
+
+
 	}
 }

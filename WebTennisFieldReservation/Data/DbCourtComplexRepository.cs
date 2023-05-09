@@ -465,5 +465,19 @@ namespace WebTennisFieldReservation.Data
                 })
                 .ToListAsync();
 		}
+
+		public Task<List<SlotAvailabilityModel>> GetAllCourtsSlotAvailabilityForDate(DateTime date)
+		{
+			return _context.ReservationsSlots
+                .Where(slot => slot.Date == date)
+                .Select(slot => new SlotAvailabilityModel()
+                {
+                    CourtId = slot.CourtId,
+                    DaySlot = slot.DaySlot,
+                    IsAvailable = slot.IsAvailable,
+                    Price = slot.Price
+                })
+                .ToListAsync();
+		}
 	}
 }
