@@ -26,16 +26,21 @@ button.square{
     padding: 0px;
 }
 
-label.cb-label div{
-    background-color: red;   
+.hidden {
+    display: none;
 }
 
-:checked + label.cb-label div{
+:checked + label.cb-label div.box{
     background-color: lawngreen;
 }
 
-div.box{   
+:disabled + label.cb-label div.box {
+    background-color: dimgray;
+}
+
+div.box {
+    background-color: red;
     height: 25px;
-    width: 40px;   
-    border: 1px solid black;   
+    width: 40px;
+    border: 1px solid black;
 }

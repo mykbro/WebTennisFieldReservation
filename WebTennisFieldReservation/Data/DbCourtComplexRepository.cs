@@ -399,7 +399,8 @@ namespace WebTennisFieldReservation.Data
                     CourtId = reservationSlotsData.CourtId,
                     Date = day,
                     DaySlot = daySlot,
-                    Price = entry.Price
+                    Price = entry.Price,
+                    IsAvailable = false
                 });
             }
 

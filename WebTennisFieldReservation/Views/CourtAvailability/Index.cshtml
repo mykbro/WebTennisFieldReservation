@@ -13,7 +13,7 @@
 	</div>
 </div>
 <div class="row">
-	<table class="text-nowrap table">
+	<table class="table text-nowrap">
 		<thead>
 			<tr id="slotTableHeadRow">
 				<th>@*leaving space*@</th>
@@ -30,26 +30,57 @@
 			const slotTableHeadRow = document.getElementById('slotTableHeadRow');
 			const slotTableBody = document.getElementById('slotTableBody');
 
+			//we create the headers
 			for(let i=0; i<3; i++){
 				let newTh = document.createElement('th');
 				newTh.innerText = 'Campo #'+i;
 				slotTableHeadRow.appendChild(newTh);
 			}
 
+			//we create the rows
 			for(let hour=6; hour<24; hour++){
-				var newRow = document.createElement('tr');
+				//we creat a new row
+				var newRow = document.createElement('tr');	//need to be var for scope reasons				
+				
+				//the first element we add to the row is the slot timespan
 				let hourTd = document.createElement('td');
 				hourTd.innerText = ('0'+hour).slice(-2) + ':00-' + ('0'+(hour+1)).slice(-2) + ':00';
-
 				newRow.appendChild(hourTd);
 
-				for(let court=0; court<3; court++){
-					let slotTd = document.createElement('td');
+				//foreach column we add a new td to the row
+				for(let court=0; court<3; court++){					 
 					let id = court*24 + hour;
-					slotTd.innerHTML = '<div><input type="checkbox" style="display: none" id="cb'+id+'"/><label class="cb-label" for="cb'+id+'"><div class="box"></div></label></div>';					
+
+					let slotTd = document.createElement('td');
+
+					//we create a "box checkbox"
+					let outerDiv = document.createElement('div');
+					
+					let checkBox = document.createElement('input');
+					checkBox.type = 'checkbox';
+					checkBox.className = 'hidden';
+					checkBox.id = 'cb'+id;					
+					
+					let label = document.createElement('label');
+					label.className = 'cb-label';
+					label.htmlFor = checkBox.id;
+
+					let boxDiv = document.createElement('div');
+					boxDiv.className = 'box';
+
+					label.appendChild(boxDiv);
+					outerDiv.appendChild(checkBox);
+					outerDiv.appendChild(label);
+					
+					//we append it to the TD
+					slotTd.appendChild(outerDiv);
+					//slotTd.innerHTML = '<div><input type="checkbox" class="hidden" id="cb'+id+'"/><label class="cb-label" for="cb'+id+'"><div class="box"></div></label></div>';					
+					
+					//and we append the TD to the row
 					newRow.appendChild(slotTd);
 				}
 
+				//we finally add the row to the body
 				slotTableBody.appendChild(newRow);
 			}
 		})
