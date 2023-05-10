@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using WebTennisFieldReservation.Entities;
 using WebTennisFieldReservation.Models.Administration;
 using WebTennisFieldReservation.Models.Api;
+using WebTennisFieldReservation.Models.CourtAvailability;
 using WebTennisFieldReservation.Models.Users;
 
 namespace WebTennisFieldReservation.Data
@@ -466,16 +467,30 @@ namespace WebTennisFieldReservation.Data
                 .ToListAsync();
 		}
 
-		public Task<List<SlotAvailabilityModel>> GetAllCourtsSlotAvailabilityForDate(DateTime date)
+		public Task<List<SlotAvailabilityForDateModel>> GetSlotAvailabilityForDateForAllCourts(DateTime date)
 		{
 			return _context.ReservationsSlots
                 .Where(slot => slot.Date == date)
-                .Select(slot => new SlotAvailabilityModel()
+                .Select(slot => new SlotAvailabilityForDateModel()
                 {
                     Id = slot.Id,
                     CourtId = slot.CourtId,
                     DaySlot = slot.DaySlot,
                     IsAvailable = slot.IsAvailable,
+                    Price = slot.Price
+                })
+                .ToListAsync();
+		}
+
+		public Task<List<SlotModel>> GetSlotDataByIdList(List<int> ids)
+		{
+			return _context.ReservationsSlots
+                .Where(slot =>  ids.Contains(slot.Id) && slot.IsAvailable == true)      //preliminary check for availability (also for forged data)
+                .Select(slot => new SlotModel() 
+                { 
+                    Date = slot.Date,
+                    CourtId = slot.CourtId,
+                    DaySlot = slot.DaySlot,
                     Price = slot.Price
                 })
                 .ToListAsync();

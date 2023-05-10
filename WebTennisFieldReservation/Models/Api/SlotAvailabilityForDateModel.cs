@@ -1,6 +1,6 @@
 ﻿namespace WebTennisFieldReservation.Models.Api
 {
-	public class SlotAvailabilityModel
+	public class SlotAvailabilityForDateModel
 	{
 		public int Id { get; set; }
 		public int DaySlot { get; set; }

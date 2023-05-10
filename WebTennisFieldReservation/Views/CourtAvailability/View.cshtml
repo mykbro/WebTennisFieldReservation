@@ -5,8 +5,7 @@
 }
 
 <h3 class="mb-3">@ViewData["Title"]</h3>
-<!form method="post" action="/courtavailability/checkout" name="form1">
-	<input type="hidden" name="JsonPayload" id="json-input"/>	
+<!form method="post" action="/courtavailability/checkout" name="form1" itemid="">		
 </!form>
 <div class="row">
 	<div class="col-4">
@@ -44,29 +43,22 @@
 
 			$('#submit-button').click(function(){
 				const checkedElems = $(':checked').get();
-				const selectedSlots = new Array();
-
 				const checkedElemsLength = checkedElems.length;
 
 				//we submit only if we have at least 1 selection
 				if(checkedElemsLength > 0){
 
 					for(let i=0; i<checkedElemsLength; i++){
-						let slot = {
-							CourtId: checkedElems[i].dataset.court,
-							DaySlot: checkedElems[i].dataset.slot
-						}
+						let slotId = checkedElems[i].dataset.slotid;
+						
+						let inputElem = document.createElement('input');
+						inputElem.type = 'hidden';
+						inputElem.name = 'SlotIds';
+						inputElem.value = slotId;
 
-						selectedSlots.push(slot);
+						document.form1.appendChild(inputElem);
 					}
 
-					const payload = {
-						Date: document.getElementById('dateSelector').value,
-						Slots: selectedSlots
-					}
-
-					const payloadAsJSON = JSON.stringify(payload);
-					document.getElementById('json-input').value = payloadAsJSON;
 					document.form1.submit();
 				}
 				else{
@@ -97,7 +89,7 @@
 							const numEntries = result.length;
 
 							for(let i = 0; i < numEntries; i++){
-								let id = result[i].id;
+								let id ='court'+result[i].courtId+'slot'+result[i].daySlot;
 								let isAvailable = result[i].isAvailable;
 
 								let divBox = document.getElementById('box-'+id);
@@ -105,7 +97,9 @@
 								divBox.className = 'box';	//we remove the missingSlot class
 								
 								if(isAvailable){
-									document.getElementById('cb-'+id).disabled = false; 
+									let checkBox = document.getElementById('cb-'+id);
+									checkBox.disabled = false; 
+									checkBox.dataset.slotid = result[i].id;
 								}
 								else{
 									divBox.classList += ' slotTaken';
@@ -155,9 +149,7 @@
 					let checkBox = document.createElement('input');
 					checkBox.type = 'checkbox';
 					checkBox.className = 'hidden';
-					checkBox.id = 'cb-'+id;
-					checkBox.dataset.court = courts[i].id;	//we add 2 custom data attributes
-					checkBox.dataset.slot = hour;
+					checkBox.id = 'cb-'+id;					
 					checkBox.disabled = true;	//and we initially set it to disabled
 
 

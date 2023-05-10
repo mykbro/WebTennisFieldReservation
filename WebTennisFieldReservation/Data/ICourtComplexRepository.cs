@@ -2,6 +2,7 @@
 using WebTennisFieldReservation.Models.Administration;
 using WebTennisFieldReservation.Models.Users;
 using WebTennisFieldReservation.Models.Api;
+using WebTennisFieldReservation.Models.CourtAvailability;
 
 namespace WebTennisFieldReservation.Data
 {
@@ -40,6 +41,7 @@ namespace WebTennisFieldReservation.Data
 
 		public Task<List<ReservationSlotModel>> GetReservatonSlotsFromTemplateAsync(int templateId);
 
-        public Task<List<SlotAvailabilityModel>> GetAllCourtsSlotAvailabilityForDate(DateTime date);
+        public Task<List<SlotAvailabilityForDateModel>> GetSlotAvailabilityForDateForAllCourts(DateTime date);
+		public Task<List<SlotModel>> GetSlotDataByIdList(List<int> ids);
 	}
 }

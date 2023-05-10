@@ -5,6 +5,6 @@ namespace WebTennisFieldReservation.Models.CourtAvailability
 	public class CheckoutPostModel
 	{
 		[Required]
-		public string JsonPayload { get; set; } = null!;
+		public List<int> SlotIds { get; set; } = null!;
 	}
 }

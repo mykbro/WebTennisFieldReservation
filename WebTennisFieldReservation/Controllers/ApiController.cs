@@ -96,7 +96,7 @@ namespace WebTennisFieldReservation.Controllers
 		{
 			if(date != null)
             {
-                List<SlotAvailabilityModel> slots = await _repo.GetAllCourtsSlotAvailabilityForDate(date.Value);
+                List<SlotAvailabilityForDateModel> slots = await _repo.GetSlotAvailabilityForDateForAllCourts(date.Value);
                 return Json(slots);
             }
             else
