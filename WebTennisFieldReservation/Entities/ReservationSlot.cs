@@ -4,9 +4,11 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace WebTennisFieldReservation.Entities
 {
-	
+	[Index(nameof(CourtId), nameof(Date), nameof(DaySlot), IsUnique = true)]
 	public class ReservationSlot
-	{		
+	{
+		[Key]
+		public int Id { get; set; }
 		[ForeignKey(nameof(Court))]		
 		public int CourtId { get; set; }
 		[Required]

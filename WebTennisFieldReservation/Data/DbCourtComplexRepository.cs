@@ -472,6 +472,7 @@ namespace WebTennisFieldReservation.Data
                 .Where(slot => slot.Date == date)
                 .Select(slot => new SlotAvailabilityModel()
                 {
+                    Id = slot.Id,
                     CourtId = slot.CourtId,
                     DaySlot = slot.DaySlot,
                     IsAvailable = slot.IsAvailable,

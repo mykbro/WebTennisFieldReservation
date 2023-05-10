@@ -5,6 +5,9 @@
 }
 
 <h3 class="mb-3">@ViewData["Title"]</h3>
+<!form method="post" action="/courtavailability/checkout" name="form1">
+	<input type="hidden" name="JsonPayload" id="json-input"/>	
+</!form>
 <div class="row">
 	<div class="col-4">
 		<div class="mb-3">
@@ -24,17 +27,53 @@
 		</tbody>
 	</table>
 </div>
+<button type="button" id="submit-button" class="btn btn-primary">Continue ></button>
+
+
 
 @section Scripts{
 	<script>
 		$(function(){	
 
 			$('#dateSelector').change(function(){
-				fetchAvailabilityData();
-			})
+				fetchAvailabilityData();				
+			});
 
 			//fetchAvailabilityData();
 			$('#dateSelector').trigger('change');			
+
+			$('#submit-button').click(function(){
+				const checkedElems = $(':checked').get();
+				const selectedSlots = new Array();
+
+				const checkedElemsLength = checkedElems.length;
+
+				//we submit only if we have at least 1 selection
+				if(checkedElemsLength > 0){
+
+					for(let i=0; i<checkedElemsLength; i++){
+						let slot = {
+							CourtId: checkedElems[i].dataset.court,
+							DaySlot: checkedElems[i].dataset.slot
+						}
+
+						selectedSlots.push(slot);
+					}
+
+					const payload = {
+						Date: document.getElementById('dateSelector').value,
+						Slots: selectedSlots
+					}
+
+					const payloadAsJSON = JSON.stringify(payload);
+					document.getElementById('json-input').value = payloadAsJSON;
+					document.form1.submit();
+				}
+				else{
+					alert('Please select at least one slot !');
+				}
+				
+			});
 		})
 
 		function fetchAvailabilityData(){
@@ -45,24 +84,24 @@
 				dataType: 'json',
 				success: function(result){
 					//we create a full disabled table
-					buildDisabledTable(result);
+					buildDisabledTable(result);		//we could've also put this call inside the next ajax 'success' function
 
-					//we then fetch the availability data
+					//we then fetch the availability data 
 					const date = document.getElementById('dateSelector').value;
 					
 					$.ajax({
 						type: 'GET',
-						url: 'api/availability?date='+date,
+						url: '/api/availability?date='+date,
 						dataType: 'json',
 						success: function(result){
 							const numEntries = result.length;
 
 							for(let i = 0; i < numEntries; i++){
-								let id ='court'+result[i].courtId+'slot'+result[i].daySlot;
+								let id = result[i].id;
 								let isAvailable = result[i].isAvailable;
 
 								let divBox = document.getElementById('box-'+id);
-								divBox.innerText = result[i].price;
+								divBox.innerText = result[i].price.toLocaleString('it-IT', { maximumFractionDigits: 2, minimumFractionDigits: 2 }) + ' €';
 								divBox.className = 'box';	//we remove the missingSlot class
 								
 								if(isAvailable){
@@ -112,12 +151,16 @@
 
 					//we create a "box"
 					let outerDiv = document.createElement('div');					
-					//we create an hidden checkbox...
+					//we create a hidden checkbox...
 					let checkBox = document.createElement('input');
 					checkBox.type = 'checkbox';
 					checkBox.className = 'hidden';
 					checkBox.id = 'cb-'+id;
-					checkBox.disabled = true;
+					checkBox.dataset.court = courts[i].id;	//we add 2 custom data attributes
+					checkBox.dataset.slot = hour;
+					checkBox.disabled = true;	//and we initially set it to disabled
+
+
 					//...and its label
 					let label = document.createElement('label');
 					label.className = 'cb-label';
