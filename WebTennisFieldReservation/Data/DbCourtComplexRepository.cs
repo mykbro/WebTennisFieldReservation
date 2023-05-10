@@ -467,7 +467,7 @@ namespace WebTennisFieldReservation.Data
                 .ToListAsync();
 		}
 
-		public Task<List<SlotAvailabilityForDateModel>> GetSlotAvailabilityForDateForAllCourts(DateTime date)
+		public Task<List<SlotAvailabilityForDateModel>> GetSlotAvailabilityForDateForAllCourtsAsync(DateTime date)
 		{
 			return _context.ReservationsSlots
                 .Where(slot => slot.Date == date)
@@ -482,14 +482,15 @@ namespace WebTennisFieldReservation.Data
                 .ToListAsync();
 		}
 
-		public Task<List<SlotModel>> GetSlotDataByIdList(List<int> ids)
+		public Task<List<SlotModel>> GetSlotDataByIdListAsync(List<int> ids)
 		{
 			return _context.ReservationsSlots
+                .Include(slot => slot.Court)
                 .Where(slot =>  ids.Contains(slot.Id) && slot.IsAvailable == true)      //preliminary check for availability (also for forged data)
                 .Select(slot => new SlotModel() 
                 { 
                     Date = slot.Date,
-                    CourtId = slot.CourtId,
+                    CourtName = slot.Court.Name,
                     DaySlot = slot.DaySlot,
                     Price = slot.Price
                 })
