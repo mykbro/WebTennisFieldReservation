@@ -73,14 +73,18 @@ namespace WebTennisFieldReservation.Controllers
 
 				if(reservationId != null)
 				{
-					//we send a confirmation mail
-					string mailSubject = "Reservation confirmed";
-					string mailBody = $"Your reservation #{reservationId} was confirmed !";					
+					//we start a concurrent Task that sends a confirmation mail and then update the database
+					_ = Task.Run(async () =>
+						{
+							//we send the confirmation mail
+							string mailSubject = "Reservation confirmed";
+							string mailBody = $"Your reservation #{reservationId} was confirmed !";
 
-					await mailSender.SendEmailAsync(User.FindFirstValue(ClaimsNames.Email), mailSubject, mailBody);
+							await mailSender.SendEmailAsync(User.FindFirstValue(ClaimsNames.Email), mailSubject, mailBody);
 
-					//we mark the mail as sent
-					await _repo.ConfirmReservationEmailSentAsync(reservationId.Value);
+							//we mark the mail as sent
+							await _repo.ConfirmReservationEmailSentAsync(reservationId.Value);
+						});			
 
 					//we return the confirmation page
 					return RedirectToAction(nameof(ReservationSuccess), new { reservationId });
