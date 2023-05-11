@@ -32,7 +32,7 @@ namespace WebTennisFieldReservation.Migrations
 
                     b.HasKey("UserId");
 
-                    b.ToTable("AdminUsers");
+                    b.ToTable("AdminUsers", (string)null);
                 });
 
             modelBuilder.Entity("WebTennisFieldReservation.Entities.Court", b =>
@@ -52,7 +52,7 @@ namespace WebTennisFieldReservation.Migrations
                     b.HasIndex("Name")
                         .IsUnique();
 
-                    b.ToTable("Courts");
+                    b.ToTable("Courts", (string)null);
                 });
 
             modelBuilder.Entity("WebTennisFieldReservation.Entities.Reservation", b =>
@@ -61,8 +61,8 @@ namespace WebTennisFieldReservation.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<DateTime>("Timestamp")
-                        .HasColumnType("datetime2");
+                    b.Property<DateTimeOffset>("Timestamp")
+                        .HasColumnType("datetimeoffset");
 
                     b.Property<decimal>("TotalPrice")
                         .HasColumnType("decimal(18,2)");
@@ -74,7 +74,7 @@ namespace WebTennisFieldReservation.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Reservations");
+                    b.ToTable("Reservations", (string)null);
                 });
 
             modelBuilder.Entity("WebTennisFieldReservation.Entities.ReservationEntry", b =>
@@ -97,7 +97,7 @@ namespace WebTennisFieldReservation.Migrations
 
                     b.HasIndex("ReservationId");
 
-                    b.ToTable("ReservationEntries");
+                    b.ToTable("ReservationEntries", (string)null);
                 });
 
             modelBuilder.Entity("WebTennisFieldReservation.Entities.ReservationSlot", b =>
@@ -128,7 +128,7 @@ namespace WebTennisFieldReservation.Migrations
                     b.HasIndex("CourtId", "Date", "DaySlot")
                         .IsUnique();
 
-                    b.ToTable("ReservationsSlots");
+                    b.ToTable("ReservationsSlots", (string)null);
                 });
 
             modelBuilder.Entity("WebTennisFieldReservation.Entities.Template", b =>
@@ -153,7 +153,7 @@ namespace WebTennisFieldReservation.Migrations
                     b.HasIndex("Name")
                         .IsUnique();
 
-                    b.ToTable("Templates");
+                    b.ToTable("Templates", (string)null);
                 });
 
             modelBuilder.Entity("WebTennisFieldReservation.Entities.TemplateEntry", b =>
@@ -169,7 +169,7 @@ namespace WebTennisFieldReservation.Migrations
 
                     b.HasKey("TemplateId", "WeekSlot");
 
-                    b.ToTable("TemplateEntries");
+                    b.ToTable("TemplateEntries", (string)null);
                 });
 
             modelBuilder.Entity("WebTennisFieldReservation.Entities.User", b =>
@@ -225,7 +225,7 @@ namespace WebTennisFieldReservation.Migrations
                     b.HasIndex("Email")
                         .IsUnique();
 
-                    b.ToTable("Users");
+                    b.ToTable("Users", (string)null);
                 });
 
             modelBuilder.Entity("WebTennisFieldReservation.Entities.AdminUser", b =>

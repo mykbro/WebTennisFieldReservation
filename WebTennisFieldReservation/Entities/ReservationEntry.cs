@@ -4,8 +4,6 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace WebTennisFieldReservation.Entities
 {
-    
-    
     public class ReservationEntry
     {
         [Key]

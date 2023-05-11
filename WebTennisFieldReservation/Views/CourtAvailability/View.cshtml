@@ -102,6 +102,9 @@
 									checkBox.dataset.slotid = result[i].id;
 								}
 								else{
+									let checkBox = document.getElementById('cb-'+id);									
+									checkBox.dataset.slotid = result[i].id;
+
 									divBox.classList += ' slotTaken';
 								}
 								

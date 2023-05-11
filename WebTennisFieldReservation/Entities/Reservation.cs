@@ -16,7 +16,7 @@ namespace WebTennisFieldReservation.Entities
         public decimal TotalPrice { get; set; }
 
         [Required]
-        public DateTime Timestamp { get; set; }
+        public DateTimeOffset Timestamp { get; set; }
 
         // Navigation
         public User User { get; set; } = null!;

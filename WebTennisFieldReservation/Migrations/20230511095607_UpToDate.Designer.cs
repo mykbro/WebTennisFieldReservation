@@ -12,8 +12,8 @@ using WebTennisFieldReservation.Data;
 namespace WebTennisFieldReservation.Migrations
 {
     [DbContext(typeof(CourtComplexDbContext))]
-    [Migration("20230511080835_RefactoredReservation")]
-    partial class RefactoredReservation
+    [Migration("20230511095607_UpToDate")]
+    partial class UpToDate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -64,8 +64,8 @@ namespace WebTennisFieldReservation.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<DateTime>("Timestamp")
-                        .HasColumnType("datetime2");
+                    b.Property<DateTimeOffset>("Timestamp")
+                        .HasColumnType("datetimeoffset");
 
                     b.Property<decimal>("TotalPrice")
                         .HasColumnType("decimal(18,2)");

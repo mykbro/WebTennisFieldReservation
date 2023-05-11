@@ -1,5 +1,6 @@
 ﻿using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
 using WebTennisFieldReservation.Entities;
 using WebTennisFieldReservation.Models.Administration;
 using WebTennisFieldReservation.Models.Api;
@@ -496,6 +497,71 @@ namespace WebTennisFieldReservation.Data
                     Price = slot.Price
                 })
                 .ToListAsync();
+		}
+
+		public async Task<Guid?> AddReservationFromSlotIdListAsync(CreateReservationModel reservationData)
+		{
+            //we create a new Reservation
+            Guid newReservationId = Guid.NewGuid();
+
+			Reservation newReservation = new Reservation() 
+            {
+                Id = newReservationId,
+				UserId = reservationData.UserId,
+				Timestamp = reservationData.Timestamp
+            };
+
+            //we create the ReservationEntries from ReservationSlot data (price)
+            //we can do the query outside the transaction, we don't check that the price didn't change in the meantime
+            List<ReservationEntry> resEntries = await _context.ReservationsSlots
+                .Where(slot => reservationData.SlotIds.Contains(slot.Id))
+                .Select(slot => new ReservationEntry()
+                {
+                    ReservationSlotId = slot.Id,
+                    Price = slot.Price,
+                    ReservationId = newReservationId
+				})
+                .ToListAsync();
+
+            //we calculate TotalPrice and set it in newReservation
+            newReservation.TotalPrice = resEntries.Select(entry => entry.Price).Sum();
+
+            //we add everything to the context for tracking
+            _context.Reservations.Add(newReservation);
+            _context.ReservationEntries.AddRange(resEntries);           //we could have added the entries to the reservation
+
+            
+            //we try to save everything inside a transaction where we also update the IsAvailable status to false for the slots
+            //the save is going to fail in case of slots already taken or duplicate slots
+            using(var trans = await _context.Database.BeginTransactionAsync())
+            {
+                try
+                {
+                    await _context.SaveChangesAsync();
+
+                    //if the save succeeded we update the slots
+                    int slotsUpdated = await _context.ReservationsSlots
+                        .Where(slot => reservationData.SlotIds.Contains(slot.Id) && slot.IsAvailable == true)  //the IsAvailable check is just for confirmation
+                        .ExecuteUpdateAsync(slot => slot.SetProperty(slot => slot.IsAvailable, false));
+
+                    //sanitary check
+                    if(slotsUpdated == reservationData.SlotIds.Count)
+                    {
+						await trans.CommitAsync();
+						return newReservationId;
+					}
+                    else
+                    {
+                        await trans.RollbackAsync();
+                        return null;
+                    }
+                }
+                catch
+                {
+                    await trans.RollbackAsync();
+                    return null;
+                }
+            }
 		}
 	}
 }

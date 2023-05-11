@@ -7,22 +7,24 @@ namespace WebTennisFieldReservation.ValidationAttributes
     public class CollectionLength : ValidationAttribute
     {
         public override bool RequiresValidationContext => false;
-        private int _size;
+        private int _minSize;
+		private int _maxSize;
 
-        public CollectionLength(int size):base("Number of entries must be exactly {0}")
+		public CollectionLength(int minSize, int maxSize = int.MaxValue):base("Number of entries must be between {0} and {1}")
         {
-            _size = size;
+            _minSize = minSize;
+            _maxSize = maxSize;
         }
 
         protected override ValidationResult? IsValid(object? value, ValidationContext validationContext)
         {
-            if (value is ICollection c && c.Count == _size)
+            if (value is ICollection c && _minSize <= c.Count && c.Count <= _maxSize)
             {               
                 return ValidationResult.Success;
             }
             else
             {
-                return new ValidationResult(string.Format(ErrorMessageString, _size));
+                return new ValidationResult(string.Format(ErrorMessageString, _minSize, _maxSize));
             }
         }
     }

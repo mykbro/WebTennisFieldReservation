@@ -1,8 +1,10 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 using WebTennisFieldReservation.Data;
 using WebTennisFieldReservation.Models.Administration;
 using WebTennisFieldReservation.Models.CourtAvailability;
+using WebTennisFieldReservation.Constants.Names;
 
 namespace WebTennisFieldReservation.Controllers
 {
@@ -55,9 +57,46 @@ namespace WebTennisFieldReservation.Controllers
 
 		[HttpPost("reserve")]
 		[Authorize]
-		public IActionResult Reserve()
+		public async Task<IActionResult> Reserve(CheckoutPostModel checkoutData)		//we reuse the same postModel
 		{
-			return Ok();
+			if(ModelState.IsValid) 
+			{
+				CreateReservationModel createData = new CreateReservationModel()
+				{
+					SlotIds = checkoutData.SlotIds,
+					Timestamp = DateTimeOffset.Now,
+					UserId = Guid.Parse(User.FindFirstValue(ClaimsNames.Id))
+				};
+
+				Guid? reservationId = await _repo.AddReservationFromSlotIdListAsync(createData);
+
+				if(reservationId != null)
+				{
+					return RedirectToAction(nameof(ReservationSuccess), new { reservationId });
+				}
+				else
+				{
+					return BadRequest();
+				}
+			}
+			else
+			{
+				return BadRequest();
+			}
 		}
+
+		[HttpGet("reserve/success")]
+		public IActionResult ReservationSuccess(Guid? reservationId)
+		{
+			if(reservationId != null)
+			{
+				return View(reservationId.Value);
+			}
+			else
+			{
+				return BadRequest();
+			}
+		}
+
 	}
 }
