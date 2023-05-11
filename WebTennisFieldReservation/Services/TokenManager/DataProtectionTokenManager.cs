@@ -4,15 +4,15 @@ using System.Security.Cryptography;
 using WebTennisFieldReservation.Settings;
 using SecurityToken = WebTennisFieldReservation.Utilities.SecurityToken;
 
-namespace WebTennisFieldReservation.Services
+namespace WebTennisFieldReservation.Services.TokenManager
 {
     public class DataProtectionTokenManager : ITokenManager
-    {       
+    {
         private readonly IDataProtectionProvider _provider;
 
         public DataProtectionTokenManager(IDataProtectionProvider protectorProvider)
-        {           
-            _provider = protectorProvider;                        
+        {
+            _provider = protectorProvider;
         }
 
         public string GenerateToken(string purpose, Guid userId, Guid securityStamp, DateTimeOffset issueTime)
@@ -26,9 +26,9 @@ namespace WebTennisFieldReservation.Services
 
         public SecurityToken RetrieveTokenFromString(string token, string purpose)
         {
-            IDataProtector protector = _provider.CreateProtector(purpose);            
+            IDataProtector protector = _provider.CreateProtector(purpose);
             byte[] plainText = protector.Unprotect(Base64UrlEncoder.DecodeBytes(token));
-            
+
             return SecurityToken.DeserializeFromBytes(plainText);
         }
 
@@ -36,7 +36,7 @@ namespace WebTennisFieldReservation.Services
         {
             return token.UserId == userId
                         && token.SecurityStamp == securityStamp
-                        && DateTimeOffset.Now <= token.IssueTime.Add(validityTS);                         
+                        && DateTimeOffset.Now <= token.IssueTime.Add(validityTS);
         }
     }
 }

@@ -6,6 +6,7 @@
         public int Port { get; set; }
         public bool UseSSL { get; set; }
         public string User { get; set; } = null!;
-        public string? Password { get; set; }
-    }
+        // public string? Password { get; set; }
+        public string PasswordFileName { get; set; } = null!;
+	}
 }

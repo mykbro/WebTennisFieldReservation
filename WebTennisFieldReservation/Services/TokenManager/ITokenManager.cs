@@ -1,6 +1,6 @@
 ﻿using WebTennisFieldReservation.Utilities;
 
-namespace WebTennisFieldReservation.Services
+namespace WebTennisFieldReservation.Services.TokenManager
 {
     public interface ITokenManager
     {

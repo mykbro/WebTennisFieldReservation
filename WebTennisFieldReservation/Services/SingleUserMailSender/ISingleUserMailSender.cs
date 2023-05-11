@@ -1,4 +1,4 @@
-﻿namespace WebTennisFieldReservation.Services
+﻿namespace WebTennisFieldReservation.Services.SingleUserMailSender
 {
     public interface ISingleUserMailSender
     {

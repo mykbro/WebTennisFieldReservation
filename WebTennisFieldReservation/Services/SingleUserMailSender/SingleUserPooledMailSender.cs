@@ -1,7 +1,7 @@
 ﻿using SmtpLibrary;
 using System.Net.Mail;
 
-namespace WebTennisFieldReservation.Services
+namespace WebTennisFieldReservation.Services.SingleUserMailSender
 {
     public class SingleUserPooledMailSender : ISingleUserMailSender, IDisposable
     {

@@ -2,16 +2,19 @@ using Microsoft.AspNetCore.DataProtection;
 using WebTennisFieldReservation.Constants.Names;
 using WebTennisFieldReservation.Data;
 using WebTennisFieldReservation.Settings;
-using WebTennisFieldReservation.Services;
-using SmtpLibrary;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using WebTennisFieldReservation.AuthenticationSchemes.MyAuthScheme;
 using WebTennisFieldReservation.AuthorizationPolicies.SameUser;
 using Microsoft.AspNetCore.Authorization;
 using System.Reflection.Metadata.Ecma335;
 using System.Security.Claims;
+using SmtpLibrary;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
+using WebTennisFieldReservation.Services.PasswordHasher;
+using WebTennisFieldReservation.Services.ClaimPrincipalFactory;
+using WebTennisFieldReservation.Services.TokenManager;
+using WebTennisFieldReservation.Services.SingleUserMailSender;
 
 namespace WebTennisFieldReservation
 {
@@ -49,12 +52,16 @@ namespace WebTennisFieldReservation
             builder.Services.AddSingleton<TokenManagerSettings>(tokenManagerSettings);  //required for controllers that use ITokenManager
             builder.Services.AddScoped<ITokenManager, DataProtectionTokenManager>();    //needs to be scoped because it uses scoped IDataProtectionProvider
 
-            // Add mail sending service            
-            string smtpPassword = File.ReadAllText(@"D:\smtppwd.txt");
+            // Add mail sending service 
+            /*
+            string smtpPassword = File.ReadAllText(mailSenderSettings.PasswordFileName);
 
             SmtpClientFactory smtpClientFactory = new SmtpClientFactory(mailSenderSettings.HostName, mailSenderSettings.Port, mailSenderSettings.UseSSL, mailSenderSettings.User, smtpPassword);
             SmtpClientPoolSender smtpClientPoolSender = new SmtpClientPoolSender(smtpClientFactory, 1, 10);
             builder.Services.AddSingleton<ISingleUserMailSender>(new SingleUserPooledMailSender(smtpClientPoolSender, mailSenderSettings.User));
+            */
+
+            builder.Services.AddSingleton<ISingleUserMailSender>(new ConsoleMailSender());
 
             // Add claims builder
             builder.Services.AddSingleton<ClaimsPrincipalFactory>(new ClaimsPrincipalFactory(AuthenticationSchemesNames.MyAuthScheme));

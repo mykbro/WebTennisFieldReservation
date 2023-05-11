@@ -2,7 +2,7 @@
 using System.Security.Claims;
 using WebTennisFieldReservation.Constants.Names;
 
-namespace WebTennisFieldReservation.Services
+namespace WebTennisFieldReservation.Services.ClaimPrincipalFactory
 {
     public class ClaimsPrincipalFactory
     {

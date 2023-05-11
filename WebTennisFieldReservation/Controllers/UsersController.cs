@@ -5,12 +5,15 @@ using WebTennisFieldReservation.Constants.Names;
 using WebTennisFieldReservation.Data;
 using WebTennisFieldReservation.Models.Users;
 using WebTennisFieldReservation.Entities;
-using WebTennisFieldReservation.Services;
 using WebTennisFieldReservation.Settings;
 using WebTennisFieldReservation.Utilities;
 using System.Security.Cryptography;
 using Microsoft.AspNetCore.Authentication;
 using WebTennisFieldReservation.Constants;
+using WebTennisFieldReservation.Services.SingleUserMailSender;
+using WebTennisFieldReservation.Services.PasswordHasher;
+using WebTennisFieldReservation.Services.ClaimPrincipalFactory;
+using WebTennisFieldReservation.Services.TokenManager;
 
 namespace WebTennisFieldReservation.Controllers
 {
@@ -154,7 +157,7 @@ namespace WebTennisFieldReservation.Controllers
             {
                 // GetDataForTokenAsync doesn't check if email is already confirmed... it's a tradeoff for reusing the method in other context
                 // the confirmation link will fail anyway
-                var tokenData = await repo.GetDataForTokenAsync(modelData.Email);
+                var tokenData = await repo.GetDataForTokenAsync(modelData.Email.ToLower());
                 
                 // we check if we found the email, if not found tokenData will be = to its default
                 if(tokenData != default)
@@ -195,7 +198,7 @@ namespace WebTennisFieldReservation.Controllers
         {
             if(ModelState.IsValid)
             {
-                var tokenData = await repo.GetDataForTokenAsync(modelData.Email);
+                var tokenData = await repo.GetDataForTokenAsync(modelData.Email.ToLower());
 
                 if(tokenData != default)
                 {
@@ -576,9 +579,7 @@ namespace WebTennisFieldReservation.Controllers
            
             string mailBody = String.Format(confirmationMailBodyTemplate, Url.Action(nameof(ConfirmEmail), "users", new { token = tokenString }, Request.Scheme, Request.Host.Value));
 
-            //return mailSender.SendEmailAsync(recipientEmail, confirmationMailSubject, mailBody);
-            Console.WriteLine(mailBody);
-            return Task.CompletedTask;
+            return mailSender.SendEmailAsync(recipientEmail, confirmationMailSubject, mailBody);            
         }
 
         private Task SendPwdResetEmailAsync(string recipientEmail, string tokenString, ISingleUserMailSender mailSender)
@@ -588,9 +589,7 @@ namespace WebTennisFieldReservation.Controllers
 
             string mailBody = String.Format(resetPwdMailBodyTemplate, Url.Action(nameof(ResetPassword), "users", new { token = tokenString }, Request.Scheme, Request.Host.Value));
 
-            //return mailSender.SendEmailAsync(recipientEmail, resetPwdMailSubject, mailBody);
-            Console.WriteLine(mailBody);
-            return Task.CompletedTask;
+            return mailSender.SendEmailAsync(recipientEmail, resetPwdMailSubject, mailBody);           
         }
 
     }

@@ -1,4 +1,4 @@
-﻿namespace WebTennisFieldReservation.Services
+﻿namespace WebTennisFieldReservation.Services.PasswordHasher
 {
     public interface IPasswordHasher
     {
