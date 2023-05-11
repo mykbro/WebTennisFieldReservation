@@ -58,7 +58,7 @@ namespace WebTennisFieldReservation.Controllers
 
 		[HttpPost("reserve")]
 		[Authorize]
-		public async Task<IActionResult> Reserve(CheckoutPostModel checkoutData, [FromServices] ISingleUserMailSender mailSender)		//we reuse the same postModel
+		public async Task<IActionResult> Reserve(CheckoutPostModel checkoutData, [FromServices] ISingleUserMailSender mailSender, [FromServices] IServiceScopeFactory scopeFactory)		//we reuse the same postModel
 		{
 			if(ModelState.IsValid) 
 			{
@@ -82,8 +82,12 @@ namespace WebTennisFieldReservation.Controllers
 
 							await mailSender.SendEmailAsync(User.FindFirstValue(ClaimsNames.Email), mailSubject, mailBody);
 
-							//we mark the mail as sent
-							await _repo.ConfirmReservationEmailSentAsync(reservationId.Value);
+							//we must request a new ICourtComplexRepository because the "external" _repo must not be accessed concurrently and may be already disposed 
+							using (var scope = scopeFactory.CreateScope())
+							{
+								var repo = scope.ServiceProvider.GetService<ICourtComplexRepository>();
+								await repo!.ConfirmReservationEmailSentAsync(reservationId.Value);
+							}							
 						});			
 
 					//we return the confirmation page

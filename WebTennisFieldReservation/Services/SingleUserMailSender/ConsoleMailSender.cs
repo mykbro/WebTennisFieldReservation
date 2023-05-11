@@ -7,8 +7,12 @@ namespace WebTennisFieldReservation.Services.SingleUserMailSender
     {
         public Task SendEmailAsync(string email, string subject, string htmlMessage)
         {
+            ConsoleColor previous = Console.ForegroundColor;
+            Console.ForegroundColor = ConsoleColor.DarkCyan;
             Console.WriteLine(htmlMessage);
-            return Task.CompletedTask;
+            Console.ForegroundColor = previous;
+
+			return Task.CompletedTask;
         }
 
     }
