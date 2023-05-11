@@ -489,6 +489,7 @@ namespace WebTennisFieldReservation.Data
                 .Where(slot =>  ids.Contains(slot.Id) && slot.IsAvailable == true)      //preliminary check for availability (also for forged data)
                 .Select(slot => new SlotModel() 
                 { 
+                    Id = slot.Id,
                     Date = slot.Date,
                     CourtName = slot.Court.Name,
                     DaySlot = slot.DaySlot,

@@ -52,5 +52,12 @@ namespace WebTennisFieldReservation.Controllers
 				return BadRequest();
 			}
 		}
+
+		[HttpPost("reserve")]
+		[Authorize]
+		public IActionResult Reserve()
+		{
+			return Ok();
+		}
 	}
 }

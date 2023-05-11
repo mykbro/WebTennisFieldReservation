@@ -4,26 +4,23 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace WebTennisFieldReservation.Entities
 {
-    [Index(nameof(CourtId), nameof(Day), nameof(DaySlot), IsUnique = true)]
-    //[PrimaryKey(nameof(ReservationId), nameof(ReservationEntryWeakId))]
+    
+    
     public class ReservationEntry
     {
-        [ForeignKey(nameof(Reservation))]
+        [Key]
+		[ForeignKey(nameof(ReservationSlot))]
+		public int ReservationSlotId { get; set; }
+
+		[ForeignKey(nameof(Reservation))]
         public Guid ReservationId { get; set;}
 
-        [Required]
-        public int ReservationEntryWeakId { get; set;}
+		[Required]
+		[Column(TypeName = "decimal(18,2)")]
+		public decimal Price { get; set; }
 
-        [ForeignKey(nameof(Court))]
-        public int CourtId { get; set;}
-        [Required]
-        public DateTime Day { get; set; }
-        [Required]
-        public byte DaySlot { get; set; }
-
-
-        // Navigation
-        public Reservation Reservation { get; set; } = null!;
-        public Court Court { get; set; } = null!;
+		// Navigation
+		public Reservation Reservation { get; set; } = null!;
+        public ReservationSlot ReservationSlot { get; set; } = null!;
     }
 }

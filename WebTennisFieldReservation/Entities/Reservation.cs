@@ -11,6 +11,13 @@ namespace WebTennisFieldReservation.Entities
         [ForeignKey(nameof(User))]
         public Guid UserId { get; set; }
 
+        [Required]
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal TotalPrice { get; set; }
+
+        [Required]
+        public DateTime Timestamp { get; set; }
+
         // Navigation
         public User User { get; set; } = null!;
         public ICollection<ReservationEntry> ReservationEntries { get; set; } = new List<ReservationEntry>();
