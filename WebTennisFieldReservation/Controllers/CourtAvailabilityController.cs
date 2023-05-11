@@ -5,6 +5,7 @@ using WebTennisFieldReservation.Data;
 using WebTennisFieldReservation.Models.Administration;
 using WebTennisFieldReservation.Models.CourtAvailability;
 using WebTennisFieldReservation.Constants.Names;
+using WebTennisFieldReservation.Services.SingleUserMailSender;
 
 namespace WebTennisFieldReservation.Controllers
 {
@@ -57,7 +58,7 @@ namespace WebTennisFieldReservation.Controllers
 
 		[HttpPost("reserve")]
 		[Authorize]
-		public async Task<IActionResult> Reserve(CheckoutPostModel checkoutData)		//we reuse the same postModel
+		public async Task<IActionResult> Reserve(CheckoutPostModel checkoutData, [FromServices] ISingleUserMailSender mailSender)		//we reuse the same postModel
 		{
 			if(ModelState.IsValid) 
 			{
@@ -72,6 +73,16 @@ namespace WebTennisFieldReservation.Controllers
 
 				if(reservationId != null)
 				{
+					//we send a confirmation mail
+					string mailSubject = "Reservation confirmed";
+					string mailBody = $"Your reservation #{reservationId} was confirmed !";					
+
+					await mailSender.SendEmailAsync(User.FindFirstValue(ClaimsNames.Email), mailSubject, mailBody);
+
+					//we mark the mail as sent
+					await _repo.ConfirmReservationEmailSentAsync(reservationId.Value);
+
+					//we return the confirmation page
 					return RedirectToAction(nameof(ReservationSuccess), new { reservationId });
 				}
 				else

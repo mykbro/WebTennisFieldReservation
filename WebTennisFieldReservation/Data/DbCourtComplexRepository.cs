@@ -508,7 +508,8 @@ namespace WebTennisFieldReservation.Data
             {
                 Id = newReservationId,
 				UserId = reservationData.UserId,
-				Timestamp = reservationData.Timestamp
+				Timestamp = reservationData.Timestamp,
+                ConfirmationEmailSent = false
             };
 
             //we create the ReservationEntries from ReservationSlot data (price)
@@ -562,6 +563,13 @@ namespace WebTennisFieldReservation.Data
                     return null;
                 }
             }
+		}
+
+		public Task<int> ConfirmReservationEmailSentAsync(Guid reservationId)
+		{
+            return _context.Reservations
+                .Where(res => res.Id == reservationId)
+                .ExecuteUpdateAsync(res => res.SetProperty(res => res.ConfirmationEmailSent, true));
 		}
 	}
 }

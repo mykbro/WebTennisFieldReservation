@@ -18,6 +18,9 @@ namespace WebTennisFieldReservation.Entities
         [Required]
         public DateTimeOffset Timestamp { get; set; }
 
+        [Required]
+        public bool ConfirmationEmailSent { get; set; }
+
         // Navigation
         public User User { get; set; } = null!;
         public ICollection<ReservationEntry> ReservationEntries { get; set; } = new List<ReservationEntry>();
