@@ -351,86 +351,56 @@ namespace WebTennisFieldReservation.Controllers
             }
         }
 
-        [HttpGet("{id:guid}/details")]
+        [HttpGet("details")]
+        [Authorize]
         //[Authorize(Policy = AuthorizationPoliciesNames.SameUser)]
-        public async Task<IActionResult> Details(Guid id, [FromServices] ICourtComplexRepository repo, [FromServices] IAuthorizationService authorizer)
+        public async Task<IActionResult> Details([FromServices] ICourtComplexRepository repo)
         {
-            //we must follow the "SameUser" authZ policy
-            AuthorizationResult authResult = await authorizer.AuthorizeAsync(User, id, AuthorizationPoliciesNames.SameUser);
-
-            if (authResult.Succeeded)
-            {
-                //we check for user data for this id
-                UserModel? userData = await repo.GetUserDataByIdAsync(id);
+            Guid id = Guid.Parse(User.FindFirstValue(ClaimsNames.Id));
+           
+            //we check for user data for this id
+            UserModel? userData = await repo.GetUserDataByIdAsync(id);
                 
-                //if any we populate the view
-                if(userData != null)
-                {
-                    return View(userData);
-                }
-                else
-                {
-                    return NotFound();
-                }
+            //if any we populate the view
+            if(userData != null)
+            {
+                return View(userData);
             }
             else
             {
-                if (!User.Identity!.IsAuthenticated)
-                {
-                    return Challenge();
-                }
-                else
-                {
-                    return Forbid();
-                }
-            }
+                return NotFound();
+            }            
         }
 
-        [HttpPost("{id:guid}/details")]
+        [HttpPost("details")]
+        [Authorize]
         //[Authorize(Policy = AuthorizationPoliciesNames.SameUser)]
-        public async Task<IActionResult> Details(UserModel userData, Guid id, [FromServices] ICourtComplexRepository repo, [FromServices] IAuthorizationService authorizer)
-        {
-            
-            //we first check for authZ
-            AuthorizationResult authResult = await authorizer.AuthorizeAsync(User, id, AuthorizationPoliciesNames.SameUser);
-
-            if (authResult.Succeeded)
+        public async Task<IActionResult> Details(UserModel userData, [FromServices] ICourtComplexRepository repo)
+        {	  
+            if (ModelState.IsValid)
             {
-                //we then check for the model validity
-                if (ModelState.IsValid)
+                Guid id = Guid.Parse(User.FindFirstValue(ClaimsNames.Id));
+
+                //we first need to lowerCase the Email field
+                userData.Email = userData.Email.ToLower();
+
+                //we try to update the user's data (will fail on a duplicate email)                    
+                int usersUpdated = await repo.UpdateUserDataByIdAsync(id, userData);
+
+                if(usersUpdated == 1) 
                 {
-                    //we first need to lowerCase the Email field
-                    userData.Email = userData.Email.ToLower();
-
-                    //we try to update the user's data (will fail on a duplicate email)                    
-                    int usersUpdated = await repo.UpdateUserDataByIdAsync(id, userData);
-
-                    if(usersUpdated == 1) 
-                    {
-                        return RedirectToAction(nameof(UserUpdated));
-                    }
-                    else
-                    {
-                        ModelState.AddModelError("", "Email already registered");
-                        return View();
-                    }
+                    return RedirectToAction(nameof(UserUpdated));
                 }
                 else
                 {
+                    ModelState.AddModelError("", "Email already registered");
                     return View();
                 }
             }
             else
             {
-                if(!User.Identity!.IsAuthenticated)
-                {
-                    return Challenge();
-                }
-                else
-                {
-                    return Forbid();
-                }                
-            }
+                return View();
+            }            
         }
 
         [HttpGet("userupdated")]
@@ -440,132 +410,101 @@ namespace WebTennisFieldReservation.Controllers
         }
 
         
-        [HttpGet("{id:guid}/editpassword")]
+        [HttpGet("editpassword")]
         //[Authorize(Policy = AuthorizationPoliciesNames.LoggedRecently)]
         //we manually check the "LoggedRecently" policy to issue a Challenge instead of a Forbid
-        public async Task<IActionResult> EditPassword(Guid id, [FromServices] IAuthorizationService authorizer) 
-        {
-            AuthorizationResult sameUserCheck = await authorizer.AuthorizeAsync(User, id, AuthorizationPoliciesNames.SameUser);
+        public async Task<IActionResult> EditPassword([FromServices] IAuthorizationService authorizer) 
+        {           
+            //we check if we recently logged
+            AuthorizationResult recentLogCheck = await authorizer.AuthorizeAsync(User, AuthorizationPoliciesNames.LoggedRecently);
 
-            if(sameUserCheck.Succeeded)
+            if (recentLogCheck.Succeeded)
             {
-                //we then check if we recently logged
-                AuthorizationResult recentLogCheck = await authorizer.AuthorizeAsync(User, AuthorizationPoliciesNames.LoggedRecently);
+                return View();
+            }
+            else
+            {
+                //we return a challenge and not a Forbid !!!
+                return Challenge();
+            }           
+        }
 
-                if (recentLogCheck.Succeeded)
+        [HttpPost("editpassword")]
+        //[Authorize(Policy = AuthorizationPoliciesNames.LoggedRecently)]
+        //we manually check the "LoggedRecently" policy to issue a Challenge instead of a Forbid
+        public async Task<IActionResult> EditPassword(EditPasswordModel pwdData, [FromServices] IAuthorizationService authorizer, [FromServices] ICourtComplexRepository repo, [FromServices] IPasswordHasher pwdHasher, [FromServices] ClaimsPrincipalFactory claimsPrincipalFactory)
+        {            
+            //we check if we recently logged
+            AuthorizationResult recentLogCheck = await authorizer.AuthorizeAsync(User, AuthorizationPoliciesNames.LoggedRecently);
+
+            if (recentLogCheck.Succeeded)
+            {
+                if (ModelState.IsValid)
+                {
+					Guid id = Guid.Parse(User.FindFirstValue(ClaimsNames.Id));
+
+					//we retrieve the user current password data (hash, salt, iters)
+					var userSecurityData = await repo.GetPasswordDataByIdAsync(id);
+
+                    if (userSecurityData != default)
+                    {
+                        //if we found something (as we should) we check the supplied password with the one in the db
+                        bool pwdValid = pwdHasher.ValidatePassword(pwdData.CurrentPassword, userSecurityData.PasswordHash, userSecurityData.Salt, userSecurityData.Iters);
+
+                        if (pwdValid)
+                        {
+                            //we generate the new security data
+                            var newPwdData = pwdHasher.GeneratePasswordAndSalt(pwdData.NewPassword);
+                            Guid newSecStamp = Guid.NewGuid();
+
+                            //we can update the password with the current iters and a new securityStamp
+                            var pwdUpdateModel = new PasswordUpdateModel()
+                            {
+                                PasswordHash = newPwdData.PasswordHash,
+                                Salt = newPwdData.Salt,
+                                Iters = pwdHasher.Iterations,
+                                NewSecurityStamp = newSecStamp
+                            };
+                                
+                            int usersUpdated = await repo.UpdatePasswordDataByIdAsync(id, pwdUpdateModel);
+
+                            //we do a little check
+                            if (usersUpdated != 1)
+                            {
+                                throw new Exception("Password update didn't return 'usersUpdated == 1'");
+                            }
+
+                            //we resign-in the user with the updated security stamp
+                            bool wasAdmin = Boolean.Parse(User.FindFirstValue(ClaimsNames.IsAdmin));
+                            bool wasRememberMe = Boolean.Parse(User.FindFirstValue(ClaimsNames.RememberMe));
+                            var claimsPrincipal = claimsPrincipalFactory.CreatePrincipal(id, newSecStamp, wasAdmin, DateTimeOffset.Now, wasRememberMe);
+                            AuthenticationProperties authProp = wasRememberMe ? AuthenticationPropertiesConsts.RememberMe : AuthenticationPropertiesConsts.DoNotRememberMe;
+
+                            await HttpContext.SignInAsync(AuthenticationSchemesNames.MyAuthScheme, claimsPrincipal, authProp);
+
+                            //and we return to the details page for this user
+                            return RedirectToAction(nameof(Details), new { id = id });
+                        }
+                        else //current password wasn't valid
+                        {
+                            ModelState.AddModelError("", "Wrong current password");
+                            return View();
+                        }
+                    }
+                    else //somehow the password wasn't found... shouldn't enter here
+                    {
+                        return NotFound();
+                    }
+                }
+                else //model invalid
                 {
                     return View();
                 }
-                else
-                {
-                    //we return a challenge and not a Forbid !!!
-                    return Challenge();
-                }
             }
-            else
-            {                
-                if(!User.Identity!.IsAuthenticated)
-                {
-                    return Challenge();
-                }
-                else
-                {
-                    return Forbid();
-                }
-            }
-        }
-
-        [HttpPost("{id:guid}/editpassword")]
-        //[Authorize(Policy = AuthorizationPoliciesNames.LoggedRecently)]
-        //we manually check the "LoggedRecently" policy to issue a Challenge instead of a Forbid
-        public async Task<IActionResult> EditPassword(EditPasswordModel pwdData, Guid id, [FromServices] IAuthorizationService authorizer, [FromServices] ICourtComplexRepository repo, [FromServices] IPasswordHasher pwdHasher, [FromServices] ClaimsPrincipalFactory claimsPrincipalFactory)
-        {
-            AuthorizationResult sameUserCheck = await authorizer.AuthorizeAsync(User, id, AuthorizationPoliciesNames.SameUser);
-
-            if (sameUserCheck.Succeeded)
+            else    //our login wasn't recent
             {
-                //we then check if we recently logged
-                AuthorizationResult recentLogCheck = await authorizer.AuthorizeAsync(User, AuthorizationPoliciesNames.LoggedRecently);
-
-                if (recentLogCheck.Succeeded)
-                {
-                    if (ModelState.IsValid)
-                    {
-                        //we retrieve the user current password data (hash, salt, iters)
-                        var userSecurityData = await repo.GetPasswordDataByIdAsync(id);
-
-                        if (userSecurityData != default)
-                        {
-                            //if we found something (as we should) we check the supplied password with the one in the db
-                            bool pwdValid = pwdHasher.ValidatePassword(pwdData.CurrentPassword, userSecurityData.PasswordHash, userSecurityData.Salt, userSecurityData.Iters);
-
-                            if (pwdValid)
-                            {
-                                //we generate the new security data
-                                var newPwdData = pwdHasher.GeneratePasswordAndSalt(pwdData.NewPassword);
-                                Guid newSecStamp = Guid.NewGuid();
-
-                                //we can update the password with the current iters and a new securityStamp
-                                var pwdUpdateModel = new PasswordUpdateModel()
-                                {
-                                    PasswordHash = newPwdData.PasswordHash,
-                                    Salt = newPwdData.Salt,
-                                    Iters = pwdHasher.Iterations,
-                                    NewSecurityStamp = newSecStamp
-                                };
-                                
-                                int usersUpdated = await repo.UpdatePasswordDataByIdAsync(id, pwdUpdateModel);
-
-                                //we do a little check
-                                if (usersUpdated != 1)
-                                {
-                                    throw new Exception("Password update didn't return 'usersUpdated == 1'");
-                                }
-
-                                //we resign-in the user with the updated security stamp
-                                bool wasAdmin = Boolean.Parse(User.FindFirstValue(ClaimsNames.IsAdmin));
-                                bool wasRememberMe = Boolean.Parse(User.FindFirstValue(ClaimsNames.RememberMe));
-                                var claimsPrincipal = claimsPrincipalFactory.CreatePrincipal(id, newSecStamp, wasAdmin, DateTimeOffset.Now, wasRememberMe);
-                                AuthenticationProperties authProp = wasRememberMe ? AuthenticationPropertiesConsts.RememberMe : AuthenticationPropertiesConsts.DoNotRememberMe;
-
-                                await HttpContext.SignInAsync(AuthenticationSchemesNames.MyAuthScheme, claimsPrincipal, authProp);
-
-                                //and we return to the details page for this user
-                                return RedirectToAction(nameof(Details), new { id = id });
-                            }
-                            else //current password wasn't valid
-                            {
-                                ModelState.AddModelError("", "Wrong current password");
-                                return View();
-                            }
-                        }
-                        else //somehow the password wasn't found... shouldn't enter here
-                        {
-                            return NotFound();
-                        }
-                    }
-                    else //model invalid
-                    {
-                        return View();
-                    }
-                }
-                else    //our login wasn't recent
-                {
-                    //we return a challenge and not a Forbid !!!
-                    return Challenge();
-                }
-                
-            }
-            else
-            {
-                if (!User.Identity!.IsAuthenticated)
-                {
-                    return Challenge();
-                }
-                else
-                {
-                    return Forbid();
-                }
+                //we return a challenge and not a Forbid !!!
+                return Challenge();
             }
         }
 

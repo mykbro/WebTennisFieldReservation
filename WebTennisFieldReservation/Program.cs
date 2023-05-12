@@ -101,9 +101,17 @@ namespace WebTennisFieldReservation
                     //the auth cookie IssueTime must be in the MaxAge window defined in appsettings.json
                     policyBuilder.RequireAssertion(context =>
                     {
-                        DateTimeOffset cookieIssueTime = DateTimeOffset.Parse(context.User.FindFirstValue(ClaimsNames.IssueTime));
+                        string? issueTimeAsString = context.User.FindFirstValue(ClaimsNames.IssueTime);
 
-                        return DateTimeOffset.Now <= cookieIssueTime.AddMinutes(loggedRecentlyPolicySettings.MaxAgeInMins);
+                        if(issueTimeAsString != null)
+                        {
+							DateTimeOffset cookieIssueTime = DateTimeOffset.Parse(issueTimeAsString);
+							return DateTimeOffset.Now <= cookieIssueTime.AddMinutes(loggedRecentlyPolicySettings.MaxAgeInMins);
+						}
+                        else
+                        {
+                            return false;
+                        }						
                     });
                 });
             });

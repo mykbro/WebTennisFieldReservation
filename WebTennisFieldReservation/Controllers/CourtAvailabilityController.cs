@@ -75,7 +75,7 @@ namespace WebTennisFieldReservation.Controllers
 				{
 					//we start a concurrent Task that sends a confirmation mail and then update the database
 					_ = Task.Run(async () =>
-						{
+						{							
 							//we send the confirmation mail
 							string mailSubject = "Reservation confirmed";
 							string mailBody = $"Your reservation #{reservationId} was confirmed !";
