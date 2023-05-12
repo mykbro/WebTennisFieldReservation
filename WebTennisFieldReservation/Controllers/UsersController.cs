@@ -67,7 +67,7 @@ namespace WebTennisFieldReservation.Controllers
 
                     try
                     {
-                        await SendConfirmationEmailAsync(toAdd.Email, token, mailSender);
+                        _ = SendConfirmationEmailAsync(toAdd.Email, token, mailSender);     //we execute this method concurrently (we can as mailSender is singleton)
                     }
                     catch
                     {
@@ -168,8 +168,8 @@ namespace WebTennisFieldReservation.Controllers
                     // we try to send it
                     try
                     {
-                        await SendConfirmationEmailAsync(modelData.Email, token, mailSender);
-                    }
+                        _ = SendConfirmationEmailAsync(modelData.Email, token, mailSender); //we execute this method concurrently (we can as mailSender is singleton)
+					}
                     catch
                     {
 
@@ -208,8 +208,8 @@ namespace WebTennisFieldReservation.Controllers
                     // we try to send the mail
                     try
                     {
-                        await SendPwdResetEmailAsync(modelData.Email, token, mailSender);
-                    }
+                        _ = SendPwdResetEmailAsync(modelData.Email, token, mailSender); //we execute this method concurrently (we can as mailSender is singleton)
+					}
                     catch
                     {
 
