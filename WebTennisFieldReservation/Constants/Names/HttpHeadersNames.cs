@@ -3,5 +3,6 @@
 	public static class HttpHeadersNames
 	{
 		public const string X_CSRF_TOKEN = "X-CSRF-TOKEN";
+		public const string ContentType = "Content-Type";
 	}
 }

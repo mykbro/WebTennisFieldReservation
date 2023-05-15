@@ -8,5 +8,6 @@
         public const string TokenManager = nameof(TokenManager);
         public const string AuthenticationSchemes = nameof(AuthenticationSchemes);
         public const string LoggedRecentlyPolicy = nameof(LoggedRecentlyPolicy);
+        public const string PaypalApi = nameof(PaypalApi);
     }
 }

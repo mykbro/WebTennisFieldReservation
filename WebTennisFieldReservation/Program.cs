@@ -15,6 +15,7 @@ using WebTennisFieldReservation.Services.PasswordHasher;
 using WebTennisFieldReservation.Services.ClaimPrincipalFactory;
 using WebTennisFieldReservation.Services.TokenManager;
 using WebTennisFieldReservation.Services.SingleUserMailSender;
+using WebTennisFieldReservation.Services.HttpClients;
 
 namespace WebTennisFieldReservation
 {
@@ -34,6 +35,7 @@ namespace WebTennisFieldReservation
             TokenManagerSettings tokenManagerSettings = builder.Configuration.GetSection(ConfigurationSectionsNames.TokenManager).Get<TokenManagerSettings>();
             AuthenticationSchemeSettings myAuthSchemeSettings = builder.Configuration.GetSection(ConfigurationSectionsNames.AuthenticationSchemes + ":" + AuthenticationSchemesNames.MyAuthScheme).Get<AuthenticationSchemeSettings>();
             LoggedRecentlyPolicySettings loggedRecentlyPolicySettings = builder.Configuration.GetSection(ConfigurationSectionsNames.LoggedRecentlyPolicy).Get<LoggedRecentlyPolicySettings>();
+            PaypalApiSettings paypalApiSettings = builder.Configuration.GetSection(ConfigurationSectionsNames.PaypalApi).Get<PaypalApiSettings>();
 
             // Add dbcontext backed repository
             string connString = builder.Configuration.GetConnectionString(ConnectionStringsNames.Default) ?? throw new InvalidOperationException("Connection string missing");
@@ -124,8 +126,12 @@ namespace WebTennisFieldReservation
                 options.HeaderName = HttpHeadersNames.X_CSRF_TOKEN;
             });
 
-            //*************** BUILD ***************
-            var app = builder.Build();
+            // Add HTTP clients
+            builder.Services.AddHttpClient<PaypalAuthenticationClient>();
+            builder.Services.AddSingleton<PaypalApiSettings>(paypalApiSettings);    //we need to inject this in the PaypalAuthenticationClient
+
+			//*************** BUILD ***************
+			var app = builder.Build();
 
             // Configure the HTTP request pipeline.
             if (!app.Environment.IsDevelopment())

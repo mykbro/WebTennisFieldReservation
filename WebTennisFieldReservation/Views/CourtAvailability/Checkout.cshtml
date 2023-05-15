@@ -7,6 +7,7 @@
 <h4>Please review your selections</h4>
 <div class="row my-3">
 	<form name="form1" method="post" action="/courtavailability/reserve">
+		<input type="hidden" name="PaymentToken" value="@Model.PaymentToken" />
 	</form> 
 	<table class="table table-hover">
 		<thead>

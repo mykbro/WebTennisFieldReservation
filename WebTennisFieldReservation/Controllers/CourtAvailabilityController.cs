@@ -42,7 +42,10 @@ namespace WebTennisFieldReservation.Controllers
 					//we should probably do this ordering directly in the query
 					var checkoutEntries = slotsData.OrderBy(entry => entry.Date).ThenBy(entry => entry.DaySlot);
 					
-					return View(new CheckoutPageModel(checkoutEntries.ToList()));
+					//we create a PaymentId (for payment idempotence)
+					Guid paymentToken = Guid.NewGuid();
+
+					return View(new CheckoutPageModel(checkoutEntries.ToList(), paymentToken));
 				}
 				else
 				{
