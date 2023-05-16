@@ -499,23 +499,24 @@ namespace WebTennisFieldReservation.Data
                 .ToListAsync();
 		}
 
-		public async Task<Guid?> AddReservationFromSlotIdListAsync(CreateReservationModel reservationData)
+		public async Task<bool> AddReservationFromSlotIdListAsync(CreateReservationModel reservationData)
 		{
             //we create a new Reservation
-            Guid reservationId = reservationData.CheckoutToken;
+            Guid reservationId = reservationData.ReservationId;
 
 			Reservation newReservation = new Reservation() 
             {
                 Id = reservationId,
 				UserId = reservationData.UserId,
 				Timestamp = reservationData.Timestamp, 
-                Status = ReservationStatus.Pending,
-                PaymentConfirmationToken = reservationData.PaymentConfirmationToken,
-                PaymentId = reservationData.PaymentId                
+                Status = ReservationStatus.Created,
+                PaymentConfirmationToken = reservationData.PaymentConfirmationToken                             
             };
 
             //we create the ReservationEntries from ReservationSlot data (price)
             //we can do the query outside the transaction, we don't check that the price didn't change in the meantime
+            //here's where we FIX the final price
+            //(please note that here we could check slot availability for an early failure)
             List<ReservationEntry> resEntries = await _context.ReservationsSlots
                 .Where(slot => reservationData.SlotIds.Contains(slot.Id))
                 .Select(slot => new ReservationEntry()
@@ -526,45 +527,62 @@ namespace WebTennisFieldReservation.Data
 				})
                 .ToListAsync();
 
+            //we set the EntryNr for each entry
+            for(int i = 0; i < resEntries.Count; i++)
+            {
+                resEntries[i].EntryNr = i;
+            }
+
             //we calculate TotalPrice and set it in newReservation
             newReservation.TotalPrice = resEntries.Select(entry => entry.Price).Sum();
 
             //we add everything to the context for tracking
             _context.Reservations.Add(newReservation);
-            _context.ReservationEntries.AddRange(resEntries);           //we could have added the entries to the reservation sparing this line
-
-            
-            //we try to save everything inside a transaction where we also update the IsAvailable status to false for the slots
-            //the save is going to fail in case of slots already taken or duplicate slots
-            using(var trans = await _context.Database.BeginTransactionAsync())
+            _context.ReservationEntries.AddRange(resEntries);           //we could have added the entries to the reservation sparing this line            
+           
+            try
             {
-                try
+				//we try to save everything,
+				//the save is going to fail in case of duplicate ReservationId/CheckoutToken
+				//please note that WE DON'T CHANGE THE SLOTS' AVAILABILITY YET 
+				await _context.SaveChangesAsync();
+                return true;    
+
+                /**
+                //if the save succeeded we update the slots
+                int slotsUpdated = await _context.ReservationsSlots
+                    .Where(slot => reservationData.SlotIds.Contains(slot.Id) && slot.IsAvailable == true)  //the IsAvailable check is just for confirmation
+                    .ExecuteUpdateAsync(slot => slot.SetProperty(slot => slot.IsAvailable, false));
+
+                //sanitary check
+                if(slotsUpdated == reservationData.SlotIds.Count)
                 {
-                    await _context.SaveChangesAsync();
-
-                    //if the save succeeded we update the slots
-                    int slotsUpdated = await _context.ReservationsSlots
-                        .Where(slot => reservationData.SlotIds.Contains(slot.Id) && slot.IsAvailable == true)  //the IsAvailable check is just for confirmation
-                        .ExecuteUpdateAsync(slot => slot.SetProperty(slot => slot.IsAvailable, false));
-
-                    //sanitary check
-                    if(slotsUpdated == reservationData.SlotIds.Count)
-                    {
-						await trans.CommitAsync();
-						return reservationId;
-					}
-                    else
-                    {
-                        await trans.RollbackAsync();
-                        return null;
-                    }
-                }
-                catch
+					await trans.CommitAsync();
+					return reservationId;
+				}
+                else
                 {
                     await trans.RollbackAsync();
                     return null;
                 }
+                */
             }
-		}	
+            catch
+            {
+                //await trans.RollbackAsync();
+                return false;
+            }
+            
+		}
+
+		public Task<decimal> GetReservationTotalPriceAsync(Guid reservationId)
+		{
+			return _context.Reservations.Where(res => res.Id == reservationId).Select(res => res.TotalPrice).SingleOrDefaultAsync();
+		}
+
+		public Task<int> UpdateReservationPaymentIdAsync(Guid reservationId, string paymentId)
+		{
+			
+		}
 	}
 }

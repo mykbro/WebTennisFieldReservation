@@ -10,7 +10,7 @@ namespace WebTennisFieldReservation.Controllers
 		{
 			try
 			{
-				string authToken = await paypalClient.GetAuthToken();
+				string authToken = await paypalClient.GetAuthTokenAsync();
 				return Ok();
 			}
 			catch

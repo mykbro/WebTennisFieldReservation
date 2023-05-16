@@ -6,7 +6,7 @@
 
 <h4>Please review your selections</h4>
 <div class="row my-3">
-	<form name="form1" method="post" asp-action="Reserve">
+	<form name="form1" method="post" asp-controller="Reservations" asp-action="Create">
 		<input type="hidden" name="CheckoutToken" value="@Model.CheckoutToken" />
 	</form> 
 	<table class="table table-hover">

@@ -23,10 +23,9 @@ namespace WebTennisFieldReservation.Entities
 
         [Required]
         public Guid PaymentConfirmationToken { get; set; }
-
-        [Required]
+        
         [StringLength(32)]        
-        public string PaymentId { get; set; } = null!;
+        public string? PaymentId { get; set; }      //can be null on order creation
 
         // Navigation
         public User User { get; set; } = null!;
@@ -35,8 +34,9 @@ namespace WebTennisFieldReservation.Entities
 
     public enum ReservationStatus
     {
-        Pending = 0,
-        Authorized = 1,
-        Confirmed = 2
+        Created = 0,
+        PaymentPending = 1,
+        PaymentAuthorized = 2,
+        PaymentConfirmed = 3
     }
 }

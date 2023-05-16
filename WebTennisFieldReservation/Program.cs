@@ -126,9 +126,11 @@ namespace WebTennisFieldReservation
                 options.HeaderName = HttpHeadersNames.X_CSRF_TOKEN;
             });
 
-            // Add HTTP clients
+			// Add HTTP clients
+			builder.Services.AddSingleton<PaypalApiSettings>(paypalApiSettings);    //we need to inject this in the PaypalAuthenticationClient			
             builder.Services.AddHttpClient<PaypalAuthenticationClient>();
-            builder.Services.AddSingleton<PaypalApiSettings>(paypalApiSettings);    //we need to inject this in the PaypalAuthenticationClient
+            builder.Services.AddHttpClient<PaypalCreateOrderClient>();
+            
 
 			//*************** BUILD ***************
 			var app = builder.Build();

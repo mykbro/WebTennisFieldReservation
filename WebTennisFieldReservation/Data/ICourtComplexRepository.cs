@@ -43,7 +43,10 @@ namespace WebTennisFieldReservation.Data
 
         public Task<List<SlotAvailabilityForDateModel>> GetSlotAvailabilityForDateForAllCourtsAsync(DateTime date);
 		public Task<List<SlotModel>> GetSlotDataByIdListAsync(List<int> ids);
+        
+        public Task<bool> AddReservationFromSlotIdListAsync(CreateReservationModel reservationData);
 
-        public Task<Guid?> AddReservationFromSlotIdListAsync(CreateReservationModel reservationData);      
+		public Task<decimal> GetReservationTotalPriceAsync(Guid reservationId);
+		public Task<int> UpdateReservationPaymentIdAsync(Guid reservationId, string paymentId);
 	}
 }

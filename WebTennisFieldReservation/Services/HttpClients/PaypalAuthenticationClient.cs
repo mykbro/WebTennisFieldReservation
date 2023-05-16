@@ -2,19 +2,19 @@
 using System.Net.Http.Headers;
 using WebTennisFieldReservation.Constants.Names;
 using WebTennisFieldReservation.Exceptions;
-using WebTennisFieldReservation.Utilities;
 using System.Text.Json;
 using System.Buffers.Text;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using WebTennisFieldReservation.Utilities.Paypal;
+using WebTennisFieldReservation.Constants;
 
 namespace WebTennisFieldReservation.Services.HttpClients
 {
     public class PaypalAuthenticationClient
     {
-        private static readonly HttpContent RequestContent;
-        private static readonly JsonSerializerOptions JsonOptions = new JsonSerializerOptions() { PropertyNameCaseInsensitive = true };
+        private static readonly HttpContent RequestContent;       
 
 		private HttpClient _httpClient;
 
@@ -45,17 +45,17 @@ namespace WebTennisFieldReservation.Services.HttpClients
 		/// <returns></returns>
 		/// <exception cref="PaypalAuthFailedException"></exception>
 		/// <exception cref="HttpRequestException"></exception>
-		public async Task<string> GetAuthToken()
+		public async Task<string> GetAuthTokenAsync()
         { 
 			HttpResponseMessage httpResponse = await _httpClient.PostAsync("", RequestContent);
 
             if (httpResponse.IsSuccessStatusCode)
             {
-                PaypalAuthResponse? response = await httpResponse.Content.ReadFromJsonAsync<PaypalAuthResponse>(JsonOptions);
+                PaypalAuthResponse? response = await httpResponse.Content.ReadFromJsonAsync<PaypalAuthResponse>(HttpClientsConsts.JsonOptions);
 
                 if(response != null)
                 {
-                    return response.Access_Token;
+                    return response.access_token;
                 }
                 else
                 {
