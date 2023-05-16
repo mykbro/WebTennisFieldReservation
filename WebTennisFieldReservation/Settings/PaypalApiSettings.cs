@@ -6,5 +6,6 @@
 		public string ClientId { get; set; } = null!;
 		public string Secret { get; set; } = null!;
 		public string CreateOrderUrl { get; set; } = null!;
+		public string CheckoutPageUrl { get; set; } = null!;
 	}
 }

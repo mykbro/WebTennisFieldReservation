@@ -47,6 +47,7 @@ namespace WebTennisFieldReservation.Data
         public Task<bool> AddReservationFromSlotIdListAsync(CreateReservationModel reservationData);
 
 		public Task<decimal> GetReservationTotalPriceAsync(Guid reservationId);
-		public Task<int> UpdateReservationPaymentIdAsync(Guid reservationId, string paymentId);
+		public Task<int> UpdateReservationToPaymentCreatedAsync(Guid reservationId, string paymentId);
+        public Task<int> UpdateReservationToPaymentAuthorizedAsync(Guid reservationId, Guid confirmationToken, string paymentId);
 	}
 }

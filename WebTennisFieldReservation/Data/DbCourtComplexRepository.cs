@@ -509,7 +509,7 @@ namespace WebTennisFieldReservation.Data
                 Id = reservationId,
 				UserId = reservationData.UserId,
 				Timestamp = reservationData.Timestamp, 
-                Status = ReservationStatus.Created,
+                Status = ReservationStatus.Pending,
                 PaymentConfirmationToken = reservationData.PaymentConfirmationToken                             
             };
 
@@ -580,9 +580,28 @@ namespace WebTennisFieldReservation.Data
 			return _context.Reservations.Where(res => res.Id == reservationId).Select(res => res.TotalPrice).SingleOrDefaultAsync();
 		}
 
-		public Task<int> UpdateReservationPaymentIdAsync(Guid reservationId, string paymentId)
+		public Task<int> UpdateReservationToPaymentCreatedAsync(Guid reservationId, string paymentId)
 		{
-			
+            return _context.Reservations
+                .Where(res => res.Id == reservationId)
+                .ExecuteUpdateAsync(res =>
+                    res.SetProperty(res => res.PaymentId, paymentId)
+                        .SetProperty(res => res.Status, ReservationStatus.PaymentCreated)
+                );
+                   
+		}
+
+		public Task<int> UpdateReservationToPaymentAuthorizedAsync(Guid reservationId, Guid confirmationToken, string paymentId)
+		{
+			return _context.Reservations
+                .Where(res => res.Id == reservationId 
+                                && res.PaymentConfirmationToken == confirmationToken
+                                && res.PaymentId == paymentId 
+                                && res.Status == ReservationStatus.PaymentCreated
+                )
+				.ExecuteUpdateAsync(res =>
+					res.SetProperty(res => res.Status, ReservationStatus.PaymentAuthorized)						
+				);
 		}
 	}
 }

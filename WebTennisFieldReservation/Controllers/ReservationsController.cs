@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.ComponentModel.DataAnnotations;
+using System.Diagnostics.CodeAnalysis;
 using System.Security.Claims;
 using WebTennisFieldReservation.Constants.Names;
 using WebTennisFieldReservation.Data;
@@ -7,6 +9,7 @@ using WebTennisFieldReservation.Models.CourtAvailability;
 using WebTennisFieldReservation.Models.Reservations;
 using WebTennisFieldReservation.Services.HttpClients;
 using WebTennisFieldReservation.Services.SingleUserMailSender;
+using WebTennisFieldReservation.Settings;
 using WebTennisFieldReservation.Utilities.Paypal;
 
 namespace WebTennisFieldReservation.Controllers
@@ -56,7 +59,7 @@ namespace WebTennisFieldReservation.Controllers
 		}
 
 		[HttpPost("create")]
-		public async Task<IActionResult> Create(CheckoutPostModel checkoutData, [FromServices] PaypalCreateOrderClient createOrderClient, [FromServices] PaypalAuthenticationClient authClient)     //we reuse the same postModel
+		public async Task<IActionResult> Create(CheckoutPostModel checkoutData, [FromServices] PaypalCreateOrderClient createOrderClient, [FromServices] PaypalAuthenticationClient authClient, [FromServices] PaypalApiSettings paypalSettings)     //we reuse the same postModel
 		{
 			if (ModelState.IsValid)
 			{
@@ -85,19 +88,19 @@ namespace WebTennisFieldReservation.Controllers
 					try 
 					{						
 						string authToken = await authClient.GetAuthTokenAsync();
-						PaypalCreateOrderResponse paypalResponse = await createOrderClient.CreateOrderAsync(authToken, paymentToken, checkoutData.SlotIds.Count, totalAmount);
-						
+						PaypalCreateOrderResponse paypalResponse = await createOrderClient.CreateOrderAsync(authToken, reservationId, paymentToken, checkoutData.SlotIds.Count, totalAmount);
+
 						//if we succeded we update the db with the payment id
+						await _repo.UpdateReservationToPaymentCreatedAsync(reservationId, paypalResponse.id);
 
-
+						//and we redirect to the payment page
+						return Redirect(paypalSettings.CheckoutPageUrl + "?token=" + paypalResponse.id);
 					}
 					catch(Exception ex)
 					{
-
+						return BadRequest();
 					}
-
-					//we return the confirmation page
-					return RedirectToAction(nameof(ReservationSuccess), new { createData.ReservationId });
+					
 				}
 				else
 				{
@@ -107,6 +110,39 @@ namespace WebTennisFieldReservation.Controllers
 			else
 			{
 				return BadRequest();
+			}
+		}
+
+		[HttpGet("confirm")]
+		[AllowAnonymous]
+		public async Task<IActionResult> Confirm([Required] Guid reservationId, [Required] Guid confirmationToken, string token)
+		{
+			//we also need the confirmationToken, which only paypal can know, otherwise one can forge a reservationId during checkout
+			//and get the payment token during the paypal redirect, confirming the order without going through the paypal authorization
+			//(even better we should save the confirmationToken hash or save nothing and rely on DataProtection to prevent db dumps attacks)
+			if (ModelState.IsValid)
+			{
+				//we first update the reservation status to PaymentAuthorized in order to stop any replay of this method
+				int updatesDone = await _repo.UpdateReservationToPaymentAuthorizedAsync(reservationId, confirmationToken, token);
+
+				//we check if the update happened
+				if(updatesDone == 1)
+				{
+					// we try to confirm the order marking the slots as taken,
+					// we'll fail if any of the slots is taken or has been taken in the meanwhile (between the checkout and now)
+
+
+
+
+				}
+				else
+				{
+					//the order was already deleted/authorized or there was a forging attempt
+				}
+			}
+			else
+			{
+				return NotFound();
 			}
 		}
 
@@ -163,16 +199,17 @@ namespace WebTennisFieldReservation.Controllers
 			}
 		}
 
-		[HttpGet("reserve/success")]
-		public IActionResult ReservationSuccess(Guid? reservationId)
+		[HttpGet("confirm/success")]
+		[AllowAnonymous]
+		public IActionResult ReservationSuccess([Required] Guid reservationId)
 		{
-			if (reservationId != null)
+			if (ModelState.IsValid)
 			{
-				return View(reservationId.Value);
+				return View(reservationId);
 			}
 			else
 			{
-				return BadRequest();
+				return NotFound();
 			}
 		}
 	}

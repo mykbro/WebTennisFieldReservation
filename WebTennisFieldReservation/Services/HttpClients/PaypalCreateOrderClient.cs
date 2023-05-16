@@ -17,40 +17,36 @@ namespace WebTennisFieldReservation.Services.HttpClients
             _httpClient.BaseAddress = new Uri(settings.CreateOrderUrl);            
         }
 
-        public async Task<PaypalCreateOrderResponse> CreateOrderAsync(string authToken, Guid paymentToken, int numSlots, decimal totalAmount)
+        public async Task<PaypalCreateOrderResponse> CreateOrderAsync(string authToken, Guid reservationId, Guid confirmationToken, int numSlots, decimal totalAmount)
         {
             //we add the auth token...
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", authToken);
             //...and the idempotency token
-            _httpClient.DefaultRequestHeaders.Add(HttpHeadersNames.PayPalRequestId, paymentToken.ToString());
+            _httpClient.DefaultRequestHeaders.Add(HttpHeadersNames.PayPalRequestId, confirmationToken.ToString());
 
             //we create and populate the PaypalCreateOrderRequest object
-            PaypalCreateOrderRequest orderData = new PaypalCreateOrderRequest()
-            {
+            var orderData = new {
                 intent = "AUTHORIZE",
-                purchase_units = new List<PaypalPurchaseUnit>()
-                {
-                    new PaypalPurchaseUnit()
-                    {
+                purchase_units = new[] {
+                    new {
                         description = $"Reservation for {numSlots} slots",
-                        amount = new PaypalAmount()
-                        {
+                        amount = new {
                             currency_code = "EUR",
-                            value = totalAmount.ToString().Replace(',' , '.')           //paypal wants the DOT
+                            value = totalAmount.ToString().Replace(',', '.')           //paypal wants the DOT
                         }
                     }
                 },
-                payment_source = new PaypalPaymentSource
-                {
-                    paypal = n
-                    {
-
+                payment_source = new {
+                    paypal = new {
+                        experience_context = new {
+                            return_url = $"http://localhost/reservations/confirm?reservationId={reservationId}&confirmationToken={confirmationToken}"
+                        }
                     }
                 }
 			};
 
 			//we try to make the request
-			HttpResponseMessage httpResponse = await _httpClient.PostAsJsonAsync<PaypalCreateOrderRequest>("", orderData);
+			HttpResponseMessage httpResponse = await _httpClient.PostAsJsonAsync("", orderData);
 
             //we check the response
             if (httpResponse.IsSuccessStatusCode)
