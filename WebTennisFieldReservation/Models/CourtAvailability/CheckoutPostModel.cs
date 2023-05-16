@@ -8,5 +8,8 @@ namespace WebTennisFieldReservation.Models.CourtAvailability
 		[Required]
 		[CollectionLength(minSize: 1)]
 		public List<int> SlotIds { get; set; } = null!;
+
+		[Required]
+		public Guid CheckoutToken { get; set; }
 	}
 }

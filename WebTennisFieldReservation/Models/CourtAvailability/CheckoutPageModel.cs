@@ -4,13 +4,14 @@
 	{
 		public List<SlotModel> Entries { get; }
 		public decimal TotalPrice { get; }
-		public Guid PaymentToken { get; }
+		public Guid CheckoutToken { get; }
+		
 
-		public CheckoutPageModel(List<SlotModel> entries, Guid paymentToken) 
+		public CheckoutPageModel(List<SlotModel> entries, Guid checkoutToken) 
 		{ 
 			Entries = entries;
 			TotalPrice = Entries.Select(e => e.Price).Sum();
-			PaymentToken = paymentToken;
+			CheckoutToken = checkoutToken;
 		}
 
 	}

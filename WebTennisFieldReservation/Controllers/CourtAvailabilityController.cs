@@ -6,10 +6,12 @@ using WebTennisFieldReservation.Models.Administration;
 using WebTennisFieldReservation.Models.CourtAvailability;
 using WebTennisFieldReservation.Constants.Names;
 using WebTennisFieldReservation.Services.SingleUserMailSender;
+using Microsoft.AspNetCore.Antiforgery;
 
 namespace WebTennisFieldReservation.Controllers
 {
 	[Route("/courtavailability")]
+	[AutoValidateAntiforgeryToken]
 	public class CourtAvailabilityController : Controller
 	{
 		private readonly ICourtComplexRepository _repo;
@@ -42,10 +44,10 @@ namespace WebTennisFieldReservation.Controllers
 					//we should probably do this ordering directly in the query
 					var checkoutEntries = slotsData.OrderBy(entry => entry.Date).ThenBy(entry => entry.DaySlot);
 					
-					//we create a PaymentId (for payment idempotence)
-					Guid paymentToken = Guid.NewGuid();
+					//we create a CheckoutToken (for payment idempotence)
+					Guid checkoutToken = Guid.NewGuid();
 
-					return View(new CheckoutPageModel(checkoutEntries.ToList(), paymentToken));
+					return View(new CheckoutPageModel(checkoutEntries.ToList(), checkoutToken));
 				}
 				else
 				{
@@ -61,7 +63,7 @@ namespace WebTennisFieldReservation.Controllers
 
 		[HttpPost("reserve")]
 		[Authorize]
-		public async Task<IActionResult> Reserve(CheckoutPostModel checkoutData, [FromServices] ISingleUserMailSender mailSender, [FromServices] IServiceScopeFactory scopeFactory)		//we reuse the same postModel
+		public async Task<IActionResult> Reserve(CheckoutPostModel checkoutData, [FromServices] ISingleUserMailSender mailSender/*, [FromServices] IServiceScopeFactory scopeFactory*/)		//we reuse the same postModel
 		{
 			if(ModelState.IsValid) 
 			{
@@ -69,7 +71,10 @@ namespace WebTennisFieldReservation.Controllers
 				{
 					SlotIds = checkoutData.SlotIds,
 					Timestamp = DateTimeOffset.Now,
-					UserId = Guid.Parse(User.FindFirstValue(ClaimsNames.Id))
+					UserId = Guid.Parse(User.FindFirstValue(ClaimsNames.Id)),
+					CheckoutToken = checkoutData.CheckoutToken,
+					PaymentConfirmationToken = Guid.NewGuid(),
+					PaymentId = "blablabla"
 				};
 
 				Guid? reservationId = await _repo.AddReservationFromSlotIdListAsync(createData);
@@ -85,12 +90,14 @@ namespace WebTennisFieldReservation.Controllers
 
 							await mailSender.SendEmailAsync(User.FindFirstValue(ClaimsNames.Email), mailSubject, mailBody);
 
+							/*
 							//we must request a new ICourtComplexRepository because the "external" _repo must not be accessed concurrently and may be already disposed 
 							using (var scope = scopeFactory.CreateScope())
 							{
 								var repo = scope.ServiceProvider.GetService<ICourtComplexRepository>();
 								await repo!.ConfirmReservationEmailSentAsync(reservationId.Value);
-							}							
+							}
+							*/
 						});			
 
 					//we return the confirmation page

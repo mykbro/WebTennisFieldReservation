@@ -502,14 +502,16 @@ namespace WebTennisFieldReservation.Data
 		public async Task<Guid?> AddReservationFromSlotIdListAsync(CreateReservationModel reservationData)
 		{
             //we create a new Reservation
-            Guid newReservationId = Guid.NewGuid();
+            Guid reservationId = reservationData.CheckoutToken;
 
 			Reservation newReservation = new Reservation() 
             {
-                Id = newReservationId,
+                Id = reservationId,
 				UserId = reservationData.UserId,
-				Timestamp = reservationData.Timestamp,
-                ConfirmationEmailSent = false
+				Timestamp = reservationData.Timestamp, 
+                Status = ReservationStatus.Pending,
+                PaymentConfirmationToken = reservationData.PaymentConfirmationToken,
+                PaymentId = reservationData.PaymentId                
             };
 
             //we create the ReservationEntries from ReservationSlot data (price)
@@ -520,7 +522,7 @@ namespace WebTennisFieldReservation.Data
                 {
                     ReservationSlotId = slot.Id,
                     Price = slot.Price,
-                    ReservationId = newReservationId
+                    ReservationId = reservationId
 				})
                 .ToListAsync();
 
@@ -529,7 +531,7 @@ namespace WebTennisFieldReservation.Data
 
             //we add everything to the context for tracking
             _context.Reservations.Add(newReservation);
-            _context.ReservationEntries.AddRange(resEntries);           //we could have added the entries to the reservation
+            _context.ReservationEntries.AddRange(resEntries);           //we could have added the entries to the reservation sparing this line
 
             
             //we try to save everything inside a transaction where we also update the IsAvailable status to false for the slots
@@ -549,7 +551,7 @@ namespace WebTennisFieldReservation.Data
                     if(slotsUpdated == reservationData.SlotIds.Count)
                     {
 						await trans.CommitAsync();
-						return newReservationId;
+						return reservationId;
 					}
                     else
                     {
@@ -563,13 +565,6 @@ namespace WebTennisFieldReservation.Data
                     return null;
                 }
             }
-		}
-
-		public Task<int> ConfirmReservationEmailSentAsync(Guid reservationId)
-		{
-            return _context.Reservations
-                .Where(res => res.Id == reservationId)
-                .ExecuteUpdateAsync(res => res.SetProperty(res => res.ConfirmationEmailSent, true));
-		}
+		}	
 	}
 }
