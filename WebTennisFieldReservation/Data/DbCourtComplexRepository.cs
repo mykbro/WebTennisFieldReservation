@@ -543,33 +543,13 @@ namespace WebTennisFieldReservation.Data
             try
             {
 				//we try to save everything,
-				//the save is going to fail in case of duplicate ReservationId/CheckoutToken
+				//the save is going to fail in case of duplicate ReservationId
 				//please note that WE DON'T CHANGE THE SLOTS' AVAILABILITY YET 
 				await _context.SaveChangesAsync();
-                return true;    
-
-                /**
-                //if the save succeeded we update the slots
-                int slotsUpdated = await _context.ReservationsSlots
-                    .Where(slot => reservationData.SlotIds.Contains(slot.Id) && slot.IsAvailable == true)  //the IsAvailable check is just for confirmation
-                    .ExecuteUpdateAsync(slot => slot.SetProperty(slot => slot.IsAvailable, false));
-
-                //sanitary check
-                if(slotsUpdated == reservationData.SlotIds.Count)
-                {
-					await trans.CommitAsync();
-					return reservationId;
-				}
-                else
-                {
-                    await trans.RollbackAsync();
-                    return null;
-                }
-                */
+                return true;                  
             }
             catch
-            {
-                //await trans.RollbackAsync();
+            {               
                 return false;
             }
             
@@ -644,6 +624,15 @@ namespace WebTennisFieldReservation.Data
                     return false;
                 }
             }
+		}
+
+		public Task<int> UpdateReservationToConfirmedAsync(Guid reservationId)
+		{
+			return _context.Reservations
+				.Where(res => res.Id == reservationId && res.Status == ReservationStatus.Fulfilled)
+				.ExecuteUpdateAsync(res =>
+					res.SetProperty(res => res.Status, ReservationStatus.Confirmed)						
+				);
 		}
 	}
 }

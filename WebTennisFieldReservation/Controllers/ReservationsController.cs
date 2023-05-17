@@ -88,10 +88,7 @@ namespace WebTennisFieldReservation.Controllers
 					try 
 					{						
 						string authToken = await authClient.GetAuthTokenAsync();
-						PaypalOrderResponse paypalResponse = await createOrderClient.CreateOrderAsync(authToken, reservationId, paymentToken, checkoutData.SlotIds.Count, totalAmount);
-
-						//if we succeded we update the db with the payment id
-						await _repo.UpdateReservationToPaymentCreatedAsync(reservationId, paypalResponse.id);
+						PaypalOrderResponse paypalResponse = await createOrderClient.CreateOrderAsync(authToken, reservationId, paymentToken, checkoutData.SlotIds.Count, totalAmount);						
 
 						//and we redirect to the payment page
 						return Redirect(paypalSettings.CheckoutPageUrl + "?token=" + paypalResponse.id);
@@ -114,9 +111,8 @@ namespace WebTennisFieldReservation.Controllers
 			}
 		}
 
-		[HttpGet("confirm")]
-		[AllowAnonymous]	//we allow the confirmation even when logged out
-		public async Task<IActionResult> Confirm([Required] Guid reservationId, [Required] Guid confirmationToken, string token, [FromServices] PaypalCapturePaymentClient capturePaymentClient, [FromServices] PaypalAuthenticationClient authClient)
+		[HttpGet("confirm")]		
+		public async Task<IActionResult> Confirm([Required] Guid reservationId, [Required] Guid confirmationToken, string token, [FromServices] PaypalCapturePaymentClient capturePaymentClient, [FromServices] PaypalAuthenticationClient authClient, [FromServices] ISingleUserMailSender mailSender)
 		{			
 			//we also need the confirmationToken, which only paypal can know, otherwise one can forge a reservationId during checkout
 			//and call this endpoint with a random payment token that will be saved in the database and checked for capturing;
@@ -149,14 +145,51 @@ namespace WebTennisFieldReservation.Controllers
 							//we check if everything went fine
 							if(response.status == "COMPLETED")
 							{
-								
-							}
+								//we try to send a confirmation mail, if we don't succeed we continue
+								string mailSubject = "Reservation confirmed";
+								string mailBody = $"Your reservation #{reservationId} was confirmed !";
 
-							return Ok();
+								try 
+								{
+									await mailSender.SendEmailAsync(User.FindFirstValue(ClaimsNames.Email), mailSubject, mailBody);
+								}
+								catch(Exception ex)
+								{
+								}
+
+								//we then update the database
+								updatesDone = await _repo.UpdateReservationToConfirmedAsync(reservationId);
+
+								//profilactic check
+								if (updatesDone == 1)
+								{
+									//we finally return a success page
+									return RedirectToAction(nameof(ReservationSuccess), new { reservationId });
+								}
+								else
+								{
+									//something went terribly wrong if we're here...
+									//we should probably delete the order and refund it
+									return BadRequest();
+								}
+							}
+							else
+							{
+								//we got a response and it's not good
+								//we should delete the order
+								return BadRequest();
+							}							
 						}
 						catch(Exception ex)
 						{
-							//something went wrong
+							// something went wrong
+							// there are many cases:
+							// 1- authentication error/no answer from auth -> we can retry a few times and then give up aborting the order
+							// 2- bad answer from capturePayment (not a PaypalOrderResponse) -> no capture happened, we can abort the order
+							// 3- NO ANSWER from capturePayment -> this is the trickiest, we can retry the capture a few times but if we fail we cannot say anything,
+							//	  we leave the reservation Fulfilled but we need a background service to check for a previous capture and confirm or abort the order.
+							//	  We can return a "Reservation pending" page to give at least some feedback to the user.
+
 							return BadRequest();
 						}						
 					}

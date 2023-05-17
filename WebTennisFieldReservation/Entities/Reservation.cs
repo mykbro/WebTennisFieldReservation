@@ -15,7 +15,7 @@ namespace WebTennisFieldReservation.Entities
         [Column(TypeName = "decimal(18,2)")]
         public decimal TotalPrice { get; set; }
 
-        [Required]
+        [Required]        
         public DateTimeOffset Timestamp { get; set; }
 
         [Required]
@@ -34,10 +34,12 @@ namespace WebTennisFieldReservation.Entities
 
     public enum ReservationStatus
     {
-        Pending,                //we place it in the db for "fixing" the price with a NULL paymentId. We do not reserve the slots yet.       
-        PaymentApproved,        //we need this to protect against replayed/concurrent order confirmation. We update the paymentId field.
+        Pending,                //we place it in the db for "fixing" the price with a NULL paymentId. We do not reserve the slots yet.
+        PaymentCreated,         //we update the paymentId field.
+		PaymentApproved,        //the user approved the payment and the returnUrl has been called
+                                //we need this to protect against replayed/concurrent order confirmations. 
         Fulfilled,              //the slots were available and we were able to fulfill the order reserving the slots. We need to capture the payment.
-		Confirmed               //we successfully captured the payment and sent a confirmation email
-							 
+		Confirmed,              //we successfully captured the payment and tried to send a confirmation email
+        Aborted                 //something went wrong during the payment/fulfillment but we want to keep the reservation in the db							 
 	}
 }

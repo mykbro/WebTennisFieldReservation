@@ -17,7 +17,7 @@ namespace WebTennisFieldReservation.Services.HttpClients
             _httpClient.BaseAddress = new Uri(settings.CreateOrderUrl);            
         }
 
-        public async Task<PaypalOrderResponse> CreateOrderAsync(string authToken, Guid reservationId, int numSlots, decimal totalAmount)
+        public async Task<PaypalOrderResponse> CreateOrderAsync(string authToken, Guid reservationId, Guid confirmationToken, int numSlots, decimal totalAmount)
         {
             //we add the auth token...
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", authToken);
@@ -40,7 +40,7 @@ namespace WebTennisFieldReservation.Services.HttpClients
                     paypal = new {
                         experience_context = new {
                             brand_name = "WebTennisCourtComplex",
-                            return_url = $"http://localhost/reservations/confirm?reservationId={reservationId}",
+                            return_url = $"http://localhost/reservations/confirm?reservationId={reservationId}&confirmationToken={confirmationToken}",
                             user_action = "PAY_NOW",
 							payment_method_preference = "IMMEDIATE_PAYMENT_REQUIRED"
 						}
