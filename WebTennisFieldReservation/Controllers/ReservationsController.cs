@@ -115,22 +115,27 @@ namespace WebTennisFieldReservation.Controllers
 		}
 
 		[HttpGet("confirm")]
-		[AllowAnonymous]
+		[AllowAnonymous]	//we allow the confirmation even when logged out
 		public async Task<IActionResult> Confirm([Required] Guid reservationId, [Required] Guid confirmationToken, string token, [FromServices] PaypalCapturePaymentClient capturePaymentClient, [FromServices] PaypalAuthenticationClient authClient)
-		{
+		{			
 			//we also need the confirmationToken, which only paypal can know, otherwise one can forge a reservationId during checkout
-			//and get the payment token during the paypal redirect, confirming the order without going through the paypal authorization
-			//(even better we should save the confirmationToken hash or save nothing and rely on DataProtection to prevent db dumps attacks)
+			//and call this endpoint with a random payment token that will be saved in the database and checked for capturing;
+			//ofc the check will fail (payment not found) but this can disrupt the process
+			//(even better we should save the confirmationToken hash or save nothing and rely on a DataProtection token to prevent db dumps attacks)
 			if (ModelState.IsValid)
 			{
-				//we first update the reservation status to PaymentAuthorized in order to stop any replay of this method
-				int updatesDone = await _repo.UpdateReservationToPaymentAuthorizedAsync(reservationId, confirmationToken, token);
+				// we first try to update the reservation state from Placed to PaymentApproved;
+				// this will:
+				// 1- protect against a replay/concurrent call to this endpoint
+				// 2- protect against any forgery thanks to the confirmationToken
+				// 3- atomically add the paymentId to the reservation
+				int updatesDone = await _repo.UpdateReservationToPaymentApprovedAsync(reservationId, confirmationToken, token);
 
 				//we check if the update happened
-				if(updatesDone == 1)
+				if (updatesDone == 1)
 				{
 					// we try to confirm the order marking the slots as taken,
-					// we'll fail if any of the slots is taken or has been taken in the meanwhile (between the checkout and now)
+					// we'll fail if any of the slots is taken or has been taken in the meanwhile (between the checkout and now)					
 					bool reservationFulfilled = await _repo.TryToFulfillReservationAsync(reservationId);
 
 					if(reservationFulfilled)
@@ -158,7 +163,7 @@ namespace WebTennisFieldReservation.Controllers
 					else
 					{
 						//we weren't able to fulfill the reservation
-						//we should void the payment authorization etc etc...
+						//we should remove the order from the db etc etc...
 						return BadRequest();
 					}
 				}

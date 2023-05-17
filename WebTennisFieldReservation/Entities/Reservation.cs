@@ -34,11 +34,10 @@ namespace WebTennisFieldReservation.Entities
 
     public enum ReservationStatus
     {
-        Pending,                //we place it in the db for "fixing" the price with a NULL paymentId. We do not reserve the slots yet.
-        PaymentCreated,         //we created the payment on paypal and updated the paymentId field
-        PaymentAuthorized,      //the user completed the paypal checkout successfully
-        Fulfilled,              //the slots were available and we were able to fulfill the order. We reserve the slots.
-		Confirmed               //we captured the payment and sent a confirmation email
+        Pending,                //we place it in the db for "fixing" the price with a NULL paymentId. We do not reserve the slots yet.       
+        PaymentApproved,        //we need this to protect against replayed/concurrent order confirmation. We update the paymentId field.
+        Fulfilled,              //the slots were available and we were able to fulfill the order reserving the slots. We need to capture the payment.
+		Confirmed               //we successfully captured the payment and sent a confirmation email
 							 
 	}
 }

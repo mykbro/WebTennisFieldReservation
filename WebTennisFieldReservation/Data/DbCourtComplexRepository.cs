@@ -579,28 +579,17 @@ namespace WebTennisFieldReservation.Data
 		{
 			return _context.Reservations.Where(res => res.Id == reservationId).Select(res => res.TotalPrice).SingleOrDefaultAsync();
 		}
-
-		public Task<int> UpdateReservationToPaymentCreatedAsync(Guid reservationId, string paymentId)
-		{
-            return _context.Reservations
-                .Where(res => res.Id == reservationId)
-                .ExecuteUpdateAsync(res =>
-                    res.SetProperty(res => res.PaymentId, paymentId)
-                        .SetProperty(res => res.Status, ReservationStatus.PaymentCreated)
-                );
-                   
-		}
-
-		public Task<int> UpdateReservationToPaymentAuthorizedAsync(Guid reservationId, Guid confirmationToken, string paymentId)
+		
+		public Task<int> UpdateReservationToPaymentApprovedAsync(Guid reservationId, Guid confirmationToken, string paymentId)
 		{
 			return _context.Reservations
                 .Where(res => res.Id == reservationId 
-                                && res.PaymentConfirmationToken == confirmationToken
-                                && res.PaymentId == paymentId 
-                                && res.Status == ReservationStatus.PaymentCreated
+                                && res.PaymentConfirmationToken == confirmationToken                                
+                                && res.Status == ReservationStatus.Pending
                 )
 				.ExecuteUpdateAsync(res =>
-					res.SetProperty(res => res.Status, ReservationStatus.PaymentAuthorized)						
+					res.SetProperty(res => res.Status, ReservationStatus.PaymentApproved)
+                        .SetProperty(res => res.PaymentId, paymentId)
 				);
 		}
 
@@ -609,11 +598,17 @@ namespace WebTennisFieldReservation.Data
             //we first get the slots to reserve
             List<int> slotsToReserve = await _context.ReservationEntries.Where(e => e.ReservationId == reservationId).Select(e => e.ReservationSlotId).ToListAsync();
 
+            //just a profilactic check... if we're here reservationId must exist and have at least 1 entry
+            if(slotsToReserve.Count == 0) 
+            {
+                return false;
+            }
+
             //we try to update their status to NotAvailable and change the Reservation Status to Fulfilled
 			using(var trans = await _context.Database.BeginTransactionAsync())
             {
                 int updatedSlots = await _context.ReservationsSlots
-                    .Where(slot =>  slotsToReserve.Contains(slot.Id) && slot.IsAvailable == true)            //this is THE check line
+                    .Where(slot =>  slotsToReserve.Contains(slot.Id) && slot.IsAvailable == true)            //this is THE guard line
                     .ExecuteUpdateAsync(slot => 
                         slot.SetProperty(slot => slot.IsAvailable, false)
                     );
@@ -623,7 +618,7 @@ namespace WebTennisFieldReservation.Data
                 {
                     //we update the reservation status
                     int updatedReservations = await _context.Reservations
-                        .Where(res => res.Id == reservationId && res.Status == ReservationStatus.PaymentAuthorized)             //the res.Status == ReservationStatus.PaymentAuthorized is profilactic
+                        .Where(res => res.Id == reservationId && res.Status == ReservationStatus.PaymentApproved)             //the res.Status == ReservationStatus.PaymentAuthorized is profilactic
                         .ExecuteUpdateAsync(res => 
                             res.SetProperty(res => res.Status, ReservationStatus.Fulfilled)
                         );
@@ -644,6 +639,7 @@ namespace WebTennisFieldReservation.Data
 				}
                 else
                 {
+                    //one or more slots were already taken
                     await trans.RollbackAsync();
                     return false;
                 }

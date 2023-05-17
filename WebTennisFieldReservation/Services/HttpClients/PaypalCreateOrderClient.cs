@@ -17,16 +17,16 @@ namespace WebTennisFieldReservation.Services.HttpClients
             _httpClient.BaseAddress = new Uri(settings.CreateOrderUrl);            
         }
 
-        public async Task<PaypalOrderResponse> CreateOrderAsync(string authToken, Guid reservationId, Guid confirmationToken, int numSlots, decimal totalAmount)
+        public async Task<PaypalOrderResponse> CreateOrderAsync(string authToken, Guid reservationId, int numSlots, decimal totalAmount)
         {
             //we add the auth token...
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", authToken);
-            //...and the idempotency token
-            _httpClient.DefaultRequestHeaders.Add(HttpHeadersNames.PayPalRequestId, confirmationToken.ToString());
+            //...and the idempotency token (which is the ReservationId)
+            _httpClient.DefaultRequestHeaders.Add(HttpHeadersNames.PayPalRequestId, reservationId.ToString());
 
-            //we create and populate the PaypalCreateOrderRequest object
+            //we create and populate an anonymous object
             var orderData = new {
-                intent = "AUTHORIZE",
+                intent = "CAPTURE",
                 purchase_units = new[] {
                     new {
                         description = $"Reservation for {numSlots} slots",
@@ -40,7 +40,7 @@ namespace WebTennisFieldReservation.Services.HttpClients
                     paypal = new {
                         experience_context = new {
                             brand_name = "WebTennisCourtComplex",
-                            return_url = $"http://localhost/reservations/confirm?reservationId={reservationId}&confirmationToken={confirmationToken}",
+                            return_url = $"http://localhost/reservations/confirm?reservationId={reservationId}",
                             user_action = "PAY_NOW",
 							payment_method_preference = "IMMEDIATE_PAYMENT_REQUIRED"
 						}
