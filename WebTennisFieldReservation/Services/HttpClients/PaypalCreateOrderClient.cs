@@ -39,8 +39,11 @@ namespace WebTennisFieldReservation.Services.HttpClients
                 payment_source = new {
                     paypal = new {
                         experience_context = new {
-                            return_url = $"http://localhost/reservations/confirm?reservationId={reservationId}&confirmationToken={confirmationToken}"
-                        }
+                            brand_name = "WebTennisCourtComplex",
+                            return_url = $"http://localhost/reservations/confirm?reservationId={reservationId}&confirmationToken={confirmationToken}",
+                            user_action = "PAY_NOW",
+							payment_method_preference = "IMMEDIATE_PAYMENT_REQUIRED"
+						}
                     }
                 }
 			};

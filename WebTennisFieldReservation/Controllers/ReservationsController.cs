@@ -116,7 +116,7 @@ namespace WebTennisFieldReservation.Controllers
 
 		[HttpGet("confirm")]
 		[AllowAnonymous]
-		public async Task<IActionResult> Confirm([Required] Guid reservationId, [Required] Guid confirmationToken, string token)
+		public async Task<IActionResult> Confirm([Required] Guid reservationId, [Required] Guid confirmationToken, string token, [FromServices] PaypalCapturePaymentClient capturePaymentClient, [FromServices] PaypalAuthenticationClient authClient)
 		{
 			//we also need the confirmationToken, which only paypal can know, otherwise one can forge a reservationId during checkout
 			//and get the payment token during the paypal redirect, confirming the order without going through the paypal authorization
@@ -136,10 +136,24 @@ namespace WebTennisFieldReservation.Controllers
 					if(reservationFulfilled)
 					{
 						//we have to capture the payment, send a confirmation mail, update the db and return a success page (all in this order)
+						try
+						{
+							string authToken = await authClient.GetAuthTokenAsync();
+							PaypalOrderResponse response = await capturePaymentClient.CapturePayment(authToken, token);
 
+							//we check if everything went fine
+							if(response.status == "COMPLETED")
+							{
+								
+							}
 
-
-						return Ok();
+							return Ok();
+						}
+						catch(Exception ex)
+						{
+							//something went wrong
+							return BadRequest();
+						}						
 					}
 					else
 					{

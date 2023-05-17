@@ -1,5 +1,8 @@
-﻿using WebTennisFieldReservation.Settings;
+﻿using Microsoft.AspNetCore.Http;
+using WebTennisFieldReservation.Exceptions;
+using WebTennisFieldReservation.Settings;
 using WebTennisFieldReservation.Utilities.Paypal;
+using System.Net.Http.Headers;
 
 namespace WebTennisFieldReservation.Services.HttpClients
 {
@@ -13,7 +16,30 @@ namespace WebTennisFieldReservation.Services.HttpClients
             _httpClient.BaseAddress = new Uri(settings.CapturePaymentUrl);
         }
 
-        public async Task<PaypalOrderResponse> 
+        public async Task<PaypalOrderResponse> CapturePayment(string authToken, string paymentId)
+        {
+			_httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", authToken);
+            HttpResponseMessage response = await _httpClient.PostAsJsonAsync($"{paymentId}/capture", new {});     //by sending no content we capture the whole amount
+
+            if (response.IsSuccessStatusCode)
+            {
+                PaypalOrderResponse? responseContent = await response.Content.ReadFromJsonAsync<PaypalOrderResponse>();
+
+				if (responseContent != null)
+				{
+					return responseContent;
+				}
+				else
+				{
+					throw new PaypalCapturePaymentFailedException();
+				}
+			}
+			else
+			{
+				string debug = await response.Content.ReadAsStringAsync();
+				throw new PaypalCapturePaymentFailedException();
+			}
+		}
 
 
     }
