@@ -17,7 +17,7 @@ namespace WebTennisFieldReservation.Services.HttpClients
             _httpClient.BaseAddress = new Uri(settings.CreateOrderUrl);            
         }
 
-        public async Task<PaypalCreateOrderResponse> CreateOrderAsync(string authToken, Guid reservationId, Guid confirmationToken, int numSlots, decimal totalAmount)
+        public async Task<PaypalOrderResponse> CreateOrderAsync(string authToken, Guid reservationId, Guid confirmationToken, int numSlots, decimal totalAmount)
         {
             //we add the auth token...
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", authToken);
@@ -51,7 +51,7 @@ namespace WebTennisFieldReservation.Services.HttpClients
             //we check the response
             if (httpResponse.IsSuccessStatusCode)
             {
-                PaypalCreateOrderResponse? createOrderResponse = await httpResponse.Content.ReadFromJsonAsync<PaypalCreateOrderResponse>(HttpClientsConsts.JsonOptions);
+                PaypalOrderResponse? createOrderResponse = await httpResponse.Content.ReadFromJsonAsync<PaypalOrderResponse>(HttpClientsConsts.JsonOptions);
                 if(createOrderResponse != null)
                 {
                     return createOrderResponse;

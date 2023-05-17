@@ -88,7 +88,7 @@ namespace WebTennisFieldReservation.Controllers
 					try 
 					{						
 						string authToken = await authClient.GetAuthTokenAsync();
-						PaypalCreateOrderResponse paypalResponse = await createOrderClient.CreateOrderAsync(authToken, reservationId, paymentToken, checkoutData.SlotIds.Count, totalAmount);
+						PaypalOrderResponse paypalResponse = await createOrderClient.CreateOrderAsync(authToken, reservationId, paymentToken, checkoutData.SlotIds.Count, totalAmount);
 
 						//if we succeded we update the db with the payment id
 						await _repo.UpdateReservationToPaymentCreatedAsync(reservationId, paypalResponse.id);
@@ -98,6 +98,7 @@ namespace WebTennisFieldReservation.Controllers
 					}
 					catch(Exception ex)
 					{
+						//something went wrong
 						return BadRequest();
 					}
 					
@@ -130,14 +131,27 @@ namespace WebTennisFieldReservation.Controllers
 				{
 					// we try to confirm the order marking the slots as taken,
 					// we'll fail if any of the slots is taken or has been taken in the meanwhile (between the checkout and now)
+					bool reservationFulfilled = await _repo.TryToFulfillReservationAsync(reservationId);
+
+					if(reservationFulfilled)
+					{
+						//we have to capture the payment, send a confirmation mail, update the db and return a success page (all in this order)
 
 
 
-
+						return Ok();
+					}
+					else
+					{
+						//we weren't able to fulfill the reservation
+						//we should void the payment authorization etc etc...
+						return BadRequest();
+					}
 				}
 				else
 				{
 					//the order was already deleted/authorized or there was a forging attempt
+					return NotFound();
 				}
 			}
 			else

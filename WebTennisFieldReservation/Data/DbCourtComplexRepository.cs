@@ -603,5 +603,51 @@ namespace WebTennisFieldReservation.Data
 					res.SetProperty(res => res.Status, ReservationStatus.PaymentAuthorized)						
 				);
 		}
+
+		public async Task<bool> TryToFulfillReservationAsync(Guid reservationId)
+		{
+            //we first get the slots to reserve
+            List<int> slotsToReserve = await _context.ReservationEntries.Where(e => e.ReservationId == reservationId).Select(e => e.ReservationSlotId).ToListAsync();
+
+            //we try to update their status to NotAvailable and change the Reservation Status to Fulfilled
+			using(var trans = await _context.Database.BeginTransactionAsync())
+            {
+                int updatedSlots = await _context.ReservationsSlots
+                    .Where(slot =>  slotsToReserve.Contains(slot.Id) && slot.IsAvailable == true)            //this is THE check line
+                    .ExecuteUpdateAsync(slot => 
+                        slot.SetProperty(slot => slot.IsAvailable, false)
+                    );
+
+                //we check that all required slots have been reserved
+                if(updatedSlots == slotsToReserve.Count)
+                {
+                    //we update the reservation status
+                    int updatedReservations = await _context.Reservations
+                        .Where(res => res.Id == reservationId && res.Status == ReservationStatus.PaymentAuthorized)             //the res.Status == ReservationStatus.PaymentAuthorized is profilactic
+                        .ExecuteUpdateAsync(res => 
+                            res.SetProperty(res => res.Status, ReservationStatus.Fulfilled)
+                        );
+
+                    //we check if the update happened (it should have)
+                    if(updatedReservations == 1)
+                    {
+                        //we're happy !
+                        await trans.CommitAsync();
+                        return true;
+                    }
+                    else
+                    {
+						await trans.RollbackAsync();
+						return false;
+					}
+
+				}
+                else
+                {
+                    await trans.RollbackAsync();
+                    return false;
+                }
+            }
+		}
 	}
 }
