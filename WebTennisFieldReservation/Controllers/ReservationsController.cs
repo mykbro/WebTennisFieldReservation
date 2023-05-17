@@ -88,10 +88,22 @@ namespace WebTennisFieldReservation.Controllers
 					try 
 					{						
 						string authToken = await authClient.GetAuthTokenAsync();
-						PaypalOrderResponse paypalResponse = await createOrderClient.CreateOrderAsync(authToken, reservationId, paymentToken, checkoutData.SlotIds.Count, totalAmount);						
+						PaypalOrderResponse paypalResponse = await createOrderClient.CreateOrderAsync(authToken, reservationId, paymentToken, checkoutData.SlotIds.Count, totalAmount);
 
-						//and we redirect to the payment page
-						return Redirect(paypalSettings.CheckoutPageUrl + "?token=" + paypalResponse.id);
+						//we update the reservation to PaymentCreated (inserting the paymentId)
+						int reservationsUpdated = await _repo.UpdateReservationToPaymentCreatedAsync(reservationId, paypalResponse.id);		
+
+						if(reservationsUpdated == 1)
+						{
+							//we redirect to the payment page
+							return Redirect(paypalSettings.CheckoutPageUrl + "?token=" + paypalResponse.id);
+						}
+						else
+						{
+							//something went wrong, shouldn't be here
+							return BadRequest();
+						}
+						
 					}
 					catch(Exception ex)
 					{
@@ -115,7 +127,7 @@ namespace WebTennisFieldReservation.Controllers
 		public async Task<IActionResult> Confirm([Required] Guid reservationId, [Required] Guid confirmationToken, string token, [FromServices] PaypalCapturePaymentClient capturePaymentClient, [FromServices] PaypalAuthenticationClient authClient, [FromServices] ISingleUserMailSender mailSender)
 		{			
 			//we also need the confirmationToken, which only paypal can know, otherwise one can forge a reservationId during checkout
-			//and call this endpoint with a random payment token that will be saved in the database and checked for capturing;
+			//and call this endpoint with the payment token we see during paypal checkout (without approving the payment)
 			//ofc the check will fail (payment not found) but this can disrupt the process
 			//(even better we should save the confirmationToken hash or save nothing and rely on a DataProtection token to prevent db dumps attacks)
 			if (ModelState.IsValid)

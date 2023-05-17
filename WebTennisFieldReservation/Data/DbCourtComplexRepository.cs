@@ -559,17 +559,29 @@ namespace WebTennisFieldReservation.Data
 		{
 			return _context.Reservations.Where(res => res.Id == reservationId).Select(res => res.TotalPrice).SingleOrDefaultAsync();
 		}
-		
+
+		public Task<int> UpdateReservationToPaymentCreatedAsync(Guid reservationId, string paymentId)
+		{
+			return _context.Reservations
+				.Where(res => res.Id == reservationId								
+								&& res.Status == ReservationStatus.Pending								
+				)
+				.ExecuteUpdateAsync(res =>
+					res.SetProperty(res => res.Status, ReservationStatus.PaymentCreated)
+                        .SetProperty(res => res.PaymentId, paymentId)
+				);
+		}
+
 		public Task<int> UpdateReservationToPaymentApprovedAsync(Guid reservationId, Guid confirmationToken, string paymentId)
 		{
 			return _context.Reservations
                 .Where(res => res.Id == reservationId 
                                 && res.PaymentConfirmationToken == confirmationToken                                
-                                && res.Status == ReservationStatus.Pending
+                                && res.Status == ReservationStatus.PaymentCreated
+                                && res.PaymentId == paymentId
                 )
 				.ExecuteUpdateAsync(res =>
-					res.SetProperty(res => res.Status, ReservationStatus.PaymentApproved)
-                        .SetProperty(res => res.PaymentId, paymentId)
+					res.SetProperty(res => res.Status, ReservationStatus.PaymentApproved)                       
 				);
 		}
 
@@ -634,5 +646,7 @@ namespace WebTennisFieldReservation.Data
 					res.SetProperty(res => res.Status, ReservationStatus.Confirmed)						
 				);
 		}
+
+		
 	}
 }
