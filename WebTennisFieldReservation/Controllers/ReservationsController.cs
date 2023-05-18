@@ -163,7 +163,7 @@ namespace WebTennisFieldReservation.Controllers
 									//we want to send it synchronously (awaiting) and not concurrently because we want (or at least try)
 									//to give a feedback before updating the database to CONFIRMED because we can't be sure that the success page will be displayed
 									string mailSubject = "Reservation confirmed";
-									string mailBody = $"Your reservation #{reservationId} was confirmed !";
+									string mailBody = $"Your reservation #{reservationId} was confirmed !";                                    
 
 									try
 									{

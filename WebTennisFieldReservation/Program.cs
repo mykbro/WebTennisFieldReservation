@@ -16,6 +16,7 @@ using WebTennisFieldReservation.Services.ClaimPrincipalFactory;
 using WebTennisFieldReservation.Services.TokenManager;
 using WebTennisFieldReservation.Services.SingleUserMailSender;
 using WebTennisFieldReservation.Services.HttpClients;
+using WebTennisFieldReservation.Services.BackgroundTest;
 
 namespace WebTennisFieldReservation
 {
@@ -131,10 +132,15 @@ namespace WebTennisFieldReservation
             builder.Services.AddHttpClient<PaypalAuthenticationClient>();
             builder.Services.AddHttpClient<PaypalCreateOrderClient>();
             builder.Services.AddHttpClient<PaypalCapturePaymentClient>();
-            
 
-			//*************** BUILD ***************
-			var app = builder.Build();
+            // Add background services
+            builder.Services.AddSingleton<BackgroundTaskTest>();
+            builder.Services.AddHostedService<BackgroundTaskTest>( provider => provider.GetRequiredService<BackgroundTaskTest>() );
+            builder.Services.AddHostedService<CommandListener>();
+
+
+            //*************** BUILD ***************
+            var app = builder.Build();
 
             // Configure the HTTP request pipeline.
             if (!app.Environment.IsDevelopment())
