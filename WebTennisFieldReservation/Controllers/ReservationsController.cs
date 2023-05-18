@@ -39,12 +39,9 @@ namespace WebTennisFieldReservation.Controllers
 				if (slotsData.Count == checkoutData.SlotIds.Count)
 				{
 					//we should probably do this ordering directly in the query
-					var checkoutEntries = slotsData.OrderBy(entry => entry.Date).ThenBy(entry => entry.DaySlot);
+					var checkoutEntries = slotsData.OrderBy(entry => entry.Date).ThenBy(entry => entry.DaySlot);					
 
-					//we create a CheckoutToken (for payment idempotence)
-					Guid checkoutToken = Guid.NewGuid();
-
-					return View(new CheckoutPageModel(checkoutEntries.ToList(), checkoutToken));
+					return View(new CheckoutPageModel(checkoutEntries.ToList(), checkoutData.CheckoutToken));
 				}
 				else
 				{
@@ -76,7 +73,7 @@ namespace WebTennisFieldReservation.Controllers
 					PaymentConfirmationToken = paymentToken
 				};
 
-				//we try to insert it
+				//we try to insert it (this guard against POST replays)
 				bool success = await _repo.AddReservationFromSlotIdListAsync(createData);
 
 				if (success)
@@ -127,7 +124,7 @@ namespace WebTennisFieldReservation.Controllers
 		public async Task<IActionResult> Confirm([Required] Guid reservationId, [Required] Guid confirmationToken, string token, [FromServices] PaypalCapturePaymentClient capturePaymentClient, [FromServices] PaypalAuthenticationClient authClient, [FromServices] ISingleUserMailSender mailSender)
 		{			
 			//we also need the confirmationToken, which only paypal can know, otherwise one can forge a reservationId during checkout
-			//and call this endpoint with the payment token we see during paypal checkout (without approving the payment)
+			//and call this endpoint with the payment token that he can see in the URL during paypal checkout (without approving the payment)
 			//ofc the check will fail (payment not found) but this can disrupt the process
 			//(even better we should save the confirmationToken hash or save nothing and rely on a DataProtection token to prevent db dumps attacks)
 			if (ModelState.IsValid)
@@ -135,8 +132,7 @@ namespace WebTennisFieldReservation.Controllers
 				// we first try to update the reservation state from Placed to PaymentApproved;
 				// this will:
 				// 1- protect against a replay/concurrent call to this endpoint
-				// 2- protect against any forgery thanks to the confirmationToken
-				// 3- atomically add the paymentId to the reservation
+				// 2- protect against any forgery thanks to the confirmationToken				
 				int updatesDone = await _repo.UpdateReservationToPaymentApprovedAsync(reservationId, confirmationToken, token);
 
 				//we check if the update happened
@@ -157,7 +153,9 @@ namespace WebTennisFieldReservation.Controllers
 							//we check if everything went fine
 							if(response.status == "COMPLETED")
 							{
-								//we try to send a confirmation mail, if we don't succeed we continue
+								//we try to send a confirmation mail, if we don't succeed we continue anyway
+								//we want to send it synchronously (awaiting) and not concurrently because we want (or at least try)
+								//to give a feedback before updating the database to CONFIRMED because we can't be sure that the success page will be displayed
 								string mailSubject = "Reservation confirmed";
 								string mailBody = $"Your reservation #{reservationId} was confirmed !";
 
@@ -167,6 +165,7 @@ namespace WebTennisFieldReservation.Controllers
 								}
 								catch(Exception ex)
 								{
+									//log the failure
 								}
 
 								//we then update the database
@@ -188,7 +187,7 @@ namespace WebTennisFieldReservation.Controllers
 							else
 							{
 								//we got a response and it's not good
-								//we should delete the order
+								//we let the background service do the cleaning
 								return BadRequest();
 							}							
 						}
@@ -196,25 +195,26 @@ namespace WebTennisFieldReservation.Controllers
 						{
 							// something went wrong
 							// there are many cases:
-							// 1- authentication error/no answer from auth -> we can retry a few times and then give up aborting the order
+							// 1- authentication error/no answer from auth -> we can retry a few times and then give up
 							// 2- bad answer from capturePayment (not a PaypalOrderResponse) -> no capture happened, we can abort the order
 							// 3- NO ANSWER from capturePayment -> this is the trickiest, we can retry the capture a few times but if we fail we cannot say anything,
 							//	  we leave the reservation Fulfilled but we need a background service to check for a previous capture and confirm or abort the order.
 							//	  We can return a "Reservation pending" page to give at least some feedback to the user.
-
+							
+							//we let the background service do the cleaning
 							return BadRequest();
 						}						
 					}
 					else
 					{
 						//we weren't able to fulfill the reservation
-						//we should remove the order from the db etc etc...
+						//we let the background service do the cleaning
 						return BadRequest();
 					}
 				}
 				else
 				{
-					//the order was already deleted/authorized or there was a forging attempt
+					//the order was a replay or a forging attempt
 					return NotFound();
 				}
 			}

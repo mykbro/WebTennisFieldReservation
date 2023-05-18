@@ -17,7 +17,7 @@ namespace WebTennisFieldReservation.Controllers
 		[HttpGet("view")]
 		public new IActionResult View()
 		{
-			var pageData = new AvailabilityPageModel() { Today = DateTime.Now };
+			var pageData = new AvailabilityPageModel() { Today = DateTime.Now, CheckoutToken = Guid.NewGuid() };
 			return View(pageData);
 		}
 	}

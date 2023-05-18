@@ -3,9 +3,10 @@
 namespace WebTennisFieldReservation.Models.CourtAvailability
 {
 	public class AvailabilityPageModel
-	{
-		[Required]
+	{		
 		[DataType(DataType.Date)]
 		public DateTime Today { get; set; }
+
+		public Guid CheckoutToken { get; set; }
 	}
 }
