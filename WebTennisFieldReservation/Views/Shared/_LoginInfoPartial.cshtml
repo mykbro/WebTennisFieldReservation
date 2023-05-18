@@ -1,4 +1,5 @@
 ﻿@using System.Security.Claims;
+@using Microsoft.AspNetCore.Http.Extensions;
 
 @*
     For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
@@ -10,16 +11,18 @@
 
     string? isAdminAsString = User.FindFirstValue(ClaimsNames.IsAdmin);
     bool isAdmin = isAdminAsString != null ? Boolean.Parse(isAdminAsString) : false;
+
+    string returnUrl = Context.Request.GetEncodedPathAndQuery();        //here it encodes, while in MyAuthSchemeHandler we need to use an additional encoder... dunno why
 }
 
 <ul class="navbar-nav">
     @if (username == null)
     {
         <li class="nav-item">
-            <a class="nav-link text-dark" asp-controller="Users" asp-action="Login" asp-route-returnurl="@Context.Request.Path">Login</a>
+            <a class="nav-link text-dark" asp-controller="Users" asp-action="Login" asp-route-returnurl="@returnUrl">Login</a>
         </li>
         <li class="nav-item">
-            <a class="nav-link text-dark" asp-controller="Users" asp-action="Register" asp-route-returnurl="@Context.Request.Path">Register</a>
+            <a class="nav-link text-dark" asp-controller="Users" asp-action="Register" asp-route-returnurl="@returnUrl">Register</a>
         </li>
     }
     else
@@ -34,7 +37,7 @@
             </li>   
         }        
         <li class="nav-item">
-            <form method="post" asp-controller="Users" asp-action="Logout" asp-route-returnurl="@Context.Request.Path">
+            <form method="post" asp-controller="Users" asp-action="Logout" asp-route-returnurl="@returnUrl">
                 <button type="submit" class="nav-link btn btn-link text-dark">Logout</button>
             </form>           
         </li>

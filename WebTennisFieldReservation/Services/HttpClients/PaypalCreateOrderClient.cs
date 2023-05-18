@@ -40,7 +40,7 @@ namespace WebTennisFieldReservation.Services.HttpClients
                     paypal = new {
                         experience_context = new {
                             brand_name = "WebTennisCourtComplex",
-                            return_url = $"http://localhost/reservations/confirm?reservationId={reservationId}&confirmationToken={confirmationToken}",
+                            return_url = $"http://localhost/reservations/confirm/{reservationId}?confirmationToken={confirmationToken}",
                             user_action = "PAY_NOW",
 							payment_method_preference = "IMMEDIATE_PAYMENT_REQUIRED"
 						}

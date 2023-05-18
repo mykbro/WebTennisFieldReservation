@@ -8,6 +8,7 @@ using System.Security.Cryptography;
 using System.Text.Encodings.Web;
 using WebTennisFieldReservation.Data;
 using WebTennisFieldReservation.Constants.Names;
+using Microsoft.AspNetCore.Http.Extensions;
 
 namespace WebTennisFieldReservation.AuthenticationSchemes.MyAuthScheme
 {
@@ -188,7 +189,7 @@ namespace WebTennisFieldReservation.AuthenticationSchemes.MyAuthScheme
             {
                 if(returnUrlParam != null)
                 {
-                    Context.Response.Redirect(loginPath + $"?{returnUrlParam}={Context.Request.Path}");
+                    Context.Response.Redirect(loginPath + $"?{returnUrlParam}={UrlEncoder.Encode(Context.Request.GetEncodedPathAndQuery())}");
                 }
                 else
                 {
