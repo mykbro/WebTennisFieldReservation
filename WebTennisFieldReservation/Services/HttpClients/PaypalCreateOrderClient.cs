@@ -14,7 +14,8 @@ namespace WebTennisFieldReservation.Services.HttpClients
         public PaypalCreateOrderClient(HttpClient httpClient, PaypalApiSettings settings)
         {
             _httpClient = httpClient;
-            _httpClient.BaseAddress = new Uri(settings.CreateOrderUrl);            
+            _httpClient.BaseAddress = new Uri(settings.CreateOrderUrl);
+            _httpClient.Timeout = TimeSpan.FromSeconds(settings.ClientTimeoutInSecs);
         }
 
         public async Task<PaypalOrderResponse> CreateOrderAsync(string authToken, Guid reservationId, Guid confirmationToken, int numSlots, decimal totalAmount)

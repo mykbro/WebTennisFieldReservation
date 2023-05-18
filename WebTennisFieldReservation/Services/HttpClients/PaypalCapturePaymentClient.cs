@@ -14,6 +14,7 @@ namespace WebTennisFieldReservation.Services.HttpClients
         {
             _httpClient = httpClient;
             _httpClient.BaseAddress = new Uri(settings.CapturePaymentUrl);
+            _httpClient.Timeout = TimeSpan.FromSeconds(settings.ClientTimeoutInSecs);
         }
 
         public async Task<PaypalOrderResponse> CapturePayment(string authToken, string paymentId)

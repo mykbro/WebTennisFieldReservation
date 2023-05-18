@@ -196,21 +196,28 @@ namespace WebTennisFieldReservation.Controllers
 								}
 								else
 								{
-                                    //we got a response but it's not good
-                                    //we let the background service do the cleaning
+                                    //we got a response but it's not good                                    
 									updatesDone = await _repo.UpdateReservationToAbortedAsync(reservationId);	//should be 1
                                     return RedirectToAction(nameof(ReservationError));
                                 }
 							}
-                            catch (HttpRequestException ex)
+                            catch (TaskCanceledException ex)
                             {
-								// NO ANSWER from capturePayment -> this is the trickiest, we can retry the capture a few times but if we fail we cannot say anything,
-								// we leave the reservation Fulfilled but we need a background service to check for a previous capture and confirm or abort the order.
-								// We can return a "Reservation pending" page to give at least some feedback to the user.
-								return RedirectToAction(nameof(ReservationPending));
-
+								if(ex.InnerException is TimeoutException timeoutEx)
+								{
+                                    // TIMEOUT from capturePayment -> this is the trickiest, we can retry the capture a few times but if we fail we cannot say anything,
+                                    // we leave the reservation Fulfilled but we need a background service to check for a previous capture and confirm or abort the order.
+                                    // We can return a "Reservation pending" page to give at least some feedback to the user.
+                                    return RedirectToAction(nameof(ReservationPending));
+                                }
+                                else
+								{
+                                    //we shouldn't be here but in any case we abort
+                                    updatesDone = await _repo.UpdateReservationToAbortedAsync(reservationId);   //should be 1
+                                    return RedirectToAction(nameof(ReservationError));
+                                }
                             }
-                            catch (Exception ex)
+                            catch (Exception ex)	//catch all
 							{
                                 // something went wrong, there are 2 cases:								
                                 // 1- bad answer from capturePayment (PaypalCapturePaymentFailedException) -> no capture happened, we can give up
@@ -229,8 +236,7 @@ namespace WebTennisFieldReservation.Controllers
 					}
 					else
 					{
-                        //we weren't able to fulfill the reservation
-                        //we let the background service do the cleaning
+                        //we weren't able to fulfill the reservation                        
                         return RedirectToAction(nameof(ReservationError));
                     }
 				}

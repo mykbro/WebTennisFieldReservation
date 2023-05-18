@@ -34,6 +34,7 @@ namespace WebTennisFieldReservation.Services.HttpClients
             string base64AuthCred = Convert.ToBase64String(basicAuthCredBytes);
 
 			_httpClient = httpClient;
+            _httpClient.Timeout = TimeSpan.FromSeconds(paypalApiSettings.ClientTimeoutInSecs);
             _httpClient.BaseAddress = new Uri(paypalApiSettings.AuthUrl);            
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", base64AuthCred);                     
         }
