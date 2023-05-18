@@ -5,6 +5,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Security.Claims;
 using WebTennisFieldReservation.Constants.Names;
 using WebTennisFieldReservation.Data;
+using WebTennisFieldReservation.Exceptions;
 using WebTennisFieldReservation.Models.CourtAvailability;
 using WebTennisFieldReservation.Models.Reservations;
 using WebTennisFieldReservation.Services.HttpClients;
@@ -61,7 +62,7 @@ namespace WebTennisFieldReservation.Controllers
 			if (ModelState.IsValid)
 			{
 				Guid reservationId = checkoutData.CheckoutToken;
-				Guid paymentToken = Guid.NewGuid();
+				Guid confirmationToken = Guid.NewGuid();
 
 				//we create an order to be placed with status "Created" in the db
 				CreateReservationModel createData = new CreateReservationModel()
@@ -70,7 +71,7 @@ namespace WebTennisFieldReservation.Controllers
 					Timestamp = DateTimeOffset.Now,
 					UserId = Guid.Parse(User.FindFirstValue(ClaimsNames.Id)),
 					ReservationId = reservationId,
-					PaymentConfirmationToken = paymentToken
+					PaymentConfirmationToken = confirmationToken
 				};
 
 				//we try to insert it (this guard against POST replays)
@@ -85,7 +86,7 @@ namespace WebTennisFieldReservation.Controllers
 					try 
 					{						
 						string authToken = await authClient.GetAuthTokenAsync();
-						PaypalOrderResponse paypalResponse = await createOrderClient.CreateOrderAsync(authToken, reservationId, paymentToken, checkoutData.SlotIds.Count, totalAmount);
+						PaypalOrderResponse paypalResponse = await createOrderClient.CreateOrderAsync(authToken, reservationId, confirmationToken, checkoutData.SlotIds.Count, totalAmount);
 
 						//we update the reservation to PaymentCreated (inserting the paymentId)
 						int reservationsUpdated = await _repo.UpdateReservationToPaymentCreatedAsync(reservationId, paypalResponse.id);		
@@ -97,22 +98,22 @@ namespace WebTennisFieldReservation.Controllers
 						}
 						else
 						{
-							//something went wrong, shouldn't be here
-							return BadRequest();
-						}
+                            //something went wrong, shouldn't be here
+                            return RedirectToAction(nameof(ReservationError));
+                        }
 						
 					}
 					catch(Exception ex)
 					{
-						//something went wrong
-						return BadRequest();
-					}
+                        //something went wrong
+                        return RedirectToAction(nameof(ReservationError));
+                    }
 					
 				}
 				else
 				{
-					return BadRequest();
-				}
+                    return RedirectToAction(nameof(ReservationError));
+                }
 			}
 			else
 			{
@@ -127,6 +128,9 @@ namespace WebTennisFieldReservation.Controllers
 			//and call this endpoint with the payment token that he can see in the URL during paypal checkout (without approving the payment)
 			//ofc the check will fail (payment not found) but this can disrupt the process
 			//(even better we should save the confirmationToken hash or save nothing and rely on a DataProtection token to prevent db dumps attacks)
+
+			//we could also check the reservation placed date in order to avoid processing orders approved after a certain timespan
+
 			if (ModelState.IsValid)
 			{
 				// we first try to update the reservation state from Placed to PaymentApproved;
@@ -187,44 +191,52 @@ namespace WebTennisFieldReservation.Controllers
 									{
 										//something went terribly wrong if we're here...
 										//we should probably delete the order and refund it
-										return BadRequest();
-									}
+										return RedirectToAction(nameof(ReservationError));
+                                    }
 								}
 								else
 								{
-									//we got a response but it's not good
-									//we let the background service do the cleaning
-									return BadRequest();
-								}
+                                    //we got a response but it's not good
+                                    //we let the background service do the cleaning
+									updatesDone = await _repo.UpdateReservationToAbortedAsync(reservationId);	//should be 1
+                                    return RedirectToAction(nameof(ReservationError));
+                                }
 							}
-							catch (Exception ex)
-							{
-								// something went wrong, there are 2 cases:								
-								// 1- bad answer from capturePayment (not a PaypalOrderResponse) -> no capture happened, we can give up
-								// 2- NO ANSWER from capturePayment -> this is the trickiest, we can retry the capture a few times but if we fail we cannot say anything,
-								//	  we leave the reservation Fulfilled but we need a background service to check for a previous capture and confirm or abort the order.
-								//	  We can return a "Reservation pending" page to give at least some feedback to the user.
+                            catch (HttpRequestException ex)
+                            {
+								// NO ANSWER from capturePayment -> this is the trickiest, we can retry the capture a few times but if we fail we cannot say anything,
+								// we leave the reservation Fulfilled but we need a background service to check for a previous capture and confirm or abort the order.
+								// We can return a "Reservation pending" page to give at least some feedback to the user.
+								return RedirectToAction(nameof(ReservationPending));
 
-								//we let the background service do the cleaning
-								return BadRequest();
-							}
+                            }
+                            catch (Exception ex)
+							{
+                                // something went wrong, there are 2 cases:								
+                                // 1- bad answer from capturePayment (PaypalCapturePaymentFailedException) -> no capture happened, we can give up
+                                // 2- any other exception... we abort
+                                updatesDone = await _repo.UpdateReservationToAbortedAsync(reservationId);	//should be 1
+                                return RedirectToAction(nameof(ReservationError));
+                            }						
+							
 						}
 						catch(Exception ex)
 						{
-							//authentication error/no answer from auth - >we can retry a few times and then give up
-							return BadRequest();
-						}								
+                            //authentication error/no answer from auth - > we can retry a few times before giving up
+                            updatesDone = await _repo.UpdateReservationToAbortedAsync(reservationId);	//should be 1
+                            return RedirectToAction(nameof(ReservationError));
+                        }								
 					}
 					else
 					{
-						//we weren't able to fulfill the reservation
-						//we let the background service do the cleaning
-						return BadRequest();
-					}
+                        //we weren't able to fulfill the reservation
+                        //we let the background service do the cleaning
+                        return RedirectToAction(nameof(ReservationError));
+                    }
 				}
 				else
 				{
-					//the order was a replay or a forging attempt
+					//the endpoint call was a replay or a forging attempt
 					return NotFound();
 				}
 			}
@@ -247,5 +259,19 @@ namespace WebTennisFieldReservation.Controllers
 				return NotFound();
 			}
 		}
-	}
+
+        [HttpGet("confirm/error")]
+        [AllowAnonymous]
+        public IActionResult ReservationError()
+        {            
+            return View();           
+        }
+
+        [HttpGet("confirm/pending")]
+        [AllowAnonymous]
+        public IActionResult ReservationPending()
+        {
+            return View();
+        }
+    }
 }

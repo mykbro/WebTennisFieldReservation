@@ -134,9 +134,9 @@ namespace WebTennisFieldReservation
             builder.Services.AddHttpClient<PaypalCapturePaymentClient>();
 
             // Add background services
-            builder.Services.AddSingleton<BackgroundTaskTest>();
-            builder.Services.AddHostedService<BackgroundTaskTest>( provider => provider.GetRequiredService<BackgroundTaskTest>() );
-            builder.Services.AddHostedService<CommandListener>();
+            //builder.Services.AddSingleton<BackgroundTaskTest>();
+            //builder.Services.AddHostedService<BackgroundTaskTest>( provider => provider.GetRequiredService<BackgroundTaskTest>() );
+            //builder.Services.AddHostedService<CommandListener>();
 
 
             //*************** BUILD ***************

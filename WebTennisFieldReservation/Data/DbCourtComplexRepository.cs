@@ -138,7 +138,7 @@ namespace WebTennisFieldReservation.Data
             catch(SqlException ex)
             {
                 return 0;
-            }
+            }           
         }
 
         public Task<PasswordDataModel?> GetPasswordDataByIdAsync(Guid id)
@@ -647,6 +647,27 @@ namespace WebTennisFieldReservation.Data
 				);
 		}
 
-		
-	}
+        public async Task<int> UpdateReservationToAbortedAsync(Guid reservationId)
+        {
+            //we need to also atomically reset each slot status to AVAILABLE
+
+            using(var trans = await _context.Database.BeginTransactionAsync())
+            {
+                int num = await _context.Reservations
+                .Where(res => res.Id == reservationId && res.Status == ReservationStatus.Fulfilled)     //we abort only Fullfilled reservarions
+                .ExecuteUpdateAsync(res =>
+                    res.SetProperty(res => res.Status, ReservationStatus.Aborted)
+                );
+
+                await _context.ReservationEntries
+                    .Include(e => e.ReservationSlot)
+                    .Where(e => e.ReservationId == reservationId)
+                    .Select(e => e.ReservationSlot)
+                    .ExecuteUpdateAsync(slot => slot.SetProperty(slot => slot.IsAvailable, true));
+
+                await trans.CommitAsync();
+                return num;
+            }            
+        }
+    }
 }

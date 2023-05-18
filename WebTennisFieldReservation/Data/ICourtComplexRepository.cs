@@ -51,5 +51,6 @@ namespace WebTennisFieldReservation.Data
 		public Task<int> UpdateReservationToPaymentApprovedAsync(Guid reservationId, Guid confirmationToken, string paymentId);
 		public Task<bool> TryToFulfillReservationAsync(Guid reservationId);
 		public Task<int> UpdateReservationToConfirmedAsync(Guid reservationId);
-	}
+        public Task<int> UpdateReservationToAbortedAsync(Guid reservationId);
+    }
 }
