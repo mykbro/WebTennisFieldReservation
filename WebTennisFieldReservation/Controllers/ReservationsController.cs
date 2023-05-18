@@ -145,65 +145,75 @@ namespace WebTennisFieldReservation.Controllers
 					if(reservationFulfilled)
 					{
 						//we have to capture the payment, send a confirmation mail, update the db and return a success page (all in this order)
+
+						//we first try to retrieve an authToken
 						try
 						{
 							string authToken = await authClient.GetAuthTokenAsync();
-							PaypalOrderResponse response = await capturePaymentClient.CapturePayment(authToken, token);
 
-							//we check if everything went fine
-							if(response.status == "COMPLETED")
+							//we then try to make a Capture request
+							try
 							{
-								//we try to send a confirmation mail, if we don't succeed we continue anyway
-								//we want to send it synchronously (awaiting) and not concurrently because we want (or at least try)
-								//to give a feedback before updating the database to CONFIRMED because we can't be sure that the success page will be displayed
-								string mailSubject = "Reservation confirmed";
-								string mailBody = $"Your reservation #{reservationId} was confirmed !";
+								PaypalOrderResponse response = await capturePaymentClient.CapturePayment(authToken, token);
 
-								try 
+								//we check if everything went fine
+								if (response.status == "COMPLETED")
 								{
-									await mailSender.SendEmailAsync(User.FindFirstValue(ClaimsNames.Email), mailSubject, mailBody);
-								}
-								catch(Exception ex)
-								{
-									//log the failure
-								}
+									//we try to send a confirmation mail, if we don't succeed we continue anyway
+									//we want to send it synchronously (awaiting) and not concurrently because we want (or at least try)
+									//to give a feedback before updating the database to CONFIRMED because we can't be sure that the success page will be displayed
+									string mailSubject = "Reservation confirmed";
+									string mailBody = $"Your reservation #{reservationId} was confirmed !";
 
-								//we then update the database
-								updatesDone = await _repo.UpdateReservationToConfirmedAsync(reservationId);
+									try
+									{
+										await mailSender.SendEmailAsync(User.FindFirstValue(ClaimsNames.Email), mailSubject, mailBody);
+									}
+									catch (Exception ex)
+									{
+										//log the failure
+									}
 
-								//profilactic check
-								if (updatesDone == 1)
-								{
-									//we finally return a success page
-									return RedirectToAction(nameof(ReservationSuccess), new { reservationId });
+									//we then update the database
+									updatesDone = await _repo.UpdateReservationToConfirmedAsync(reservationId);
+
+									//profilactic check
+									if (updatesDone == 1)
+									{
+										//we finally return a success page
+										return RedirectToAction(nameof(ReservationSuccess), new { reservationId });
+									}
+									else
+									{
+										//something went terribly wrong if we're here...
+										//we should probably delete the order and refund it
+										return BadRequest();
+									}
 								}
 								else
 								{
-									//something went terribly wrong if we're here...
-									//we should probably delete the order and refund it
+									//we got a response but it's not good
+									//we let the background service do the cleaning
 									return BadRequest();
 								}
 							}
-							else
+							catch (Exception ex)
 							{
-								//we got a response and it's not good
+								// something went wrong, there are 2 cases:								
+								// 1- bad answer from capturePayment (not a PaypalOrderResponse) -> no capture happened, we can give up
+								// 2- NO ANSWER from capturePayment -> this is the trickiest, we can retry the capture a few times but if we fail we cannot say anything,
+								//	  we leave the reservation Fulfilled but we need a background service to check for a previous capture and confirm or abort the order.
+								//	  We can return a "Reservation pending" page to give at least some feedback to the user.
+
 								//we let the background service do the cleaning
 								return BadRequest();
-							}							
+							}
 						}
 						catch(Exception ex)
 						{
-							// something went wrong
-							// there are many cases:
-							// 1- authentication error/no answer from auth -> we can retry a few times and then give up
-							// 2- bad answer from capturePayment (not a PaypalOrderResponse) -> no capture happened, we can abort the order
-							// 3- NO ANSWER from capturePayment -> this is the trickiest, we can retry the capture a few times but if we fail we cannot say anything,
-							//	  we leave the reservation Fulfilled but we need a background service to check for a previous capture and confirm or abort the order.
-							//	  We can return a "Reservation pending" page to give at least some feedback to the user.
-							
-							//we let the background service do the cleaning
+							//authentication error/no answer from auth - >we can retry a few times and then give up
 							return BadRequest();
-						}						
+						}								
 					}
 					else
 					{
@@ -222,60 +232,7 @@ namespace WebTennisFieldReservation.Controllers
 			{
 				return NotFound();
 			}
-		}
-
-
-		[HttpPost("reserve")]
-		public async Task<IActionResult> Reserve(CheckoutPostModel checkoutData, [FromServices] ISingleUserMailSender mailSender/*, [FromServices] IServiceScopeFactory scopeFactory*/)     //we reuse the same postModel
-		{
-			if (ModelState.IsValid)
-			{
-				CreateReservationModel createData = new CreateReservationModel()
-				{
-					SlotIds = checkoutData.SlotIds,
-					Timestamp = DateTimeOffset.Now,
-					UserId = Guid.Parse(User.FindFirstValue(ClaimsNames.Id)),
-					ReservationId = checkoutData.CheckoutToken,
-					PaymentConfirmationToken = Guid.NewGuid(),
-					PaymentId = "blablabla"
-				};
-
-				bool success = await _repo.AddReservationFromSlotIdListAsync(createData);
-
-				if (success)
-				{
-					//we start a concurrent Task that sends a confirmation mail and then update the database
-					_ = Task.Run(async () =>
-					{
-						//we send the confirmation mail
-						string mailSubject = "Reservation confirmed";
-						string mailBody = $"Your reservation #{createData.ReservationId} was confirmed !";
-
-						await mailSender.SendEmailAsync(User.FindFirstValue(ClaimsNames.Email), mailSubject, mailBody);
-
-						/*
-						//we must request a new ICourtComplexRepository because the "external" _repo must not be accessed concurrently and may be already disposed 
-						using (var scope = scopeFactory.CreateScope())
-						{
-							var repo = scope.ServiceProvider.GetService<ICourtComplexRepository>();
-							await repo!.ConfirmReservationEmailSentAsync(reservationId.Value);
-						}
-						*/
-					});
-
-					//we return the confirmation page
-					return RedirectToAction(nameof(ReservationSuccess), new { createData.ReservationId });
-				}
-				else
-				{
-					return BadRequest();
-				}
-			}
-			else
-			{
-				return BadRequest();
-			}
-		}
+		}		
 
 		[HttpGet("confirm/success")]
 		[AllowAnonymous]
