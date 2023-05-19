@@ -649,7 +649,7 @@ namespace WebTennisFieldReservation.Data
 
         public async Task<int> UpdateReservationToAbortedAsync(Guid reservationId)
         {
-            //we need to also atomically reset each slot status to AVAILABLE
+            //we need to also atomically reset each slot status to AVAILABLE           
 
             using(var trans = await _context.Database.BeginTransactionAsync())
             {
@@ -668,6 +668,46 @@ namespace WebTennisFieldReservation.Data
                 await trans.CommitAsync();
                 return num;
             }            
+        }
+
+        public async Task<bool> TestUpdlock()
+        {
+            using(var trans = await _context.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable))
+            {
+                //var reservations = await _context.Reservations.FromSql($"SELECT Id FROM Reservations WITH (UPDLOCK) WHERE Status >= 4").CountAsync();
+                var x = await _context.Database.ExecuteSqlAsync($"SELECT COUNT(*) FROM Reservations WITH (UPDLOCK) WHERE Status >= 4");
+                await Task.Delay(10000);
+                Console.WriteLine("Exiting transaction !!!!!!!!!!!!");
+            }
+
+            return true;
+        }
+
+        public async Task<bool> TestUpdlock2()
+        {
+            Reservation r = new Reservation()
+            {
+                Id = Guid.NewGuid(),
+                Status = ReservationStatus.Confirmed,
+                TotalPrice = 0m,
+                Timestamp = DateTimeOffset.Now,
+                PaymentId = null,
+                UserId = Guid.Parse("d9c3438b-867b-435a-9007-74ba2a3eb653"),
+                PaymentConfirmationToken = Guid.NewGuid()                
+            };
+
+            _context.Reservations.Add(r);
+            try
+            {
+                await _context.SaveChangesAsync();
+                Console.WriteLine("Save complete");
+            }
+            catch (Exception ex)
+            {
+
+            }            
+
+            return true;
         }
     }
 }

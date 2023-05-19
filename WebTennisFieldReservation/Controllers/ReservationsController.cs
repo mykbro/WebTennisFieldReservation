@@ -279,5 +279,21 @@ namespace WebTennisFieldReservation.Controllers
         {
             return View();
         }
+
+        [HttpGet("testupdlock")]
+        [AllowAnonymous]
+        public async Task<IActionResult> TestUpdlock()
+        {
+			await _repo.TestUpdlock();
+            return Ok();
+        }
+
+        [HttpGet("testupdlock2")]
+        [AllowAnonymous]
+        public async Task<IActionResult> TestUpdlock2()
+        {
+            await _repo.TestUpdlock2();
+            return Ok();
+        }
     }
 }
