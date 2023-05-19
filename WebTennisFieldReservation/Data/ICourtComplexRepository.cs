@@ -53,8 +53,6 @@ namespace WebTennisFieldReservation.Data
 		public Task<int> UpdateReservationToConfirmedAsync(Guid reservationId);
         public Task<int> UpdateReservationToAbortedAsync(Guid reservationId);
 
-        public Task<bool> TestUpdlock();
-        public Task<bool> TestUpdlock2();
     }
 
 

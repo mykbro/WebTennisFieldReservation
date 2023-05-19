@@ -587,7 +587,7 @@ namespace WebTennisFieldReservation.Data
 
 		public async Task<bool> TryToFulfillReservationAsync(Guid reservationId)
 		{
-            //we first get the slots to reserve
+            //we first get the slots to reserve, we can do it outside the transaction, no race conditions are possible here
             List<int> slotsToReserve = await _context.ReservationEntries.Where(e => e.ReservationId == reservationId).Select(e => e.ReservationSlotId).ToListAsync();
 
             //just a profilactic check... if we're here reservationId must exist and have at least 1 entry
@@ -654,60 +654,20 @@ namespace WebTennisFieldReservation.Data
             using(var trans = await _context.Database.BeginTransactionAsync())
             {
                 int num = await _context.Reservations
-                .Where(res => res.Id == reservationId && res.Status == ReservationStatus.Fulfilled)     //we abort only Fullfilled reservarions
+                .Where(res => res.Id == reservationId && res.Status == ReservationStatus.Fulfilled)     //we abort only Fullfilled reservations
                 .ExecuteUpdateAsync(res =>
                     res.SetProperty(res => res.Status, ReservationStatus.Aborted)
                 );
 
                 await _context.ReservationEntries
-                    .Include(e => e.ReservationSlot)
                     .Where(e => e.ReservationId == reservationId)
+                    .Include(e => e.ReservationSlot)                    
                     .Select(e => e.ReservationSlot)
                     .ExecuteUpdateAsync(slot => slot.SetProperty(slot => slot.IsAvailable, true));
 
                 await trans.CommitAsync();
                 return num;
             }            
-        }
-
-        public async Task<bool> TestUpdlock()
-        {
-            using(var trans = await _context.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable))
-            {
-                //var reservations = await _context.Reservations.FromSql($"SELECT Id FROM Reservations WITH (UPDLOCK) WHERE Status >= 4").CountAsync();
-                var x = await _context.Database.ExecuteSqlAsync($"SELECT COUNT(*) FROM Reservations WITH (UPDLOCK) WHERE Status >= 4");
-                await Task.Delay(10000);
-                Console.WriteLine("Exiting transaction !!!!!!!!!!!!");
-            }
-
-            return true;
-        }
-
-        public async Task<bool> TestUpdlock2()
-        {
-            Reservation r = new Reservation()
-            {
-                Id = Guid.NewGuid(),
-                Status = ReservationStatus.Confirmed,
-                TotalPrice = 0m,
-                Timestamp = DateTimeOffset.Now,
-                PaymentId = null,
-                UserId = Guid.Parse("d9c3438b-867b-435a-9007-74ba2a3eb653"),
-                PaymentConfirmationToken = Guid.NewGuid()                
-            };
-
-            _context.Reservations.Add(r);
-            try
-            {
-                await _context.SaveChangesAsync();
-                Console.WriteLine("Save complete");
-            }
-            catch (Exception ex)
-            {
-
-            }            
-
-            return true;
         }
     }
 }

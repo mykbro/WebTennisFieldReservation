@@ -280,20 +280,12 @@ namespace WebTennisFieldReservation.Controllers
             return View();
         }
 
-        [HttpGet("testupdlock")]
+        [HttpGet("test/{id:guid}")]
         [AllowAnonymous]
-        public async Task<IActionResult> TestUpdlock()
+        public async Task<IActionResult> Test(Guid id)
         {
-			await _repo.TestUpdlock();
-            return Ok();
-        }
-
-        [HttpGet("testupdlock2")]
-        [AllowAnonymous]
-        public async Task<IActionResult> TestUpdlock2()
-        {
-            await _repo.TestUpdlock2();
-            return Ok();
+			await _repo.UpdateReservationToAbortedAsync(id);
+			return Ok();
         }
     }
 }
