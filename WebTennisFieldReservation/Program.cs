@@ -37,6 +37,7 @@ namespace WebTennisFieldReservation
             AuthenticationSchemeSettings myAuthSchemeSettings = builder.Configuration.GetSection(ConfigurationSectionsNames.AuthenticationSchemes + ":" + AuthenticationSchemesNames.MyAuthScheme).Get<AuthenticationSchemeSettings>();
             LoggedRecentlyPolicySettings loggedRecentlyPolicySettings = builder.Configuration.GetSection(ConfigurationSectionsNames.LoggedRecentlyPolicy).Get<LoggedRecentlyPolicySettings>();
             PaypalApiSettings paypalApiSettings = builder.Configuration.GetSection(ConfigurationSectionsNames.PaypalApi).Get<PaypalApiSettings>();
+            BackgroundReservationsCheckerSettings backgroundReservationsCheckerSettings = builder.Configuration.GetSection(ConfigurationSectionsNames.BackgroundReservationsChecker).Get<BackgroundReservationsCheckerSettings>();
 
             // Add dbcontext backed repository
             string connString = builder.Configuration.GetConnectionString(ConnectionStringsNames.Default) ?? throw new InvalidOperationException("Connection string missing");
@@ -137,6 +138,7 @@ namespace WebTennisFieldReservation
             //builder.Services.AddSingleton<BackgroundTaskTest>();
             //builder.Services.AddHostedService<BackgroundTaskTest>( provider => provider.GetRequiredService<BackgroundTaskTest>() );
             //builder.Services.AddHostedService<CommandListener>();
+            builder.Services.AddSingleton<BackgroundReservationsCheckerSettings>(backgroundReservationsCheckerSettings);
 
 
             //*************** BUILD ***************

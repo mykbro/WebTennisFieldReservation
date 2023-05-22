@@ -9,5 +9,6 @@
         public const string AuthenticationSchemes = nameof(AuthenticationSchemes);
         public const string LoggedRecentlyPolicy = nameof(LoggedRecentlyPolicy);
         public const string PaypalApi = nameof(PaypalApi);
+        public const string BackgroundReservationsChecker = "BackgroundServices:ReservationsChecker";
     }
 }

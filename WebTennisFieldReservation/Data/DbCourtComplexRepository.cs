@@ -508,7 +508,8 @@ namespace WebTennisFieldReservation.Data
             {
                 Id = reservationId,
 				UserId = reservationData.UserId,
-				Timestamp = reservationData.Timestamp, 
+				CreatedOn = reservationData.Timestamp,
+                LastUpdateOn = reservationData.Timestamp,
                 Status = ReservationStatus.Pending,
                 PaymentConfirmationToken = reservationData.PaymentConfirmationToken                             
             };
@@ -569,6 +570,7 @@ namespace WebTennisFieldReservation.Data
 				.ExecuteUpdateAsync(res =>
 					res.SetProperty(res => res.Status, ReservationStatus.PaymentCreated)
                         .SetProperty(res => res.PaymentId, paymentId)
+                        .SetProperty(res => res.LastUpdateOn, DateTimeOffset.Now)
 				);
 		}
 
@@ -581,8 +583,9 @@ namespace WebTennisFieldReservation.Data
                                 && res.PaymentId == paymentId
                 )
 				.ExecuteUpdateAsync(res =>
-					res.SetProperty(res => res.Status, ReservationStatus.PaymentApproved)                       
-				);
+					res.SetProperty(res => res.Status, ReservationStatus.PaymentApproved)
+                    .SetProperty(res => res.LastUpdateOn, DateTimeOffset.Now)
+                );
 		}
 
 		public async Task<bool> TryToFulfillReservationAsync(Guid reservationId)
@@ -610,7 +613,7 @@ namespace WebTennisFieldReservation.Data
                         slot.SetProperty(slot => slot.IsAvailable, false)
                     );
 
-                //we check that all required slots have been reserved
+                //we check if all required slots have been reserved
                 int requiredUpdates = await _context.ReservationEntries.Where(e => e.ReservationId == reservationId).Select(e => e.ReservationSlotId).CountAsync();
                 if (updatedSlots == requiredUpdates && requiredUpdates != 0)        //the != 0 check is just profilactic
                 {
@@ -619,6 +622,7 @@ namespace WebTennisFieldReservation.Data
                         .Where(res => res.Id == reservationId && res.Status == ReservationStatus.PaymentApproved)             //the res.Status == ReservationStatus.PaymentAuthorized is profilactic
                         .ExecuteUpdateAsync(res => 
                             res.SetProperty(res => res.Status, ReservationStatus.Fulfilled)
+                            .SetProperty(res => res.LastUpdateOn, DateTimeOffset.Now)
                         );
 
                     //we check if the update happened (it should have)
@@ -649,7 +653,8 @@ namespace WebTennisFieldReservation.Data
 			return _context.Reservations
 				.Where(res => res.Id == reservationId && res.Status == ReservationStatus.Fulfilled)
 				.ExecuteUpdateAsync(res =>
-					res.SetProperty(res => res.Status, ReservationStatus.Confirmed)						
+					res.SetProperty(res => res.Status, ReservationStatus.Confirmed)
+                    .SetProperty(res => res.LastUpdateOn, DateTimeOffset.Now)
 				);
 		}
 
@@ -663,6 +668,7 @@ namespace WebTennisFieldReservation.Data
                 .Where(res => res.Id == reservationId && res.Status == ReservationStatus.Fulfilled)     //we abort only Fullfilled reservations
                 .ExecuteUpdateAsync(res =>
                     res.SetProperty(res => res.Status, ReservationStatus.Aborted)
+                    .SetProperty(res => res.LastUpdateOn, DateTimeOffset.Now)
                 );
 
                 await _context.ReservationEntries

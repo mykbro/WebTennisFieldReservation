@@ -16,7 +16,10 @@ namespace WebTennisFieldReservation.Entities
         public decimal TotalPrice { get; set; }
 
         [Required]        
-        public DateTimeOffset Timestamp { get; set; }
+        public DateTimeOffset CreatedOn { get; set; }
+
+        [Required]
+        public DateTimeOffset LastUpdateOn { get; set; }
 
         [Required]
         public ReservationStatus Status { get; set; }
