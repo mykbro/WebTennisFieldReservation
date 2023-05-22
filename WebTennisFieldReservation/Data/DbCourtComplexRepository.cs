@@ -587,6 +587,7 @@ namespace WebTennisFieldReservation.Data
 
 		public async Task<bool> TryToFulfillReservationAsync(Guid reservationId)
 		{
+            /*
             //we first get the slots to reserve, we can do it outside the transaction, no race conditions are possible here
             List<int> slotsToReserve = await _context.ReservationEntries.Where(e => e.ReservationId == reservationId).Select(e => e.ReservationSlotId).ToListAsync();
 
@@ -595,18 +596,23 @@ namespace WebTennisFieldReservation.Data
             {
                 return false;
             }
+            */
 
             //we try to update their status to NotAvailable and change the Reservation Status to Fulfilled
 			using(var trans = await _context.Database.BeginTransactionAsync())
             {
-                int updatedSlots = await _context.ReservationsSlots
-                    .Where(slot =>  slotsToReserve.Contains(slot.Id) && slot.IsAvailable == true)            //this is THE guard line
+                int updatedSlots = await _context.ReservationEntries 
+                    .Where(e => e.ReservationId == reservationId)
+                    .Include(e => e.ReservationSlot)
+                    .Select(e => e.ReservationSlot)
+                    .Where(slot => slot.IsAvailable == true)
                     .ExecuteUpdateAsync(slot => 
                         slot.SetProperty(slot => slot.IsAvailable, false)
                     );
 
                 //we check that all required slots have been reserved
-                if(updatedSlots == slotsToReserve.Count)
+                int requiredUpdates = await _context.ReservationEntries.Where(e => e.ReservationId == reservationId).Select(e => e.ReservationSlotId).CountAsync();
+                if (updatedSlots == requiredUpdates && requiredUpdates != 0)        //the != 0 check is just profilactic
                 {
                     //we update the reservation status
                     int updatedReservations = await _context.Reservations

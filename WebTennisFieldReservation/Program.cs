@@ -128,7 +128,7 @@ namespace WebTennisFieldReservation
             });
 
 			// Add HTTP clients
-			builder.Services.AddSingleton<PaypalApiSettings>(paypalApiSettings);    //we need to inject this in the PaypalAuthenticationClient			
+			builder.Services.AddSingleton<PaypalApiSettings>(paypalApiSettings);    //we need to inject this in the Paypal clients			
             builder.Services.AddHttpClient<PaypalAuthenticationClient>();
             builder.Services.AddHttpClient<PaypalCreateOrderClient>();
             builder.Services.AddHttpClient<PaypalCapturePaymentClient>();
