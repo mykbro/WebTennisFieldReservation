@@ -51,7 +51,8 @@ namespace WebTennisFieldReservation
             builder.Services.AddDataProtection(options =>
             {
                 options.ApplicationDiscriminator = dataProtectionSettings.AppDiscriminator;
-            }).PersistKeysToFileSystem(new DirectoryInfo(dataProtectionSettings.KeysFolderPath));
+            })
+            .PersistKeysToFileSystem(new DirectoryInfo(dataProtectionSettings.KeysFolderPath));
 
             // Add security token manager            
             builder.Services.AddSingleton<TokenManagerSettings>(tokenManagerSettings);  //required for controllers that use ITokenManager
