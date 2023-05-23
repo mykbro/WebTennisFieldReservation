@@ -5,6 +5,7 @@ using WebTennisFieldReservation.Entities;
 using WebTennisFieldReservation.Models.Administration;
 using WebTennisFieldReservation.Models.Api;
 using WebTennisFieldReservation.Models.CourtAvailability;
+using WebTennisFieldReservation.Models.Reservations;
 using WebTennisFieldReservation.Models.Users;
 
 namespace WebTennisFieldReservation.Data
@@ -680,6 +681,20 @@ namespace WebTennisFieldReservation.Data
                 await trans.CommitAsync();
                 return num;
             }            
+        }
+
+        public Task<List<ReservationCheckerModel>> GetExpiredFulfilledReservationsDataAsync(DateTimeOffset expireTime)
+        {
+            return _context.Reservations
+                .Include(res => res.User)
+                .Where(res => res.Status == ReservationStatus.Fulfilled && res.LastUpdateOn <= expireTime)
+                .Select(res => new ReservationCheckerModel()
+                {
+                    ReservationId = res.Id,
+                    PaymentToken = res.PaymentId!,
+                    EmailAddress = res.User.Email
+                })
+                .ToListAsync();
         }
     }
 }

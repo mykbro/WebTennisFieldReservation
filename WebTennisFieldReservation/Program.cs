@@ -17,6 +17,7 @@ using WebTennisFieldReservation.Services.TokenManager;
 using WebTennisFieldReservation.Services.SingleUserMailSender;
 using WebTennisFieldReservation.Services.HttpClients;
 using WebTennisFieldReservation.Services.BackgroundTest;
+using WebTennisFieldReservation.Services._Background;
 
 namespace WebTennisFieldReservation
 {
@@ -41,7 +42,7 @@ namespace WebTennisFieldReservation
 
             // Add dbcontext backed repository
             string connString = builder.Configuration.GetConnectionString(ConnectionStringsNames.Default) ?? throw new InvalidOperationException("Connection string missing");
-            builder.Services.AddScoped<ICourtComplexRepository, DbCourtComplexRepository>(_ => new DbCourtComplexRepository(connString, true));
+            builder.Services.AddScoped<ICourtComplexRepository, DbCourtComplexRepository>(_ => new DbCourtComplexRepository(connString, log: true));
 
             // Add password hasher
             builder.Services.AddSingleton<IPasswordHasher>(new Pbkdf2PasswordHasher(passwordSettings.Iterations));
@@ -133,12 +134,11 @@ namespace WebTennisFieldReservation
             builder.Services.AddHttpClient<PaypalAuthenticationClient>();
             builder.Services.AddHttpClient<PaypalCreateOrderClient>();
             builder.Services.AddHttpClient<PaypalCapturePaymentClient>();
+            builder.Services.AddHttpClient<PaypalCheckOrderClient>();
 
-            // Add background services
-            //builder.Services.AddSingleton<BackgroundTaskTest>();
-            //builder.Services.AddHostedService<BackgroundTaskTest>( provider => provider.GetRequiredService<BackgroundTaskTest>() );
-            //builder.Services.AddHostedService<CommandListener>();
+            // Add background services          
             builder.Services.AddSingleton<BackgroundReservationsCheckerSettings>(backgroundReservationsCheckerSettings);
+            builder.Services.AddHostedService<ReservationsChecker>();
 
 
             //*************** BUILD ***************

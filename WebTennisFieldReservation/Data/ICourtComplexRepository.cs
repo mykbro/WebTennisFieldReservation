@@ -3,6 +3,7 @@ using WebTennisFieldReservation.Models.Administration;
 using WebTennisFieldReservation.Models.Users;
 using WebTennisFieldReservation.Models.Api;
 using WebTennisFieldReservation.Models.CourtAvailability;
+using WebTennisFieldReservation.Models.Reservations;
 
 namespace WebTennisFieldReservation.Data
 {
@@ -52,6 +53,8 @@ namespace WebTennisFieldReservation.Data
 		public Task<bool> TryToFulfillReservationAsync(Guid reservationId);
 		public Task<int> UpdateReservationToConfirmedAsync(Guid reservationId);
         public Task<int> UpdateReservationToAbortedAsync(Guid reservationId);
+
+        public Task<List<ReservationCheckerModel>> GetExpiredFulfilledReservationsDataAsync(DateTimeOffset expireTime);
 
     }
 

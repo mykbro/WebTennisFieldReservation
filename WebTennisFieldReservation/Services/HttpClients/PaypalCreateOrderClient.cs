@@ -62,13 +62,13 @@ namespace WebTennisFieldReservation.Services.HttpClients
                 }
                 else
                 {
-					throw new PaypalCreateOrderFailedException();
+					throw new PaypalCreateOrderException();
 				}
             }
             else
             {
                 string debug = await httpResponse.Content.ReadAsStringAsync();
-                throw new PaypalCreateOrderFailedException();
+                throw new PaypalCreateOrderException();
             }
         }
     }

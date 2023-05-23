@@ -44,7 +44,7 @@ namespace WebTennisFieldReservation.Services.HttpClients
 		/// 
 		/// </summary>
 		/// <returns></returns>
-		/// <exception cref="PaypalAuthFailedException"></exception>
+		/// <exception cref="PaypalAuthException"></exception>
 		/// <exception cref="HttpRequestException"></exception>
 		public async Task<string> GetAuthTokenAsync()
         { 
@@ -60,12 +60,12 @@ namespace WebTennisFieldReservation.Services.HttpClients
                 }
                 else
                 {
-					throw new PaypalAuthFailedException();
+					throw new PaypalAuthException();
 				}
             }
             else
             {
-                throw new PaypalAuthFailedException();
+                throw new PaypalAuthException();
             }
 
         }

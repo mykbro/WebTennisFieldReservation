@@ -17,7 +17,7 @@ namespace WebTennisFieldReservation.Services.HttpClients
             _httpClient.Timeout = TimeSpan.FromSeconds(settings.ClientTimeoutInSecs);
         }
 
-        public async Task<PaypalOrderResponse> CapturePayment(string authToken, string paymentId)
+        public async Task<PaypalOrderResponse> CapturePaymentAsync(string authToken, string paymentId)
         {
 			_httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", authToken);
             HttpResponseMessage response = await _httpClient.PostAsJsonAsync($"{paymentId}/capture", new {});     //by sending no content we capture the whole amount
@@ -32,13 +32,13 @@ namespace WebTennisFieldReservation.Services.HttpClients
 				}
 				else
 				{
-					throw new PaypalCapturePaymentFailedException();
+					throw new PaypalCapturePaymentException();
 				}
 			}
 			else
 			{
 				string debug = await response.Content.ReadAsStringAsync();
-				throw new PaypalCapturePaymentFailedException();
+				throw new PaypalCapturePaymentException();
 			}
 		}
 

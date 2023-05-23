@@ -158,7 +158,7 @@ namespace WebTennisFieldReservation.Controllers
 							//we then try to make a Capture request
 							try
 							{
-								PaypalOrderResponse response = await capturePaymentClient.CapturePayment(authToken, token);
+								PaypalOrderResponse response = await capturePaymentClient.CapturePaymentAsync(authToken, token);
 
 								//we check if everything went fine
 								if (response.status == "COMPLETED")

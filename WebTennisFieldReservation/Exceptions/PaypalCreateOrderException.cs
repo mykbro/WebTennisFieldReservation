@@ -1,6 +1,6 @@
 ﻿namespace WebTennisFieldReservation.Exceptions
 {
-	public class PaypalCreateOrderFailedException : Exception
+	public class PaypalCreateOrderException : Exception
 	{
 	}
 }

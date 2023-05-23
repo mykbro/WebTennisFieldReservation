@@ -2,6 +2,7 @@
 {
     public class BackgroundReservationsCheckerSettings
     {
-        public int DelayTimespanInSecs { get; set; }
+        public int DelayBetweenInvocationsInSecs { get; set; }
+        public int ElapsedTimeNeededForCheckInSecs { get; set; }
     }
 }

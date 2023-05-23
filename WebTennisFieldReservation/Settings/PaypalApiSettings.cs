@@ -8,6 +8,7 @@
 		public string CreateOrderUrl { get; set; } = null!;
 		public string CheckoutPageUrl { get; set; } = null!;
 		public string CapturePaymentUrl { get; set; } = null!;
+        public string CheckOrderUrl { get; set; } = null!;
         public int ClientTimeoutInSecs { get; set; }
     }
 }
