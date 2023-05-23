@@ -42,7 +42,7 @@ namespace WebTennisFieldReservation
 
             // Add dbcontext backed repository
             string connString = builder.Configuration.GetConnectionString(ConnectionStringsNames.Default) ?? throw new InvalidOperationException("Connection string missing");
-            builder.Services.AddScoped<ICourtComplexRepository, DbCourtComplexRepository>(_ => new DbCourtComplexRepository(connString, log: true));
+            builder.Services.AddScoped<ICourtComplexRepository, DbCourtComplexRepository>( _ => new DbCourtComplexRepository(connString, log: true));
 
             // Add password hasher
             builder.Services.AddSingleton<IPasswordHasher>(new Pbkdf2PasswordHasher(passwordSettings.Iterations));
@@ -57,16 +57,9 @@ namespace WebTennisFieldReservation
             builder.Services.AddSingleton<TokenManagerSettings>(tokenManagerSettings);  //required for controllers that use ITokenManager
             builder.Services.AddScoped<ITokenManager, DataProtectionTokenManager>();    //needs to be scoped because it uses scoped IDataProtectionProvider
 
-            // Add mail sending service 
-            /*
-            string smtpPassword = File.ReadAllText(mailSenderSettings.PasswordFileName);
-
-            SmtpClientFactory smtpClientFactory = new SmtpClientFactory(mailSenderSettings.HostName, mailSenderSettings.Port, mailSenderSettings.UseSSL, mailSenderSettings.User, smtpPassword);
-            SmtpClientPoolSender smtpClientPoolSender = new SmtpClientPoolSender(smtpClientFactory, 1, 10);
-            builder.Services.AddSingleton<ISingleUserMailSender>(new SingleUserPooledMailSender(smtpClientPoolSender, mailSenderSettings.User));
-            */
-
-            builder.Services.AddSingleton<ISingleUserMailSender>(new ConsoleMailSender());
+            // Add mail sending service
+            //builder.Services.AddSingleton<ISingleUserMailSender, SingleUserPooledMailSender>(); 
+            builder.Services.AddSingleton<ISingleUserMailSender, ConsoleMailSender>();
 
             // Add claims builder
             builder.Services.AddSingleton<ClaimsPrincipalFactory>(new ClaimsPrincipalFactory(AuthenticationSchemesNames.MyAuthScheme));

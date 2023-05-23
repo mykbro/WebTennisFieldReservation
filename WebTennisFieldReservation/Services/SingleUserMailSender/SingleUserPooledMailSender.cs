@@ -1,5 +1,6 @@
 ﻿using SmtpLibrary;
 using System.Net.Mail;
+using WebTennisFieldReservation.Settings;
 
 namespace WebTennisFieldReservation.Services.SingleUserMailSender
 {
@@ -8,10 +9,13 @@ namespace WebTennisFieldReservation.Services.SingleUserMailSender
         private readonly SmtpClientPoolSender _mailSender;
         private readonly string _fromAddress;
 
-        public SingleUserPooledMailSender(SmtpClientPoolSender mailSender, string fromAddress)
+        public SingleUserPooledMailSender(MailSenderSettings settings)
         {
-            _mailSender = mailSender;
-            _fromAddress = fromAddress;
+            string smtpPassword = File.ReadAllText(settings.PasswordFileName);
+            SmtpClientFactory smtpClientFactory = new SmtpClientFactory(settings.HostName, settings.Port, settings.UseSSL, settings.User, smtpPassword);
+            _mailSender = new SmtpClientPoolSender(smtpClientFactory, settings.StartingPoolSize, settings.MaxPoolSize);
+            
+            _fromAddress = settings.User;
         }
 
         public void Dispose()

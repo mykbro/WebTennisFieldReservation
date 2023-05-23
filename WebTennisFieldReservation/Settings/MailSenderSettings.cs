@@ -8,5 +8,7 @@
         public string User { get; set; } = null!;
         // public string? Password { get; set; }
         public string PasswordFileName { get; set; } = null!;
-	}
+        public int StartingPoolSize { get; set; }
+        public int MaxPoolSize { get; set; }
+    }
 }
