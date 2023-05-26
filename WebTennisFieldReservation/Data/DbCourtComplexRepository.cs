@@ -86,10 +86,9 @@ namespace WebTennisFieldReservation.Data
                 .SingleOrDefaultAsync();
         }
 
-        public async Task<bool> IsAdminAsync(Guid id)
+        public Task<bool> IsAdminAsync(Guid id)
         {
-            AdminUser? admin = await _context.AdminUsers.FindAsync(id);
-            return admin != null;
+            return _context.Users.Where(u => u.Id == id).Select(u => u.IsAdmin).SingleOrDefaultAsync();            
         }
 
         public Task<AuthenticatedUserDataModel?> GetAuthenticatedUserDataAsync(Guid id, Guid securityStamp)
@@ -162,6 +161,24 @@ namespace WebTennisFieldReservation.Data
         public Task<int> DeleteUserByIdAsync(Guid id)
         {
             return _context.Users.Where(user => user.Id == id).ExecuteDeleteAsync();
+        }
+
+        public Task<int> MakeUserAdminAsync(Guid id)
+        {
+            return _context.Users.Where(u => u.Id == id && u.IsAdmin == false)
+                .ExecuteUpdateAsync(u =>
+                    u.SetProperty(u => u.IsAdmin, true)
+                    .SetProperty(u => u.SecurityStamp, Guid.NewGuid())
+                );
+        }
+
+        public Task<int> DemoteAdminAsync(Guid id)
+        {
+            return _context.Users.Where(u => u.Id == id && u.IsAdmin == true)
+                .ExecuteUpdateAsync(u => 
+                    u.SetProperty(u => u.IsAdmin, false)
+                    .SetProperty(u => u.SecurityStamp, Guid.NewGuid())
+                );
         }
 
         public async Task<bool> AddTemplateAsync(TemplateModel templateData)

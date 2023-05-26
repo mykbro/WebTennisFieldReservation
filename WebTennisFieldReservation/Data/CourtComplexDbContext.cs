@@ -7,8 +7,7 @@ namespace WebTennisFieldReservation.Data
 {
     public class CourtComplexDbContext : DbContext
     {
-        public DbSet<User> Users { get; set; } = null!;
-        public DbSet<AdminUser> AdminUsers { get; set; } = null!;
+        public DbSet<User> Users { get; set; } = null!;        
         public DbSet<Court> Courts { get; set; } = null!;
         public DbSet<Template> Templates { get; set; } = null!;
         public DbSet<TemplateEntry> TemplateEntries { get; set; } = null!;       

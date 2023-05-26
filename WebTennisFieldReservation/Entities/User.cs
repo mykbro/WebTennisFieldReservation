@@ -32,6 +32,9 @@ namespace WebTennisFieldReservation.Entities
         [Required]
         public DateTimeOffset RegistrationTimestamp { get; set; }
 
+        [Required]
+        public bool IsAdmin { get; set; }
+
         #region __SecurityInfo
 
         [Required]

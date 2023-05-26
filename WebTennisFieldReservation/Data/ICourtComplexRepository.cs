@@ -22,6 +22,9 @@ namespace WebTennisFieldReservation.Data
         public Task<PasswordDataModel?> GetPasswordDataByIdAsync(Guid id);
         public Task<int> UpdatePasswordDataByIdAsync(Guid id, PasswordUpdateModel pwdUpdateData);
         public Task<int> DeleteUserByIdAsync(Guid id);
+        public Task<int> MakeUserAdminAsync(Guid id);
+        public Task<int> DemoteAdminAsync(Guid id);
+
 
         public Task<bool> AddTemplateAsync(TemplateModel templateData);
         public Task<List<TemplateRowModel>> GetAllTemplatesAsync();

@@ -14,6 +14,7 @@ using WebTennisFieldReservation.Services.SingleUserMailSender;
 using WebTennisFieldReservation.Services.PasswordHasher;
 using WebTennisFieldReservation.Services.ClaimPrincipalFactory;
 using WebTennisFieldReservation.Services.TokenManager;
+using System.ComponentModel.DataAnnotations;
 
 namespace WebTennisFieldReservation.Controllers
 {
@@ -508,6 +509,49 @@ namespace WebTennisFieldReservation.Controllers
             }
         }
 
+        [HttpGet("makeadmin")]
+        public async Task<IActionResult> MakeAdmin([Required] Guid userId, [FromServices] ICourtComplexRepository repo)
+        {
+            if (ModelState.IsValid)
+            {
+                int updatesDone = await repo.MakeUserAdminAsync(userId);
+
+                if (updatesDone ==1)
+                {
+                    return Redirect("/");
+                }
+                else
+                {
+                    return BadRequest();
+                }                
+            }
+            else
+            {
+                return BadRequest();
+            }            
+        }
+
+        [HttpGet("demoteadmin")]
+        public async Task<IActionResult> DemoteAdmin([Required] Guid userId, [FromServices] ICourtComplexRepository repo)
+        {
+            if (ModelState.IsValid)
+            {
+                int updatesDone = await repo.DemoteAdminAsync(userId);
+
+                if (updatesDone == 1)
+                {
+                    return Redirect("/");
+                }
+                else
+                {
+                    return BadRequest();
+                }
+            }
+            else
+            {
+                return BadRequest();
+            }
+        }
 
         ///////////////////////////////////////////////
 

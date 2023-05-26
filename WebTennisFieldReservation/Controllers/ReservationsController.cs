@@ -122,7 +122,7 @@ namespace WebTennisFieldReservation.Controllers
 		}
 
 		[HttpGet("confirm/{reservationId:guid}")]		
-		public async Task<IActionResult> Confirm(Guid reservationId, [Required] Guid confirmationToken, string token, [FromServices] PaypalCapturePaymentClient capturePaymentClient, [FromServices] PaypalAuthenticationClient authClient, [FromServices] ISingleUserMailSender mailSender)
+		public async Task<IActionResult> Confirm([Required] Guid reservationId, [Required] Guid confirmationToken, string token, [FromServices] PaypalCapturePaymentClient capturePaymentClient, [FromServices] PaypalAuthenticationClient authClient, [FromServices] ISingleUserMailSender mailSender)
 		{			
 			//we also need the confirmationToken, which only paypal can know, otherwise one can forge a reservationId during checkout
 			//and call this endpoint with the payment token that he can see in the URL during paypal checkout (without approving the payment)
