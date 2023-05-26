@@ -19,8 +19,7 @@ namespace WebTennisFieldReservation.Controllers
         {
             return View();
         }
-
-        [Authorize(Policy = AuthorizationPoliciesNames.IsAdmin)]
+        
         public IActionResult Privacy()
         {
             return View();

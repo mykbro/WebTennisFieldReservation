@@ -4,5 +4,6 @@
     {
         public string AppDiscriminator { get; set; } = null!;
         public string KeysFolderPath { get; set; } = null!;
+        public bool UseKeysFolder { get; set; }
     }
 }

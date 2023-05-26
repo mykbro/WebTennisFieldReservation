@@ -48,19 +48,30 @@ namespace WebTennisFieldReservation
             builder.Services.AddSingleton<IPasswordHasher>(new Pbkdf2PasswordHasher(passwordSettings.Iterations));
 
             // Add data protection (could have used just Configure)
-            builder.Services.AddDataProtection(options =>
+            var dataProtBuilder = builder.Services.AddDataProtection(options =>
             {
                 options.ApplicationDiscriminator = dataProtectionSettings.AppDiscriminator;
-            })
-            .PersistKeysToFileSystem(new DirectoryInfo(dataProtectionSettings.KeysFolderPath));
+            });
+
+            if (dataProtectionSettings.UseKeysFolder)
+            {
+                dataProtBuilder.PersistKeysToFileSystem(new DirectoryInfo(dataProtectionSettings.KeysFolderPath));
+            }            
 
             // Add security token manager            
             builder.Services.AddSingleton<TokenManagerSettings>(tokenManagerSettings);  //required for controllers that use ITokenManager
             builder.Services.AddScoped<ITokenManager, DataProtectionTokenManager>();    //needs to be scoped because it uses scoped IDataProtectionProvider
 
             // Add mail sending service
-            //builder.Services.AddSingleton<ISingleUserMailSender, SingleUserPooledMailSender>(); 
-            builder.Services.AddSingleton<ISingleUserMailSender, ConsoleMailSender>();
+            if (mailSenderSettings.MockMailSender)
+            {
+                builder.Services.AddSingleton<ISingleUserMailSender, ConsoleMailSender>();          //mock that displays email msgs in the console
+            }
+            else
+            {
+                //else we use the "true" service
+                builder.Services.AddSingleton<ISingleUserMailSender, SingleUserPooledMailSender>();
+            }   
 
             // Add claims builder
             builder.Services.AddSingleton<ClaimsPrincipalFactory>(new ClaimsPrincipalFactory(AuthenticationSchemesNames.MyAuthScheme));
