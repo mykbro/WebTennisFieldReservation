@@ -15,6 +15,7 @@ using WebTennisFieldReservation.Services.PasswordHasher;
 using WebTennisFieldReservation.Services.ClaimPrincipalFactory;
 using WebTennisFieldReservation.Services.TokenManager;
 using System.ComponentModel.DataAnnotations;
+using Microsoft.Extensions.Options;
 
 namespace WebTennisFieldReservation.Controllers
 {
@@ -38,10 +39,14 @@ namespace WebTennisFieldReservation.Controllers
         }
 
         [HttpPost("register")]
-        public async Task<IActionResult> Register(RegisterUserModel registrationInfo, string? returnUrl, [FromServices] ICourtComplexRepository repo, [FromServices] IPasswordHasher pwdHasher, [FromServices] ISingleUserMailSender mailSender, [FromServices] ITokenManager tokenManager)
+        public async Task<IActionResult> Register(RegisterUserModel registrationInfo, string? returnUrl, [FromServices] ICourtComplexRepository repo, [FromServices] IPasswordHasher pwdHasher, [FromServices] ISingleUserMailSender mailSender, [FromServices] ITokenManager tokenManager, [FromServices] IOptions<UserRegistrationSettings> userRegistrationOptions)
         {
             if (ModelState.IsValid)
             {
+                //we retrieve the payload from the IOptions object
+                UserRegistrationSettings userRegistrationSettings = userRegistrationOptions.Value;
+
+                //we generate a new hash/salt pair
                 var pwdInfo = pwdHasher.GeneratePasswordAndSalt(registrationInfo.Password);
 
                 User toAdd = new User()
@@ -52,7 +57,8 @@ namespace WebTennisFieldReservation.Controllers
                     Email = registrationInfo.Email.ToLower(),       //note the .ToLower()
                     Address = registrationInfo.Address,
                     BirthDate = registrationInfo.BirthDate,
-                    EmailConfirmed = false,                          
+                    IsAdmin = userRegistrationSettings.CreateAsAdmin,
+                    EmailConfirmed = userRegistrationSettings.EmailConfirmationRequired ? false : true,         //can use !userRegistrationSettings.EmailConfirmationRequired                  
                     RegistrationTimestamp = DateTimeOffset.Now,
                     Pbkdf2Iterations = pwdHasher.Iterations,
                     SecurityStamp = Guid.NewGuid(),
@@ -507,51 +513,7 @@ namespace WebTennisFieldReservation.Controllers
                 //we return a challenge and not a Forbid !!!
                 return Challenge();
             }
-        }
-
-        [HttpGet("makeadmin")]
-        public async Task<IActionResult> MakeAdmin([Required] Guid userId, [FromServices] ICourtComplexRepository repo)
-        {
-            if (ModelState.IsValid)
-            {
-                int updatesDone = await repo.MakeUserAdminAsync(userId);
-
-                if (updatesDone ==1)
-                {
-                    return Redirect("/");
-                }
-                else
-                {
-                    return BadRequest();
-                }                
-            }
-            else
-            {
-                return BadRequest();
-            }            
-        }
-
-        [HttpGet("demoteadmin")]
-        public async Task<IActionResult> DemoteAdmin([Required] Guid userId, [FromServices] ICourtComplexRepository repo)
-        {
-            if (ModelState.IsValid)
-            {
-                int updatesDone = await repo.DemoteAdminAsync(userId);
-
-                if (updatesDone == 1)
-                {
-                    return Redirect("/");
-                }
-                else
-                {
-                    return BadRequest();
-                }
-            }
-            else
-            {
-                return BadRequest();
-            }
-        }
+        }        
 
         ///////////////////////////////////////////////
 

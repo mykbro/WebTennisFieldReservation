@@ -10,5 +10,6 @@
         public const string LoggedRecentlyPolicy = nameof(LoggedRecentlyPolicy);
         public const string PaypalApi = nameof(PaypalApi);
         public const string BackgroundReservationsChecker = "BackgroundServices:ReservationsChecker";
+        public const string UserRegistration = nameof(UserRegistration);
     }
 }

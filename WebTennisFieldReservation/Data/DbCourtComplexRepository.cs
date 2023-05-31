@@ -163,24 +163,6 @@ namespace WebTennisFieldReservation.Data
             return _context.Users.Where(user => user.Id == id).ExecuteDeleteAsync();
         }
 
-        public Task<int> MakeUserAdminAsync(Guid id)
-        {
-            return _context.Users.Where(u => u.Id == id && u.IsAdmin == false)
-                .ExecuteUpdateAsync(u =>
-                    u.SetProperty(u => u.IsAdmin, true)
-                    .SetProperty(u => u.SecurityStamp, Guid.NewGuid())
-                );
-        }
-
-        public Task<int> DemoteAdminAsync(Guid id)
-        {
-            return _context.Users.Where(u => u.Id == id && u.IsAdmin == true)
-                .ExecuteUpdateAsync(u => 
-                    u.SetProperty(u => u.IsAdmin, false)
-                    .SetProperty(u => u.SecurityStamp, Guid.NewGuid())
-                );
-        }
-
         public async Task<bool> AddTemplateAsync(TemplateModel templateData)
         {
             Template templateToAdd = new Template()

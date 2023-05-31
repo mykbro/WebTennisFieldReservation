@@ -40,6 +40,10 @@ namespace WebTennisFieldReservation
             PaypalApiSettings paypalApiSettings = builder.Configuration.GetSection(ConfigurationSectionsNames.PaypalApi).Get<PaypalApiSettings>();
             BackgroundReservationsCheckerSettings backgroundReservationsCheckerSettings = builder.Configuration.GetSection(ConfigurationSectionsNames.BackgroundReservationsChecker).Get<BackgroundReservationsCheckerSettings>();
 
+            // Add options 
+            builder.Services.AddOptions<UserRegistrationSettings>().Bind(builder.Configuration.GetSection(ConfigurationSectionsNames.UserRegistration));
+            
+
             // Add dbcontext backed repository
             string connString = builder.Configuration.GetConnectionString(ConnectionStringsNames.Default) ?? throw new InvalidOperationException("Connection string missing");
             builder.Services.AddScoped<ICourtComplexRepository, DbCourtComplexRepository>( _ => new DbCourtComplexRepository(connString, log: true));
@@ -47,7 +51,7 @@ namespace WebTennisFieldReservation
             // Add password hasher
             builder.Services.AddSingleton<IPasswordHasher>(new Pbkdf2PasswordHasher(passwordSettings.Iterations));
 
-            // Add data protection (could have used just Configure)
+            // Add data protection (could have used just Configure for DataProtectionOptions)
             var dataProtBuilder = builder.Services.AddDataProtection(options =>
             {
                 options.ApplicationDiscriminator = dataProtectionSettings.AppDiscriminator;

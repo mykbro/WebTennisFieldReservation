@@ -86,7 +86,7 @@ namespace WebTennisFieldReservation.Controllers
 					try 
 					{						
 						string authToken = await authClient.GetAuthTokenAsync();
-						string returnUrl = Url.Action("confirm", "reservations", new { reservationId = reservationId, confirmationToken = confirmationToken }, Request.Scheme, Request.Host.Value) ?? ""; 
+						string returnUrl = Url.Action(nameof(Confirm), "reservations", new { reservationId = reservationId, confirmationToken = confirmationToken }, Request.Scheme, Request.Host.Value) ?? ""; 
 						PaypalOrderResponse paypalResponse = await createOrderClient.CreateOrderAsync(authToken, reservationId, checkoutData.SlotIds.Count, totalAmount, returnUrl);
 
 						//we update the reservation to PaymentCreated (inserting the paymentId)
