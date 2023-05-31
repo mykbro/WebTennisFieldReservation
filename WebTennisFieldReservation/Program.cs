@@ -70,6 +70,7 @@ namespace WebTennisFieldReservation
             else
             {
                 //else we use the "true" service
+                builder.Services.AddSingleton<MailSenderSettings>(mailSenderSettings);
                 builder.Services.AddSingleton<ISingleUserMailSender, SingleUserPooledMailSender>();
             }   
 

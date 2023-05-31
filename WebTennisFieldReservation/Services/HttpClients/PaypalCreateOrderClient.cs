@@ -4,21 +4,23 @@ using System.Net.Http.Headers;
 using WebTennisFieldReservation.Constants.Names;
 using WebTennisFieldReservation.Constants;
 using WebTennisFieldReservation.Exceptions;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Routing;
 
 namespace WebTennisFieldReservation.Services.HttpClients
 {
 	public class PaypalCreateOrderClient
 	{
-		private readonly HttpClient _httpClient;
+		private readonly HttpClient _httpClient;       
 
         public PaypalCreateOrderClient(HttpClient httpClient, PaypalApiSettings settings)
         {
             _httpClient = httpClient;
             _httpClient.BaseAddress = new Uri(settings.CreateOrderUrl);
-            _httpClient.Timeout = TimeSpan.FromSeconds(settings.ClientTimeoutInSecs);
+            _httpClient.Timeout = TimeSpan.FromSeconds(settings.ClientTimeoutInSecs);           
         }
 
-        public async Task<PaypalOrderResponse> CreateOrderAsync(string authToken, Guid reservationId, Guid confirmationToken, int numSlots, decimal totalAmount)
+        public async Task<PaypalOrderResponse> CreateOrderAsync(string authToken, Guid reservationId, int numSlots, decimal totalAmount, string returnUrl)
         {
             //we add the auth token...
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", authToken);
@@ -41,7 +43,7 @@ namespace WebTennisFieldReservation.Services.HttpClients
                     paypal = new {
                         experience_context = new {
                             brand_name = "WebTennisCourtComplex",
-                            return_url = $"http://localhost/reservations/confirm/{reservationId}?confirmationToken={confirmationToken}",
+                            return_url = returnUrl, 
                             user_action = "PAY_NOW",
 							payment_method_preference = "IMMEDIATE_PAYMENT_REQUIRED"
 						}

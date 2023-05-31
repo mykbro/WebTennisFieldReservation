@@ -86,7 +86,8 @@ namespace WebTennisFieldReservation.Controllers
 					try 
 					{						
 						string authToken = await authClient.GetAuthTokenAsync();
-						PaypalOrderResponse paypalResponse = await createOrderClient.CreateOrderAsync(authToken, reservationId, confirmationToken, checkoutData.SlotIds.Count, totalAmount);
+						string returnUrl = Url.Action("confirm", "reservations", new { reservationId = reservationId, confirmationToken = confirmationToken }, Request.Scheme, Request.Host.Value) ?? ""; 
+						PaypalOrderResponse paypalResponse = await createOrderClient.CreateOrderAsync(authToken, reservationId, checkoutData.SlotIds.Count, totalAmount, returnUrl);
 
 						//we update the reservation to PaymentCreated (inserting the paymentId)
 						int reservationsUpdated = await _repo.UpdateReservationToPaymentCreatedAsync(reservationId, paypalResponse.id);		
@@ -122,7 +123,7 @@ namespace WebTennisFieldReservation.Controllers
 		}
 
 		[HttpGet("confirm/{reservationId:guid}")]		
-		public async Task<IActionResult> Confirm([Required] Guid reservationId, [Required] Guid confirmationToken, string token, [FromServices] PaypalCapturePaymentClient capturePaymentClient, [FromServices] PaypalAuthenticationClient authClient, [FromServices] ISingleUserMailSender mailSender)
+		public async Task<IActionResult> Confirm(Guid reservationId, [Required] Guid confirmationToken, string token, [FromServices] PaypalCapturePaymentClient capturePaymentClient, [FromServices] PaypalAuthenticationClient authClient, [FromServices] ISingleUserMailSender mailSender)
 		{			
 			//we also need the confirmationToken, which only paypal can know, otherwise one can forge a reservationId during checkout
 			//and call this endpoint with the payment token that he can see in the URL during paypal checkout (without approving the payment)
