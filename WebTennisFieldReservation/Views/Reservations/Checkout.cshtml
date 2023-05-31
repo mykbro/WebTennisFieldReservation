@@ -27,7 +27,7 @@
 					string priceString = $"{entry.Price:f2} €";
 
 					<tr id="entry-@entry.Id" class="entry" data-price="@entry.Price">
-						<td>@entry.Date.ToShortDateString()</td>
+						<td>@entry.Date.ToString("dd/MM/yyyy")</td>
 						<td>@hourString</td>
 						<td>@entry.CourtName</td>
 						<td>@priceString</td>
