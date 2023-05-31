@@ -28,10 +28,13 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="Microsoft.Extensions.Logging.AzureAppServices" Version="7.0.5" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\WebRazorPagesTest\SmtpLibrary\SmtpLibrary.csproj" />
+    <Reference Include="SmtpLibrary">
+      <HintPath>..\..\SmtpLibrary\SmtpLibrary\bin\Debug\net6.0\SmtpLibrary.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
 </Project>

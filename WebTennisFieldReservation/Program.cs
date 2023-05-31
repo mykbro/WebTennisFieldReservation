@@ -18,6 +18,7 @@ using WebTennisFieldReservation.Services.SingleUserMailSender;
 using WebTennisFieldReservation.Services.HttpClients;
 using WebTennisFieldReservation.Services.BackgroundTest;
 using WebTennisFieldReservation.Services._Background;
+using Microsoft.Extensions.Logging.AzureAppServices;
 
 namespace WebTennisFieldReservation
 {
@@ -31,14 +32,14 @@ namespace WebTennisFieldReservation
             builder.Services.AddControllersWithViews();
 
             // Bind settings objects
-            PasswordSettings passwordSettings = builder.Configuration.GetSection(ConfigurationSectionsNames.Passwords).Get<PasswordSettings>();
-            DataProtectionSettings dataProtectionSettings = builder.Configuration.GetSection(ConfigurationSectionsNames.DataProtection).Get<DataProtectionSettings>();
-            MailSenderSettings mailSenderSettings = builder.Configuration.GetSection(ConfigurationSectionsNames.MailSender).Get<MailSenderSettings>();
-            TokenManagerSettings tokenManagerSettings = builder.Configuration.GetSection(ConfigurationSectionsNames.TokenManager).Get<TokenManagerSettings>();
-            AuthenticationSchemeSettings myAuthSchemeSettings = builder.Configuration.GetSection(ConfigurationSectionsNames.AuthenticationSchemes + ":" + AuthenticationSchemesNames.MyAuthScheme).Get<AuthenticationSchemeSettings>();
-            LoggedRecentlyPolicySettings loggedRecentlyPolicySettings = builder.Configuration.GetSection(ConfigurationSectionsNames.LoggedRecentlyPolicy).Get<LoggedRecentlyPolicySettings>();
-            PaypalApiSettings paypalApiSettings = builder.Configuration.GetSection(ConfigurationSectionsNames.PaypalApi).Get<PaypalApiSettings>();
-            BackgroundReservationsCheckerSettings backgroundReservationsCheckerSettings = builder.Configuration.GetSection(ConfigurationSectionsNames.BackgroundReservationsChecker).Get<BackgroundReservationsCheckerSettings>();
+            PasswordSettings passwordSettings = builder.Configuration.GetSection(ConfigurationSectionsNames.Passwords).Get<PasswordSettings>()!;
+            DataProtectionSettings dataProtectionSettings = builder.Configuration.GetSection(ConfigurationSectionsNames.DataProtection).Get<DataProtectionSettings>()!;
+            MailSenderSettings mailSenderSettings = builder.Configuration.GetSection(ConfigurationSectionsNames.MailSender).Get<MailSenderSettings>()!;
+            TokenManagerSettings tokenManagerSettings = builder.Configuration.GetSection(ConfigurationSectionsNames.TokenManager).Get<TokenManagerSettings>()!;
+            AuthenticationSchemeSettings myAuthSchemeSettings = builder.Configuration.GetSection(ConfigurationSectionsNames.AuthenticationSchemes + ":" + AuthenticationSchemesNames.MyAuthScheme).Get<AuthenticationSchemeSettings>()!;
+            LoggedRecentlyPolicySettings loggedRecentlyPolicySettings = builder.Configuration.GetSection(ConfigurationSectionsNames.LoggedRecentlyPolicy).Get<LoggedRecentlyPolicySettings>()!;
+            PaypalApiSettings paypalApiSettings = builder.Configuration.GetSection(ConfigurationSectionsNames.PaypalApi).Get<PaypalApiSettings>()!;
+            BackgroundReservationsCheckerSettings backgroundReservationsCheckerSettings = builder.Configuration.GetSection(ConfigurationSectionsNames.BackgroundReservationsChecker).Get<BackgroundReservationsCheckerSettings>()!;
 
             // Add options 
             builder.Services.AddOptions<UserRegistrationSettings>().Bind(builder.Configuration.GetSection(ConfigurationSectionsNames.UserRegistration));
@@ -46,7 +47,21 @@ namespace WebTennisFieldReservation
 
             // Add dbcontext backed repository
             string connString = builder.Configuration.GetConnectionString(ConnectionStringsNames.Default) ?? throw new InvalidOperationException("Connection string missing");
-            builder.Services.AddScoped<ICourtComplexRepository, DbCourtComplexRepository>( _ => new DbCourtComplexRepository(connString, log: true));
+            bool logDbOperations = builder.Environment.IsDevelopment();     
+            builder.Services.AddScoped<ICourtComplexRepository, DbCourtComplexRepository>( _ => new DbCourtComplexRepository(connString, logDbOperations));
+
+            // Add azure logging
+            builder.Services.AddLogging(builder =>
+            {
+                builder.AddAzureWebAppDiagnostics();
+            });
+
+            builder.Services.Configure<AzureFileLoggerOptions>(options =>
+            {
+                options.FileName = "log-";
+                options.FileSizeLimit = 10 * 1024;
+                options.RetainedFileCountLimit = 2; 
+            });
 
             // Add password hasher
             builder.Services.AddSingleton<IPasswordHasher>(new Pbkdf2PasswordHasher(passwordSettings.Iterations));
