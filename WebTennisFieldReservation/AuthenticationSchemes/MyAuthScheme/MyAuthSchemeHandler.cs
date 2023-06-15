@@ -70,7 +70,8 @@ namespace WebTennisFieldReservation.AuthenticationSchemes.MyAuthScheme
 
                         //we check in the db if the id is still there and the secStamp is still the same
                         //and contextually we retrieve the user data that we need in every request
-                        var userData = await _repo.GetAuthenticatedUserDataAsync(id, secStamp);
+                        //PLEASE NOTE that we don't check for any expiration (but we could using the issueTime Claim) 
+                        var userData = await _repo.GetAuthenticatedUserDataAsync(id, secStamp);                        
 
                         if(userData != default)
                         {
