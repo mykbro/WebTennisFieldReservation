@@ -176,16 +176,81 @@ Please check the source code of each service for more info.
 
 ## How should I use this ?
 
-### How to setup the app
+### How do I setup the app ?
 In order to operate the website you first need:
 * A MS SQL database (a different DBMS can be used but requires changes to the DbContext and the DesignTimeDbContextFactory, both of which can be found in the Data folder)
-* An email address for sending emails from (email sending can however be disabled in appsetting.json through the "MailSender:MockMailSender" property)
 * A paypal developer account with sandbox test accounts (you may ofc use live accounts if you wish)
+* An email address for sending emails from (email sending can however be disabled in appsetting.json through the "MailSender:MockMailSender" property)
+* A text file containing your email address password (the password isn't written directly in the appsettings.json file, the file path is)
+* (Optional) A location where to store DataProtection keys (otherwise the default for the platform will be used)
 
 Either you want to use a local version or you want to publish the website, you must first run the db migration using the CLI commands or the publish wizard. 
 
 After this you must setup an appsettings.Development.json file, an appsettings.Production.json file or modify the provided appsettings.json file.  
 All the information needed to configure the app is provided inside the appsetings.json file itself.
+
+### How do I create admin users ?
+Make sure that the "UserRegistration:CreateAsAdmin" setting in appsettings.json is set to 'true' and if you want to spare the hassle or you don't have the email sending service 
+setup also set the "UserRegistration:EmailConfirmationRequired" to 'false'.  
+
+Click on the 'Register' button in the top banner and fill in the form. Done !
+
+Remember to change your "UserRegistration" settings after all you admin accounts have been created.
+
+### What can I do as a normal user ?
+A regular user can:
+* Edit its profile, clicking on the "Welcome \<username>" button in the top banner
+* Check for slots availability and reserve them, using the link in the home page
+
+### What can I do as an admin user ?
+As and admin you can do everything a normal user can but also have access to the 'Administration area' through a link in the top banner.  
+
+In this area you can:
+* See user details and delete them
+* Manage the courts
+* Manage the templates
+* Manage the slots that can be reserved 
+
+### How can I manage the slots for reservation ?
+A slot is 1h of court access.  
+As an admin you can choose which slots you want to be made reservable and at what price.  
+The price can be chosen for each slot.
+
+You can manage the slots in the /administration/reservationslots area: 
+1. Select a Court (you must have created one)
+1. Select a date (the slots for the whole week, starting from that date's Monday, will be loaded)
+1. Select/Deselect any slot you want and fill in the price for each selected slot (unselected slots will not be selected even if a price has been specified) 
+1. Click the 'Submit' button (a 'Submission OK' or 'Submission FAILED' msg will appear nearby)
+
+To facilitate the slot management, instead of setting up slots one by one the admin can use 'Templates' to quickly setup the whole week.   
+In order to do so, select a template and click the 'Fill' button.  
+This will transfer that 'week template's values to the current week.
+
+An admin can create and edit templates in the /administration/templates area.  
+Select/Deselect any slot you want and fill in the price for each selected slot.  
+Remember to hit 'Submit' to save your template.
+
+
+Watch out that in this app there's no safety check that disallows an admin to unselect slots already reserved.  
+Deleting these slots will also delete the reservations for them due to the db referential integrity.
+
+### How do I reserve a slot ?
+Click on the link in the main page and select a date from the date picker.  
+You'll see a list of all the slots for all the courts for that day.  
+* Gray boxes represent slots that are not up for reservation
+* Red boxes represent slots already taken
+* Green boxes represents available slots
+* Yellow boxes represents boxes currently selected for reservation
+
+Plese note that in this app it's not possible to select slots across multiple dates.  
+The system doesn't implement a cart and doesn't "remember" previous selections when picking dates.
+
+Select at least one box and press 'Continue'.  
+You'll be sent to the checkout page where you can revisit your selection and proceed to the payment.  
+Clicking on the 'Confirm' button will redirect you to the Paypal authorization page.
+
+
+
 
 
 
