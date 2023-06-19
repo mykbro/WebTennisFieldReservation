@@ -72,15 +72,9 @@ namespace WebTennisFieldReservation.Controllers
                 {
                     string token = tokenManager.GenerateToken(ProtectorPurposesNames.EmailConfirmation, toAdd.Id, toAdd.SecurityStamp, DateTimeOffset.Now);
 
-                    try
-                    {
-                        _ = SendConfirmationEmailAsync(toAdd.Email, token, mailSender);     //we execute this method concurrently (we can as mailSender is singleton)
-                    }
-                    catch
-                    {
+                    // we try to send it, a try..catch block would be useless here as we don't await the Task
+                    _ = SendConfirmationEmailAsync(toAdd.Email, token, mailSender);     //we execute this method concurrently (we can as mailSender is singleton and doesn't go out of scope)               
 
-                    }
-                    
                     return RedirectToAction(nameof(RegisterSuccess), new {ReturnUrl = returnUrl});
                 }
                 else
@@ -172,15 +166,9 @@ namespace WebTennisFieldReservation.Controllers
                     // we create a new token
                     string token = tokenManager.GenerateToken(ProtectorPurposesNames.EmailConfirmation, tokenData.Id, tokenData.SecurityStamp, DateTimeOffset.Now);
 
-                    // we try to send it
-                    try
-                    {
-                        _ = SendConfirmationEmailAsync(modelData.Email, token, mailSender); //we execute this method concurrently (we can as mailSender is singleton)
-					}
-                    catch
-                    {
-
-                    }
+                    // we try to send it, a try..catch block would be useless here as we don't await the Task                    
+                    _ = SendConfirmationEmailAsync(modelData.Email, token, mailSender);  //we execute this method concurrently (we can as mailSender is singleton and doesn't go out of scope)
+					
                 }
             }
 

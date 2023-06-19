@@ -32,7 +32,8 @@ This project is a case study for the whole Asp.Net Core framework, the Dependenc
 
 ### How does the authentication system work ?
 We use a custom authentication system similar to the one used by the Identity framework (the 'Password reset' and the 'Confirm Email' link generation mechanism also use a TokenManager service that levareges the DataProtection service like Identity).  
-On a SignIn we append an auth Cookie to the Response.Cookies (either persistent or session based) encrypted and authenticated using the DataProtection infrastructure.
+On a SignIn we append an auth Cookie to the Response.Cookies (either persistent or session based) encrypted and authenticated using the DataProtection infrastructure.  
+Passwords hashes are derived using PBKDF2 with a number of iterations configured in appsetting.json and salted with a 32 byte array.
 
 The Claims included in this cookie are:
 *	UserId (used to determine who we are and what AuthZ we have)
@@ -174,5 +175,18 @@ In this app an auth token is requested before each paypal endpoint call. A more 
 Please check the source code of each service for more info.
 
 ## How should I use this ?
+
+### How to setup the app
+In order to operate the website you first need:
+* A MS SQL database (a different DBMS can be used but requires changes to the DbContext and the DesignTimeDbContextFactory, both of which can be found in the Data folder)
+* An email address for sending emails from (email sending can however be disabled in appsetting.json through the "MailSender:MockMailSender" property)
+* A paypal developer account with sandbox test accounts (you may ofc use live accounts if you wish)
+
+Either you want to use a local version or you want to publish the website, you must first run the db migration using the CLI commands or the publish wizard. 
+
+After this you must setup an appsettings.Development.json file, an appsettings.Production.json file or modify the provided appsettings.json file.  
+All the information needed to configure the app is provided inside the appsetings.json file itself.
+
+
 
 
